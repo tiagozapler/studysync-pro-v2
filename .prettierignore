@@ -1,0 +1,19 @@
+# Dependencias
+node_modules
+
+# Carpetas de build
+dist
+build
+
+# Archivos de lock y logs
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+*.log
+
+# Archivos de configuración del sistema/IDE
+.vscode
+.idea
+
+# Otros archivos que no necesitan formateo
+coverage
