@@ -1,171 +1,64 @@
 import React, { useState, useRef, useEffect } from 'react'
-import { Send, Bot, FileText, Settings, MessageSquare } from 'lucide-react'
-import { useAppStore } from '../../../lib/store/appStore'
-import { GroqAdapter } from '../../../lib/ai/adapters/GroqAdapter'
-import { FileContentExtractor } from '../../../lib/services/FileContentExtractor'
+import {
+  Send,
+  Bot,
+  FileText,
+  Settings,
+  MessageSquare,
+  Brain,
+  Upload,
+  X,
+} from 'lucide-react'
+import { useAppStore } from '../../../lib/store'
+import { AIService } from '../../../lib/services/AIService'
+import toast from 'react-hot-toast'
 
 interface CourseAIAssistantProps {
   courseId: string
 }
 
-interface ChatMessage {
+interface Message {
   id: string
   role: 'user' | 'assistant'
   content: string
   timestamp: Date
-  sources?: string[]
+  files?: string[]
 }
 
-export function CourseAIAssistant({ courseId }: CourseAIAssistantProps) {
-  const [messages, setMessages] = useState<ChatMessage[]>([])
+export const CourseAIAssistant: React.FC<CourseAIAssistantProps> = ({
+  courseId,
+}) => {
+  const { files, grades, courseEvents } = useAppStore()
+  const [messages, setMessages] = useState<Message[]>([])
   const [inputValue, setInputValue] = useState('')
   const [isLoading, setIsLoading] = useState(false)
-  const [includeNotes, setIncludeNotes] = useState(true)
   const [showSettings, setShowSettings] = useState(false)
+  const [huggingFaceToken, setHuggingFaceToken] = useState('')
+  const [selectedFiles, setSelectedFiles] = useState<string[]>([])
+  const [showFileSelector, setShowFileSelector] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
-  const inputRef = useRef<HTMLTextAreaElement>(null)
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
-  const course = useAppStore(state =>
-    state.courses.find(c => c.id === courseId)
-  )
-  const courseMaterials = useAppStore(state => state.files[courseId] || [])
-  const courseNotes = useAppStore(state => state.notes[courseId] || [])
-  const courseGrades = useAppStore(state => state.grades[courseId] || [])
-  const courseEvents = useAppStore(state => state.courseEvents[courseId] || [])
+  const courseFiles = files[courseId] || []
+  const aiService = AIService.getInstance()
 
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+    scrollToBottom()
   }, [messages])
 
-  const getApiKey = () => {
-    return localStorage.getItem('groq_api_key') || ''
-  }
-
-  const configureApiKey = () => {
-    // Usar variable de entorno o localStorage existente
-    const apiKey =
-      import.meta.env.VITE_GROQ_API_KEY ||
-      localStorage.getItem('groq_api_key') ||
-      ''
-    if (apiKey) {
-      localStorage.setItem('groq_api_key', apiKey)
-      // Recargar la página para aplicar los cambios
-      window.location.reload()
-    } else {
-      alert(
-        'Por favor, configura tu API key de Groq en las variables de entorno o en la configuración del chat.'
-      )
-    }
-  }
-
-  const createCourseContext = async () => {
-    let context = `Eres un asistente IA especializado en el curso "${course?.name}" (${course?.teacher}). `
-    context += `Tu función es ayudar al estudiante con preguntas específicas sobre este curso. `
-    context += `Solo debes usar la información proporcionada en los materiales y notas del curso. `
-    context += `Si no encuentras la respuesta en los materiales, debes responder: "No encuentro esa información en los materiales o notas de este curso. Intenta cargar más documentos o consulta con el Asistente General."\n\n`
-
-    // Add content from course materials
-    if (courseMaterials.length > 0) {
-      const fileMaterials = courseMaterials.filter(m => m.type === 'file')
-      if (fileMaterials.length > 0) {
-        context += `CONTENIDO DE MATERIALES DEL CURSO:\n`
-
-        for (const material of fileMaterials) {
-          context += `\n=== ${material.name} ===\n`
-
-          // Intentar extraer contenido real del archivo
-          try {
-            if (material.fileUrl) {
-              // Si tenemos una URL del archivo, intentar extraer contenido
-              const response = await fetch(material.fileUrl)
-              const blob = await response.blob()
-              const file = new File([blob], material.name, {
-                type: material.mimeType || 'application/octet-stream',
-              })
-
-              const content = await FileContentExtractor.extractContent(file)
-              context += content
-            } else {
-              // Si no hay URL, usar información básica del material
-              context += `Archivo: ${material.name}\n`
-              context += `Tipo: ${material.mimeType || 'Desconocido'}\n`
-              if (material.size) {
-                context += `Tamaño: ${(material.size / 1024).toFixed(1)} KB\n`
-              }
-              context += `[Contenido no disponible. Por favor, sube el archivo nuevamente.]\n`
-            }
-          } catch (error) {
-            console.error(
-              `Error extracting content from ${material.name}:`,
-              error
-            )
-            context += `[Error al extraer contenido de ${material.name}. Por favor, sube el archivo nuevamente.]\n`
-          }
-
-          if (material.tags && material.tags.length > 0) {
-            context += `Etiquetas: ${material.tags.join(', ')}\n`
-          }
-          context += `\n`
-        }
-      }
-    }
-
-    // Add course notes if enabled
-    if (includeNotes && courseNotes.length > 0) {
-      context += `NOTAS DEL CURSO:\n`
-      courseNotes.forEach(note => {
-        const noteData = note as any
-        context += `- ${noteData.title || 'Sin título'}: ${noteData.content || 'Sin contenido'}\n`
-      })
-      context += `\n`
-    }
-
-    // Agregar notas de evaluaciones si está habilitado
-    if (includeNotes && courseGrades.length > 0) {
-      context += `EVALUACIONES DEL CURSO:\n`
-      courseGrades.forEach(grade => {
-        const percentage = (grade.score / grade.maxScore) * 100
-        context += `- ${grade.name} (${grade.type}): ${grade.score}/${grade.maxScore} (${percentage.toFixed(1)}%) - Peso: ${grade.weight}%\n`
-        if (grade.notes) {
-          context += `  Notas: ${grade.notes}\n`
-        }
-      })
-      context += `\n`
-    }
-
-    // Agregar eventos del calendario si está habilitado
-    if (includeNotes && courseEvents.length > 0) {
-      context += `EVENTOS DEL CALENDARIO:\n`
-      courseEvents.forEach(event => {
-        context += `- ${event.title} (${event.type}): ${event.date.toLocaleDateString()}`
-        if (event.time) context += ` a las ${event.time}`
-        if (event.location) context += ` en ${event.location}`
-        context += ` - Prioridad: ${event.priority}\n`
-        if (event.description) {
-          context += `  Descripción: ${event.description}\n`
-        }
-      })
-      context += `\n`
-    }
-
-    context += `INSTRUCCIONES:\n`
-    context += `1. Responde basándote únicamente en los materiales y notas del curso.\n`
-    context += `2. Si te preguntan sobre un archivo específico, busca en los materiales.\n`
-    context += `3. Si te piden resúmenes, análisis o explicaciones, usa la información disponible.\n`
-    context += `4. Si no encuentras la información, indica claramente que no está disponible.\n`
-    context += `5. Mantén un tono educativo y de apoyo.\n\n`
-
-    return context
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }
 
   const handleSendMessage = async () => {
-    if (!inputValue.trim() || isLoading) return
+    if (!inputValue.trim() && selectedFiles.length === 0) return
 
-    const userMessage: ChatMessage = {
+    const userMessage: Message = {
       id: Date.now().toString(),
       role: 'user',
       content: inputValue,
       timestamp: new Date(),
+      files: selectedFiles,
     }
 
     setMessages(prev => [...prev, userMessage])
@@ -173,220 +66,304 @@ export function CourseAIAssistant({ courseId }: CourseAIAssistantProps) {
     setIsLoading(true)
 
     try {
-      const apiKey = getApiKey()
-      if (!apiKey) {
-        throw new Error('API key de Groq no configurada')
+      // Preparar contexto del curso
+      const courseContext = buildCourseContext()
+
+      // Preparar contenido de archivos si hay archivos seleccionados
+      let fileContent = ''
+      if (selectedFiles.length > 0) {
+        const selectedFileObjects = courseFiles.filter(f =>
+          selectedFiles.includes(f.id)
+        )
+        for (const file of selectedFileObjects) {
+          // Usar el contenido extraído del archivo si está disponible
+          const fileContentText = await extractFileContent(file)
+          if (fileContentText) {
+            fileContent += `\n\n--- CONTENIDO DE ${file.name} ---\n${fileContentText}`
+          }
+        }
       }
 
-      const adapter = new GroqAdapter(apiKey)
-      const context = await createCourseContext()
+      // Construir prompt para la IA
+      const prompt = buildPrompt(inputValue, courseContext, fileContent)
 
-      const stream = await adapter.sendMessageStream(inputValue, {
-        systemPrompt: context,
-        courseName: course?.name,
-      })
+      // Obtener respuesta de la IA
+      const response = await getAIResponse(prompt)
 
-      const reader = stream.getReader()
-      let responseContent = ''
-
-      while (true) {
-        const { done, value } = await reader.read()
-        if (done) break
-        responseContent += value
-      }
-
-      const assistantMessage: ChatMessage = {
+      const assistantMessage: Message = {
         id: (Date.now() + 1).toString(),
         role: 'assistant',
-        content: responseContent,
+        content: response,
         timestamp: new Date(),
       }
 
       setMessages(prev => [...prev, assistantMessage])
+      setSelectedFiles([])
     } catch (error) {
-      console.error('Error enviando mensaje:', error)
+      console.error('Error getting AI response:', error)
+      toast.error('Error al obtener respuesta de la IA')
 
-      const errorMessage: ChatMessage = {
+      const errorMessage: Message = {
         id: (Date.now() + 1).toString(),
         role: 'assistant',
         content:
-          'Lo siento, hubo un error al procesar tu pregunta. Verifica que tu API key de Groq esté configurada correctamente.',
+          'Lo siento, hubo un error al procesar tu solicitud. Por favor, intenta de nuevo.',
         timestamp: new Date(),
       }
-
       setMessages(prev => [...prev, errorMessage])
     } finally {
       setIsLoading(false)
     }
   }
 
-  const handleKeyPress = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault()
-      handleSendMessage()
+  const extractFileContent = async (file: any): Promise<string> => {
+    try {
+      // Si el archivo tiene contenido extraído, usarlo
+      if (file.content) {
+        return file.content
+      }
+
+      // Si no, intentar extraer el contenido del blob
+      if (file.blob) {
+        // Aquí podrías implementar la extracción de contenido del blob
+        // Por ahora, retornamos un mensaje informativo
+        return `[Archivo ${file.name} - Contenido no extraído]`
+      }
+
+      return `[Archivo ${file.name} - Sin contenido disponible]`
+    } catch (error) {
+      console.error('Error extracting file content:', error)
+      return `[Error al extraer contenido de ${file.name}]`
     }
   }
 
-  const clearChat = () => {
-    setMessages([])
+  const buildCourseContext = (): string => {
+    let context = ''
+
+    // Agregar información de calificaciones
+    const courseGrades = grades[courseId] || []
+    if (courseGrades.length > 0) {
+      context += '\n\nCALIFICACIONES DEL CURSO:\n'
+      courseGrades.forEach((grade: any) => {
+        context += `- ${grade.name}: ${grade.score}/${grade.maxScore} (${grade.weight}% peso)\n`
+      })
+    }
+
+    // Agregar información de eventos
+    const courseEventsList = courseEvents[courseId] || []
+    if (courseEventsList.length > 0) {
+      context += '\n\nEVENTOS DEL CURSO:\n'
+      courseEventsList.forEach((event: any) => {
+        context += `- ${event.title}: ${event.date} (${event.type})\n`
+      })
+    }
+
+    // Agregar información de archivos
+    if (courseFiles.length > 0) {
+      context += '\n\nARCHIVOS DISPONIBLES:\n'
+      courseFiles.forEach(file => {
+        context += `- ${file.name} (${file.type || 'tipo desconocido'})\n`
+      })
+    }
+
+    return context
   }
 
-  const getAvailableMaterialsCount = () => {
-    return courseMaterials.filter(m => m.type === 'file').length
+  const buildPrompt = (
+    userQuestion: string,
+    courseContext: string,
+    fileContent: string
+  ): string => {
+    let prompt = `Eres un asistente de IA especializado en ayudar con cursos académicos. 
+    
+CONTEXTO DEL CURSO:
+${courseContext}
+
+${fileContent ? `CONTENIDO DE ARCHIVOS SELECCIONADOS:${fileContent}` : ''}
+
+PREGUNTA DEL USUARIO: ${userQuestion}
+
+Por favor, proporciona una respuesta útil y detallada basada en el contexto del curso y el contenido de los archivos si están disponibles. 
+Si la pregunta es sobre calificaciones, cálculos o proyecciones, incluye los cálculos matemáticos.
+Si la pregunta es sobre fechas o eventos, menciona las fechas específicas del curso.
+Si la pregunta es sobre archivos, analiza el contenido proporcionado.`
+
+    return prompt
   }
 
-  const getAvailableNotesCount = () => {
-    return includeNotes
-      ? courseNotes.length + courseGrades.length + courseEvents.length
-      : 0
+  const getAIResponse = async (prompt: string): Promise<string> => {
+    try {
+      // Usar el método público analyzeFileContent
+      const analysis = await aiService.analyzeFileContent(prompt, 'prompt.txt')
+
+      // Convertir el análisis en una respuesta de texto
+      let response = ''
+
+      if (analysis.summary) {
+        response += analysis.summary + '\n\n'
+      }
+
+      if (analysis.topics.length > 0) {
+        response +=
+          '**Temas identificados:** ' + analysis.topics.join(', ') + '\n\n'
+      }
+
+      if (analysis.importantInfo.length > 0) {
+        response += '**Información importante:**\n'
+        analysis.importantInfo.forEach(info => {
+          response += `• ${info}\n`
+        })
+        response += '\n'
+      }
+
+      if (response.trim() === '') {
+        response =
+          'He analizado tu pregunta y el contexto del curso. ¿Hay algo específico sobre lo que te gustaría que profundice?'
+      }
+
+      return response
+    } catch (error) {
+      console.error('Error in AI response:', error)
+      return 'Lo siento, los servicios de IA no están disponibles en este momento. Por favor, verifica la configuración de Ollama o Hugging Face.'
+    }
   }
+
+  const handleFileSelection = (fileId: string) => {
+    setSelectedFiles(prev =>
+      prev.includes(fileId)
+        ? prev.filter(id => id !== fileId)
+        : [...prev, fileId]
+    )
+  }
+
+  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    if (event.target.files && event.target.files[0]) {
+      const file = event.target.files[0]
+      // Aquí podrías procesar el archivo si es necesario
+      toast.success(`Archivo ${file.name} seleccionado`)
+    }
+  }
+
+  const handleSaveHuggingFaceToken = () => {
+    aiService.setHuggingFaceToken(huggingFaceToken)
+    setShowSettings(false)
+    setHuggingFaceToken('')
+    toast.success('Token de Hugging Face guardado')
+  }
+
+  const getSystemInfo = () => {
+    return aiService.getSystemInfo()
+  }
+
+  const systemInfo = getSystemInfo()
 
   return (
-    <div className='h-full flex flex-col bg-dark-bg-primary'>
+    <div className='flex flex-col h-full bg-white rounded-lg shadow'>
       {/* Header */}
-      <div className='p-4 border-b border-dark-border bg-dark-bg-secondary'>
-        <div className='flex items-center justify-between'>
-          <div className='flex items-center gap-3'>
-            <Bot size={24} className='text-course-blue' />
-            <div>
-              <h2 className='text-xl font-semibold text-dark-text-primary'>
-                Asistente IA - {course?.name}
-              </h2>
-              <p className='text-sm text-dark-text-muted'>
-                {getAvailableMaterialsCount()} materiales •{' '}
-                {getAvailableNotesCount()} notas
-              </p>
-            </div>
-          </div>
-          <div className='flex items-center gap-2'>
-            <button
-              onClick={() => setShowSettings(!showSettings)}
-              className='p-2 rounded-lg bg-dark-bg-primary hover:bg-dark-bg-tertiary text-dark-text-secondary hover:text-dark-text-primary transition-colors'
-              title='Configuración'
-            >
-              <Settings size={18} />
-            </button>
-            <button
-              onClick={clearChat}
-              className='p-2 rounded-lg bg-dark-bg-primary hover:bg-dark-bg-tertiary text-dark-text-secondary hover:text-dark-text-primary transition-colors'
-              title='Limpiar chat'
-            >
-              <MessageSquare size={18} />
-            </button>
-          </div>
+      <div className='flex items-center justify-between p-4 border-b border-gray-200'>
+        <div className='flex items-center'>
+          <Bot className='h-6 w-6 text-purple-600 mr-2' />
+          <h3 className='text-lg font-semibold text-gray-900'>Asistente IA</h3>
         </div>
-
-        {/* Settings panel */}
-        {showSettings && (
-          <div className='mt-4 p-4 bg-dark-bg-primary rounded-lg border border-dark-border'>
-            <h3 className='text-sm font-semibold text-dark-text-primary mb-3'>
-              Configuración del Asistente
-            </h3>
-            <div className='space-y-3'>
-              <label className='flex items-center gap-3'>
-                <input
-                  type='checkbox'
-                  checked={includeNotes}
-                  onChange={e => setIncludeNotes(e.target.checked)}
-                  className='w-4 h-4 text-course-blue bg-dark-bg-secondary border-dark-border rounded focus:ring-course-blue focus:ring-2'
-                />
-                <span className='text-sm text-dark-text-secondary'>
-                  Incluir notas, evaluaciones y eventos del curso
-                </span>
-              </label>
-
-              {!getApiKey() && (
-                <div className='p-3 bg-yellow-500/10 border border-yellow-500/20 rounded-lg'>
-                  <p className='text-sm text-yellow-400 mb-2'>
-                    No se ha configurado la API key de Groq
-                  </p>
-                  <button
-                    onClick={configureApiKey}
-                    className='px-3 py-1 bg-yellow-500 hover:bg-yellow-600 text-yellow-900 rounded text-sm font-medium transition-colors'
-                  >
-                    Configurar API Key
-                  </button>
-                </div>
-              )}
-            </div>
-          </div>
-        )}
+        <button
+          onClick={() => setShowSettings(true)}
+          className='p-2 text-gray-400 hover:text-gray-600 rounded-md hover:bg-gray-100'
+        >
+          <Settings className='h-5 w-5' />
+        </button>
       </div>
 
-      {/* Chat Messages */}
+      {/* Estado de IA */}
+      <div className='px-4 py-3 bg-gray-50 border-b border-gray-200'>
+        <div className='flex items-center justify-between'>
+          <div className='flex items-center'>
+            <Brain className='h-4 w-4 text-purple-600 mr-2' />
+            <span className='text-xs text-gray-600'>Estado de la IA</span>
+          </div>
+          <div className='flex space-x-2'>
+            <span
+              className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                systemInfo.ollama
+                  ? 'bg-green-100 text-green-800'
+                  : 'bg-gray-100 text-gray-800'
+              }`}
+            >
+              Ollama: {systemInfo.ollama ? '✓' : '✗'}
+            </span>
+            <span
+              className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                systemInfo.hasToken
+                  ? 'bg-green-100 text-green-800'
+                  : 'bg-yellow-100 text-yellow-800'
+              }`}
+            >
+              HF: {systemInfo.hasToken ? '✓' : '✗'}
+            </span>
+          </div>
+        </div>
+      </div>
+
+      {/* Mensajes */}
       <div className='flex-1 overflow-y-auto p-4 space-y-4'>
         {messages.length === 0 ? (
-          <div className='text-center text-dark-text-muted py-8'>
-            <Bot
-              size={48}
-              className='mx-auto mb-4 text-course-blue opacity-50'
-            />
-            <h3 className='text-lg font-semibold text-dark-text-secondary mb-2'>
-              Asistente IA del Curso
-            </h3>
-            <p className='text-sm max-w-md mx-auto'>
-              Haz preguntas sobre los materiales, notas y contenido de{' '}
-              {course?.name}. El asistente solo responderá basándose en la
-              información del curso.
+          <div className='text-center text-gray-500 py-8'>
+            <Bot className='h-12 w-12 mx-auto mb-4 text-gray-300' />
+            <p className='text-sm'>
+              ¡Hola! Soy tu asistente de IA para este curso.
             </p>
-            {getAvailableMaterialsCount() === 0 && (
-              <p className='text-sm text-yellow-400 mt-3'>
-                💡 Sube algunos archivos al curso para obtener mejores
-                respuestas
-              </p>
-            )}
+            <p className='text-xs mt-1'>
+              Puedo ayudarte con preguntas sobre el curso, analizar archivos y
+              más.
+            </p>
           </div>
         ) : (
           messages.map(message => (
             <div
               key={message.id}
-              className={`flex gap-3 ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
+              className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
             >
-              {message.role === 'assistant' && (
-                <div className='w-8 h-8 rounded-full bg-course-blue flex items-center justify-center flex-shrink-0'>
-                  <Bot size={16} className='text-white' />
-                </div>
-              )}
               <div
-                className={`max-w-[70%] rounded-lg p-3 ${
+                className={`max-w-xs lg:max-w-md px-4 py-2 rounded-lg ${
                   message.role === 'user'
-                    ? 'bg-course-blue text-white'
-                    : 'bg-dark-bg-secondary text-dark-text-primary border border-dark-border'
+                    ? 'bg-blue-600 text-white'
+                    : 'bg-gray-100 text-gray-900'
                 }`}
               >
-                <div className='whitespace-pre-wrap text-sm leading-relaxed'>
-                  {message.content}
-                </div>
-                <div className='text-xs opacity-70 mt-2'>
+                {message.files && message.files.length > 0 && (
+                  <div className='mb-2'>
+                    <p className='text-xs opacity-75'>
+                      Archivos referenciados:
+                    </p>
+                    <div className='flex flex-wrap gap-1'>
+                      {message.files.map(fileId => {
+                        const file = courseFiles.find(f => f.id === fileId)
+                        return file ? (
+                          <span
+                            key={fileId}
+                            className='text-xs bg-white bg-opacity-20 px-2 py-1 rounded'
+                          >
+                            {file.name}
+                          </span>
+                        ) : null
+                      })}
+                    </div>
+                  </div>
+                )}
+                <p className='text-sm whitespace-pre-wrap'>{message.content}</p>
+                <p className='text-xs opacity-75 mt-1'>
                   {message.timestamp.toLocaleTimeString()}
-                </div>
+                </p>
               </div>
-              {message.role === 'user' && (
-                <div className='w-8 h-8 rounded-full bg-dark-bg-tertiary flex items-center justify-center flex-shrink-0'>
-                  <FileText size={16} className='text-dark-text-secondary' />
-                </div>
-              )}
             </div>
           ))
         )}
 
         {isLoading && (
-          <div className='flex gap-3 justify-start'>
-            <div className='w-8 h-8 rounded-full bg-course-blue flex items-center justify-center flex-shrink-0'>
-              <Bot size={16} className='text-white' />
-            </div>
-            <div className='bg-dark-bg-secondary border border-dark-border rounded-lg p-3'>
-              <div className='flex items-center gap-2 text-dark-text-secondary'>
-                <div className='w-2 h-2 bg-current rounded-full animate-bounce'></div>
-                <div
-                  className='w-2 h-2 bg-current rounded-full animate-bounce'
-                  style={{ animationDelay: '0.1s' }}
-                ></div>
-                <div
-                  className='w-2 h-2 bg-current rounded-full animate-bounce'
-                  style={{ animationDelay: '0.2s' }}
-                ></div>
-                <span className='text-sm ml-2'>Pensando...</span>
+          <div className='flex justify-start'>
+            <div className='bg-gray-100 text-gray-900 max-w-xs lg:max-w-md px-4 py-2 rounded-lg'>
+              <div className='flex items-center space-x-2'>
+                <div className='animate-spin rounded-full h-4 w-4 border-b-2 border-purple-600'></div>
+                <span className='text-sm'>Pensando...</span>
               </div>
             </div>
           </div>
@@ -395,34 +372,179 @@ export function CourseAIAssistant({ courseId }: CourseAIAssistantProps) {
         <div ref={messagesEndRef} />
       </div>
 
+      {/* Selector de archivos */}
+      {showFileSelector && (
+        <div className='px-4 py-3 bg-gray-50 border-t border-gray-200'>
+          <div className='flex items-center justify-between mb-2'>
+            <span className='text-sm font-medium text-gray-700'>
+              Archivos seleccionados:
+            </span>
+            <button
+              onClick={() => setShowFileSelector(false)}
+              className='text-gray-400 hover:text-gray-600'
+            >
+              <X className='h-4 w-4' />
+            </button>
+          </div>
+          <div className='space-y-2 max-h-32 overflow-y-auto'>
+            {courseFiles.map(file => (
+              <label
+                key={file.id}
+                className='flex items-center space-x-2 cursor-pointer'
+              >
+                <input
+                  type='checkbox'
+                  checked={selectedFiles.includes(file.id)}
+                  onChange={() => handleFileSelection(file.id)}
+                  className='rounded border-gray-300 text-purple-600 focus:ring-purple-500'
+                />
+                <span className='text-sm text-gray-700'>{file.name}</span>
+              </label>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* Input */}
-      <div className='p-4 border-t border-dark-border bg-dark-bg-secondary'>
-        <div className='flex gap-3'>
-          <textarea
-            ref={inputRef}
+      <div className='p-4 border-t border-gray-200'>
+        <div className='flex space-x-2'>
+          <button
+            onClick={() => setShowFileSelector(!showFileSelector)}
+            className='p-2 text-gray-400 hover:text-gray-600 rounded-md hover:bg-gray-100'
+            title='Seleccionar archivos'
+          >
+            <FileText className='h-5 w-5' />
+          </button>
+          <input
+            type='text'
             value={inputValue}
             onChange={e => setInputValue(e.target.value)}
-            onKeyDown={handleKeyPress}
-            placeholder={`Pregunta sobre ${course?.name}...`}
-            className='flex-1 resize-none rounded-lg border border-dark-border bg-dark-bg-primary text-dark-text-primary placeholder-dark-text-muted focus:ring-2 focus:ring-course-blue focus:border-transparent px-4 py-3 min-h-[44px] max-h-32'
+            onKeyPress={e => e.key === 'Enter' && handleSendMessage()}
+            placeholder='Haz una pregunta sobre el curso...'
+            className='flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent'
             disabled={isLoading}
           />
           <button
             onClick={handleSendMessage}
-            disabled={!inputValue.trim() || isLoading}
-            className='flex items-center justify-center w-12 h-12 rounded-lg bg-course-blue hover:bg-course-blue-dark disabled:opacity-50 disabled:cursor-not-allowed text-white transition-colors'
+            disabled={
+              isLoading || (!inputValue.trim() && selectedFiles.length === 0)
+            }
+            className='p-2 bg-purple-600 text-white rounded-md hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed'
           >
-            <Send size={18} />
+            <Send className='h-5 w-5' />
           </button>
         </div>
 
-        {getAvailableMaterialsCount() > 0 && (
-          <p className='text-xs text-dark-text-muted mt-2'>
-            Usando {getAvailableMaterialsCount()} archivos y{' '}
-            {getAvailableNotesCount()} notas como contexto
-          </p>
+        {selectedFiles.length > 0 && (
+          <div className='mt-2 flex flex-wrap gap-1'>
+            {selectedFiles.map(fileId => {
+              const file = courseFiles.find(f => f.id === fileId)
+              return file ? (
+                <span
+                  key={fileId}
+                  className='inline-flex items-center px-2 py-1 text-xs bg-purple-100 text-purple-800 rounded-full'
+                >
+                  {file.name}
+                  <button
+                    onClick={() => handleFileSelection(fileId)}
+                    className='ml-1 text-purple-600 hover:text-purple-800'
+                  >
+                    <X className='h-3 w-3' />
+                  </button>
+                </span>
+              ) : null
+            })}
+          </div>
         )}
       </div>
+
+      {/* Modal de configuración */}
+      {showSettings && (
+        <div className='fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50'>
+          <div className='relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white'>
+            <div className='mt-3'>
+              <h3 className='text-lg font-medium text-gray-900 mb-4 flex items-center'>
+                <Brain className='h-5 w-5 text-purple-600 mr-2' />
+                Configurar IA
+              </h3>
+
+              <div className='space-y-4'>
+                {/* Ollama */}
+                <div className='p-3 bg-gray-50 rounded-lg'>
+                  <h4 className='text-sm font-medium text-gray-900 mb-2'>
+                    Ollama (Local - Gratuito)
+                  </h4>
+                  <p className='text-xs text-gray-600 mb-2'>
+                    Instala Ollama en tu computadora para usar IA local
+                    gratuita.
+                  </p>
+                  <a
+                    href='https://ollama.ai'
+                    target='_blank'
+                    rel='noopener noreferrer'
+                    className='text-xs text-blue-600 hover:text-blue-500'
+                  >
+                    Descargar Ollama →
+                  </a>
+                </div>
+
+                {/* Hugging Face */}
+                <div className='p-3 bg-blue-50 rounded-lg'>
+                  <h4 className='text-sm font-medium text-gray-900 mb-2'>
+                    Hugging Face (API Gratuita)
+                  </h4>
+                  <p className='text-xs text-gray-600 mb-2'>
+                    Obtén un token gratuito de Hugging Face para usar IA en la
+                    nube.
+                  </p>
+                  <div className='space-y-2'>
+                    <input
+                      type='text'
+                      placeholder='Token de Hugging Face'
+                      value={huggingFaceToken}
+                      onChange={e => setHuggingFaceToken(e.target.value)}
+                      className='w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500'
+                    />
+                    <a
+                      href='https://huggingface.co/settings/tokens'
+                      target='_blank'
+                      rel='noopener noreferrer'
+                      className='text-xs text-blue-600 hover:text-blue-500 block'
+                    >
+                      Obtener Token →
+                    </a>
+                  </div>
+                </div>
+              </div>
+
+              <div className='flex space-x-3 pt-4'>
+                <button
+                  onClick={handleSaveHuggingFaceToken}
+                  disabled={!huggingFaceToken.trim()}
+                  className='flex-1 bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed'
+                >
+                  Guardar Token
+                </button>
+                <button
+                  onClick={() => setShowSettings(false)}
+                  className='flex-1 bg-gray-600 hover:bg-gray-700 text-white font-medium py-2 px-4 rounded-md transition-colors'
+                >
+                  Cancelar
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Input de archivo oculto */}
+      <input
+        ref={fileInputRef}
+        type='file'
+        className='hidden'
+        onChange={handleFileUpload}
+        accept='.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.jpg,.jpeg,.png,.gif'
+      />
     </div>
   )
 }

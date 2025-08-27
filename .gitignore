@@ -99,3 +99,5 @@ workbox-*.js
 
 # Supabase
 .supabase/
+
+.vercel

@@ -1,463 +1,474 @@
 import React, { useState } from 'react';
-import { Plus, Edit3, Trash2, Calculator, TrendingUp, Award } from 'lucide-react';
+import { Plus, Edit3, Trash2, TrendingUp, Target, Award } from 'lucide-react';
 import { useAppStore } from '../../../lib/store';
-
-interface Grade {
-  id: string;
-  name: string;
-  type: 'exam' | 'quiz' | 'project' | 'homework' | 'participation' | 'other';
-  weight: number; // Porcentaje del total
-  score: number; // Nota obtenida
-  maxScore: number; // Nota máxima posible
-  date: Date;
-  notes?: string;
-  courseId: string;
-}
 
 interface GradesSectionProps {
   courseId: string;
 }
 
-export function GradesSection({ courseId }: GradesSectionProps) {
+interface Grade {
+  id: string;
+  name: string;
+  score: number;
+  maxScore: number;
+  weight: number;
+  type: string;
+  date: Date;
+}
+
+export const GradesSection: React.FC<GradesSectionProps> = ({ courseId }) => {
+  const { grades, addCourseGrade, updateCourseGrade, deleteCourseGrade } = useAppStore();
   const [showAddModal, setShowAddModal] = useState(false);
   const [editingGrade, setEditingGrade] = useState<Grade | null>(null);
-  const [newGrade, setNewGrade] = useState({
+  const [formData, setFormData] = useState({
     name: '',
-    type: 'exam' as Grade['type'],
-    weight: 0,
-    score: 0,
-    maxScore: 100,
-    notes: ''
+    score: '',
+    maxScore: '',
+    weight: '',
+    type: 'tarea'
   });
 
-  // Obtener datos del curso desde el store
-  const course = useAppStore(state => state.courses.find(c => c.id === courseId));
-  const grades = useAppStore(state => state.grades[courseId] || []);
+  const courseGrades = grades[courseId] || [];
 
-  // Calcular estadísticas
+  // Calcular estadísticas del curso
   const calculateStats = () => {
-    if (grades.length === 0) return null;
+    if (courseGrades.length === 0) {
+      return {
+        totalWeight: 0,
+        currentWeight: 0,
+        average: 0,
+        percentage: 0,
+        remainingWeight: 100,
+        projectedGrade: 0,
+        letterGrade: 'N/A'
+      };
+    }
 
-    const totalWeight = grades.reduce((sum, grade) => sum + grade.weight, 0);
-    const weightedSum = grades.reduce((sum, grade) => {
+    const totalWeight = courseGrades.reduce((sum, grade) => sum + grade.weight, 0);
+    const currentWeight = courseGrades.reduce((sum, grade) => sum + grade.weight, 0);
+    const weightedSum = courseGrades.reduce((sum, grade) => {
       const percentage = (grade.score / grade.maxScore) * 100;
       return sum + (percentage * grade.weight);
     }, 0);
+    
+    const average = weightedSum / totalWeight;
+    const percentage = (weightedSum / totalWeight);
+    const remainingWeight = Math.max(0, 100 - totalWeight);
+    
+    // Calcular nota proyectada si hay peso restante
+    let projectedGrade = average;
+    if (remainingWeight > 0) {
+      // Asumir que las evaluaciones restantes tendrán la misma nota promedio
+      projectedGrade = average;
+    }
 
-    const average = totalWeight > 0 ? weightedSum / totalWeight : 0;
-    const totalScore = grades.reduce((sum, grade) => sum + grade.score, 0);
-    const totalMaxScore = grades.reduce((sum, grade) => sum + grade.maxScore, 0);
-    const simpleAverage = totalMaxScore > 0 ? (totalScore / totalMaxScore) * 100 : 0;
+    // Convertir a letra
+    const letterGrade = getLetterGrade(projectedGrade);
 
     return {
-      weightedAverage: average,
-      simpleAverage,
       totalWeight,
-      totalGrades: grades.length,
-      highestGrade: Math.max(...grades.map(g => (g.score / g.maxScore) * 100)),
-      lowestGrade: Math.min(...grades.map(g => (g.score / g.maxScore) * 100))
+      currentWeight,
+      average: Math.round(average * 100) / 100,
+      percentage: Math.round(percentage * 100) / 100,
+      remainingWeight,
+      projectedGrade: Math.round(projectedGrade * 100) / 100,
+      letterGrade
     };
+  };
+
+  const getLetterGrade = (percentage: number): string => {
+    if (percentage >= 93) return 'A';
+    if (percentage >= 90) return 'A-';
+    if (percentage >= 87) return 'B+';
+    if (percentage >= 83) return 'B';
+    if (percentage >= 80) return 'B-';
+    if (percentage >= 77) return 'C+';
+    if (percentage >= 73) return 'C';
+    if (percentage >= 70) return 'C-';
+    if (percentage >= 67) return 'D+';
+    if (percentage >= 63) return 'D';
+    if (percentage >= 60) return 'D-';
+    return 'F';
+  };
+
+  const getGradeColor = (percentage: number): string => {
+    if (percentage >= 90) return 'text-green-600';
+    if (percentage >= 80) return 'text-blue-600';
+    if (percentage >= 70) return 'text-yellow-600';
+    if (percentage >= 60) return 'text-orange-600';
+    return 'text-red-600';
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!formData.name.trim() || !formData.score || !formData.maxScore) {
+      return;
+    }
+
+    const gradeData = {
+      name: formData.name.trim(),
+      score: parseFloat(formData.score),
+      maxScore: parseFloat(formData.maxScore),
+      weight: parseFloat(formData.weight) || 100,
+      type: formData.type as 'exam' | 'quiz' | 'project' | 'homework' | 'participation' | 'other',
+      date: new Date()
+    };
+
+    try {
+      if (editingGrade) {
+        await updateCourseGrade(courseId, editingGrade.id, gradeData);
+        setEditingGrade(null);
+      } else {
+        await addCourseGrade(courseId, gradeData);
+      }
+      
+      setFormData({ name: '', score: '', maxScore: '', weight: '', type: 'tarea' });
+      setShowAddModal(false);
+    } catch (error) {
+      console.error('Error saving grade:', error);
+    }
+  };
+
+  const handleEdit = (grade: Grade) => {
+    setEditingGrade(grade);
+    setFormData({
+      name: grade.name,
+      score: grade.score.toString(),
+      maxScore: grade.maxScore.toString(),
+      weight: grade.weight.toString(),
+      type: grade.type
+    });
+    setShowAddModal(true);
+  };
+
+  const handleDelete = async (gradeId: string) => {
+    if (confirm('¿Estás seguro de que quieres eliminar esta nota?')) {
+      try {
+        await deleteCourseGrade(courseId, gradeId);
+      } catch (error) {
+        console.error('Error deleting grade:', error);
+      }
+    }
   };
 
   const stats = calculateStats();
 
-  const handleAddGrade = async () => {
-    if (!newGrade.name.trim() || newGrade.weight <= 0) return;
-
-    await useAppStore.getState().addCourseGrade(courseId, {
-      name: newGrade.name,
-      type: newGrade.type,
-      weight: newGrade.weight,
-      score: newGrade.score,
-      maxScore: newGrade.maxScore,
-      notes: newGrade.notes
-    });
-
-    setNewGrade({
-      name: '',
-      type: 'exam',
-      weight: 0,
-      score: 0,
-      maxScore: 100,
-      notes: ''
-    });
-    setShowAddModal(false);
-  };
-
-  const handleEditGrade = async () => {
-    if (!editingGrade || !newGrade.name.trim() || newGrade.weight <= 0) return;
-
-    await useAppStore.getState().updateCourseGrade(courseId, editingGrade.id, {
-      name: newGrade.name,
-      type: newGrade.type,
-      weight: newGrade.weight,
-      score: newGrade.score,
-      maxScore: newGrade.maxScore,
-      notes: newGrade.notes
-    });
-
-    setEditingGrade(null);
-    setNewGrade({
-      name: '',
-      type: 'exam',
-      weight: 0,
-      score: 0,
-      maxScore: 100,
-      notes: ''
-    });
-  };
-
-  const handleDeleteGrade = async (gradeId: string) => {
-    await useAppStore.getState().deleteCourseGrade(courseId, gradeId);
-  };
-
-  const startEdit = (grade: Grade) => {
-    setEditingGrade(grade);
-    setNewGrade({
-      name: grade.name,
-      type: grade.type,
-      weight: grade.weight,
-      score: grade.score,
-      maxScore: grade.maxScore,
-      notes: grade.notes || ''
-    });
-  };
-
-  const getGradeTypeIcon = (type: Grade['type']) => {
-    switch (type) {
-      case 'exam': return '📝';
-      case 'quiz': return '❓';
-      case 'project': return '📊';
-      case 'homework': return '📚';
-      case 'participation': return '👥';
-      case 'other': return '📋';
-      default: return '📄';
-    }
-  };
-
-  const getGradeTypeLabel = (type: Grade['type']) => {
-    switch (type) {
-      case 'exam': return 'Examen';
-      case 'quiz': return 'Quiz';
-      case 'project': return 'Proyecto';
-      case 'homework': return 'Tarea';
-      case 'participation': return 'Participación';
-      case 'other': return 'Otro';
-      default: return 'Otro';
-    }
-  };
-
-  const getGradeColor = (percentage: number) => {
-    if (percentage >= 90) return 'text-success';
-    if (percentage >= 80) return 'text-info';
-    if (percentage >= 70) return 'text-warning';
-    return 'text-danger';
-  };
-
-  const getGradeLetter = (percentage: number) => {
-    if (percentage >= 90) return 'A';
-    if (percentage >= 80) return 'B';
-    if (percentage >= 70) return 'C';
-    if (percentage >= 60) return 'D';
-    return 'F';
-  };
-
   return (
-    <div className="h-full flex flex-col bg-dark-bg-primary">
-      {/* Header */}
-      <div className="p-4 border-b border-dark-border bg-dark-bg-secondary">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <Calculator size={24} className="text-course-blue" />
-            <div>
-              <h2 className="text-xl font-semibold text-dark-text-primary">
-                Sistema de Notas - {course?.name}
-              </h2>
-              <p className="text-sm text-dark-text-muted">
-                {grades.length} evaluaciones registradas
+    <div className="space-y-6">
+      {/* Header y estadísticas */}
+      <div className="flex items-center justify-between">
+        <h3 className="text-lg font-semibold text-gray-900">Notas del Curso</h3>
+        <button
+          onClick={() => setShowAddModal(true)}
+          className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+        >
+          <Plus className="w-4 h-4 mr-2" />
+          Agregar Nota
+        </button>
+      </div>
+
+      {/* Tarjetas de estadísticas */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="bg-white p-4 rounded-lg shadow border">
+          <div className="flex items-center">
+            <div className="p-2 bg-blue-100 rounded-lg">
+              <TrendingUp className="h-6 w-6 text-blue-600" />
+            </div>
+            <div className="ml-3">
+              <p className="text-sm font-medium text-gray-500">Promedio Actual</p>
+              <p className={`text-2xl font-bold ${getGradeColor(stats.average)}`}>
+                {stats.average}%
               </p>
             </div>
           </div>
-          <button
-            onClick={() => setShowAddModal(true)}
-            className="btn-primary flex items-center gap-2"
-          >
-            <Plus size={16} />
-            Agregar Evaluación
-          </button>
+        </div>
+
+        <div className="bg-white p-4 rounded-lg shadow border">
+          <div className="flex items-center">
+            <div className="p-2 bg-green-100 rounded-lg">
+              <Award className="h-6 w-6 text-green-600" />
+            </div>
+            <div className="ml-3">
+              <p className="text-sm font-medium text-gray-500">Nota Letra</p>
+              <p className={`text-2xl font-bold ${getGradeColor(stats.average)}`}>
+                {stats.letterGrade}
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-white p-4 rounded-lg shadow border">
+          <div className="flex items-center">
+            <div className="p-2 bg-yellow-100 rounded-lg">
+              <Target className="h-6 w-6 text-yellow-600" />
+            </div>
+            <div className="ml-3">
+              <p className="text-sm font-medium text-gray-500">Peso Evaluado</p>
+              <p className="text-2xl font-bold text-gray-900">
+                {stats.totalWeight}%
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-white p-4 rounded-lg shadow border">
+          <div className="flex items-center">
+            <div className="p-2 bg-purple-100 rounded-lg">
+              <Target className="h-6 w-6 text-purple-600" />
+            </div>
+            <div className="ml-3">
+              <p className="text-sm font-medium text-gray-500">Peso Restante</p>
+              <p className="text-2xl font-bold text-gray-900">
+                {stats.remainingWeight}%
+              </p>
+            </div>
+          </div>
         </div>
       </div>
 
-      {/* Stats Cards */}
-      {stats && (
-        <div className="p-4 bg-dark-bg-secondary border-b border-dark-border">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            <div className="bg-dark-bg-primary p-4 rounded-lg border border-dark-border">
-              <div className="flex items-center gap-2 mb-2">
-                <TrendingUp size={16} className="text-course-blue" />
-                <span className="text-sm text-dark-text-secondary">Promedio Ponderado</span>
-              </div>
-              <div className={`text-2xl font-bold ${getGradeColor(stats.weightedAverage)}`}>
-                {stats.weightedAverage.toFixed(1)}%
-              </div>
-              <div className="text-xs text-dark-text-muted">
-                {getGradeLetter(stats.weightedAverage)}
-              </div>
-            </div>
+      {/* Barra de progreso del peso */}
+      <div className="bg-white p-4 rounded-lg shadow border">
+        <div className="flex items-center justify-between mb-2">
+          <h4 className="text-sm font-medium text-gray-900">Progreso del Curso</h4>
+          <span className="text-sm text-gray-500">
+            {stats.totalWeight}% de 100% evaluado
+          </span>
+        </div>
+        <div className="w-full bg-gray-200 rounded-full h-2">
+          <div
+            className="bg-blue-600 h-2 rounded-full transition-all duration-300"
+            style={{ width: `${stats.totalWeight}%` }}
+          />
+        </div>
+        <p className="text-xs text-gray-500 mt-1">
+          {stats.remainingWeight > 0 
+            ? `Faltan ${stats.remainingWeight}% de evaluaciones para completar el curso`
+            : 'Curso completamente evaluado'
+          }
+        </p>
+      </div>
 
-            <div className="bg-dark-bg-primary p-4 rounded-lg border border-dark-border">
-              <div className="flex items-center gap-2 mb-2">
-                <Calculator size={16} className="text-course-blue" />
-                <span className="text-sm text-dark-text-secondary">Promedio Simple</span>
-              </div>
-              <div className={`text-2xl font-bold ${getGradeColor(stats.simpleAverage)}`}>
-                {stats.simpleAverage.toFixed(1)}%
-              </div>
-              <div className="text-xs text-dark-text-muted">
-                {getGradeLetter(stats.simpleAverage)}
-              </div>
-            </div>
-
-            <div className="bg-dark-bg-primary p-4 rounded-lg border border-dark-border">
-              <div className="flex items-center gap-2 mb-2">
-                <Award size={16} className="text-success" />
-                <span className="text-sm text-dark-text-secondary">Mejor Nota</span>
-              </div>
-              <div className="text-2xl font-bold text-success">
-                {stats.highestGrade.toFixed(1)}%
-              </div>
-              <div className="text-xs text-dark-text-muted">
-                {getGradeLetter(stats.highestGrade)}
-              </div>
-            </div>
-
-            <div className="bg-dark-bg-primary p-4 rounded-lg border border-dark-border">
-              <div className="flex items-center gap-2 mb-2">
-                <span className="text-sm text-dark-text-secondary">Peso Total</span>
-              </div>
-              <div className="text-2xl font-bold text-course-blue">
-                {stats.totalWeight}%
-              </div>
-              <div className="text-xs text-dark-text-muted">
-                {stats.totalGrades} evaluaciones
-              </div>
-            </div>
+      {/* Lista de notas */}
+      {courseGrades.length > 0 ? (
+        <div className="bg-white shadow rounded-lg">
+          <div className="px-6 py-4 border-b border-gray-200">
+            <h4 className="text-sm font-medium text-gray-900">
+              Evaluaciones ({courseGrades.length})
+            </h4>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="min-w-full divide-y divide-gray-200">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Evaluación
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Nota
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Peso
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Tipo
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Fecha
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Acciones
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200">
+                {courseGrades.map((grade) => {
+                  const percentage = (grade.score / grade.maxScore) * 100;
+                  return (
+                    <tr key={grade.id} className="hover:bg-gray-50">
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="text-sm font-medium text-gray-900">
+                          {grade.name}
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="flex items-center">
+                          <span className={`text-sm font-semibold ${getGradeColor(percentage)}`}>
+                            {grade.score}/{grade.maxScore}
+                          </span>
+                          <span className={`ml-2 text-xs ${getGradeColor(percentage)}`}>
+                            ({percentage.toFixed(1)}%)
+                          </span>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <span className="text-sm text-gray-900">{grade.weight}%</span>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">
+                          {grade.type}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        {new Date(grade.date).toLocaleDateString()}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                        <div className="flex space-x-2">
+                          <button
+                            onClick={() => handleEdit(grade)}
+                            className="text-blue-600 hover:text-blue-900"
+                          >
+                            <Edit3 className="h-4 w-4" />
+                          </button>
+                          <button
+                            onClick={() => handleDelete(grade.id)}
+                            className="text-red-600 hover:text-red-900"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      ) : (
+        <div className="text-center py-8">
+          <Award className="mx-auto h-12 w-12 text-gray-400" />
+          <h3 className="mt-2 text-sm font-medium text-gray-900">No hay notas</h3>
+          <p className="mt-1 text-sm text-gray-500">
+            Comienza agregando la primera evaluación del curso.
+          </p>
+          <div className="mt-6">
+            <button
+              onClick={() => setShowAddModal(true)}
+              className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+            >
+              <Plus className="w-4 h-4 mr-2" />
+              Agregar Primera Nota
+            </button>
           </div>
         </div>
       )}
 
-      {/* Grades List */}
-      <div className="flex-1 overflow-y-auto p-4">
-        {grades.length === 0 ? (
-          <div className="text-center py-8">
-            <Calculator size={48} className="mx-auto text-dark-text-muted mb-4" />
-            <h3 className="text-lg font-semibold text-dark-text-primary mb-2">
-              No hay evaluaciones registradas
-            </h3>
-            <p className="text-dark-text-muted mb-4">
-              Agrega tu primera evaluación para comenzar a ver tu progreso.
-            </p>
-            <button
-              onClick={() => setShowAddModal(true)}
-              className="btn-primary"
-            >
-              Agregar Primera Evaluación
-            </button>
-          </div>
-        ) : (
-          <div className="space-y-3">
-            {grades.map((grade) => {
-              const percentage = (grade.score / grade.maxScore) * 100;
-              return (
-                <div
-                  key={grade.id}
-                  className="bg-dark-bg-secondary border border-dark-border rounded-lg p-4"
-                >
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <span className="text-2xl">
-                        {getGradeTypeIcon(grade.type)}
-                      </span>
-                      <div>
-                        <h4 className="font-medium text-dark-text-primary">
-                          {grade.name}
-                        </h4>
-                        <div className="flex items-center gap-4 text-sm text-dark-text-muted">
-                          <span>{getGradeTypeLabel(grade.type)}</span>
-                          <span>{grade.weight}% del total</span>
-                          <span>{grade.date.toLocaleDateString()}</span>
-                        </div>
-                      </div>
-                    </div>
-                    
-                    <div className="flex items-center gap-4">
-                      <div className="text-right">
-                        <div className={`text-lg font-bold ${getGradeColor(percentage)}`}>
-                          {grade.score}/{grade.maxScore}
-                        </div>
-                        <div className="text-sm text-dark-text-muted">
-                          {percentage.toFixed(1)}% ({getGradeLetter(percentage)})
-                        </div>
-                      </div>
-                      
-                      <div className="flex gap-1">
-                        <button
-                          onClick={() => startEdit(grade)}
-                          className="p-1 text-dark-text-muted hover:text-dark-text-primary"
-                        >
-                          <Edit3 size={14} />
-                        </button>
-                        <button
-                          onClick={() => handleDeleteGrade(grade.id)}
-                          className="p-1 text-dark-text-muted hover:text-danger"
-                        >
-                          <Trash2 size={14} />
-                        </button>
-                      </div>
-                    </div>
+      {/* Modal para agregar/editar nota */}
+      {showAddModal && (
+        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+          <div className="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+            <div className="mt-3">
+              <h3 className="text-lg font-medium text-gray-900 mb-4">
+                {editingGrade ? 'Editar Nota' : 'Agregar Nueva Nota'}
+              </h3>
+              <form onSubmit={handleSubmit} className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">
+                    Nombre de la Evaluación
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.name}
+                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                    className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                    placeholder="Examen Parcial 1"
+                    required
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">
+                      Nota Obtenida
+                    </label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      value={formData.score}
+                      onChange={(e) => setFormData({ ...formData, score: e.target.value })}
+                      className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                      placeholder="85"
+                      required
+                    />
                   </div>
-                  
-                  {grade.notes && (
-                    <div className="mt-3 pt-3 border-t border-dark-border">
-                      <p className="text-sm text-dark-text-muted">
-                        {grade.notes}
-                      </p>
-                    </div>
-                  )}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">
+                      Nota Máxima
+                    </label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      value={formData.maxScore}
+                      onChange={(e) => setFormData({ ...formData, maxScore: e.target.value })}
+                      className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                      placeholder="100"
+                      required
+                    />
+                  </div>
                 </div>
-              );
-            })}
-          </div>
-        )}
-      </div>
 
-      {/* Add/Edit Modal */}
-      {(showAddModal || editingGrade) && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-dark-bg-secondary p-6 rounded-lg shadow-modal max-w-md w-full mx-4">
-            <h3 className="text-lg font-semibold text-dark-text-primary mb-4">
-              {editingGrade ? 'Editar Evaluación' : 'Agregar Evaluación'}
-            </h3>
-            
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-dark-text-secondary mb-2">
-                  Nombre de la Evaluación
-                </label>
-                <input
-                  type="text"
-                  value={newGrade.name}
-                  onChange={(e) => setNewGrade(prev => ({ ...prev, name: e.target.value }))}
-                  className="w-full bg-dark-bg-primary border border-dark-border rounded-lg px-3 py-2 text-dark-text-primary focus:outline-none focus:border-course-blue"
-                  placeholder="Ex. Examen Parcial 1"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-dark-text-secondary mb-2">
-                  Tipo de Evaluación
-                </label>
-                <select
-                  value={newGrade.type}
-                  onChange={(e) => setNewGrade(prev => ({ ...prev, type: e.target.value as Grade['type'] }))}
-                  className="w-full bg-dark-bg-primary border border-dark-border rounded-lg px-3 py-2 text-dark-text-primary focus:outline-none focus:border-course-blue"
-                >
-                  <option value="exam">Examen</option>
-                  <option value="quiz">Quiz</option>
-                  <option value="project">Proyecto</option>
-                  <option value="homework">Tarea</option>
-                  <option value="participation">Participación</option>
-                  <option value="other">Otro</option>
-                </select>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-dark-text-secondary mb-2">
-                    Peso (%)
-                  </label>
-                  <input
-                    type="number"
-                    value={newGrade.weight}
-                    onChange={(e) => setNewGrade(prev => ({ ...prev, weight: Number(e.target.value) }))}
-                    className="w-full bg-dark-bg-primary border border-dark-border rounded-lg px-3 py-2 text-dark-text-primary focus:outline-none focus:border-course-blue"
-                    min="0"
-                    max="100"
-                    step="0.1"
-                  />
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">
+                      Peso (%)
+                    </label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      max="100"
+                      value={formData.weight}
+                      onChange={(e) => setFormData({ ...formData, weight: e.target.value })}
+                      className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                      placeholder="25"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">
+                      Tipo
+                    </label>
+                    <select
+                      value={formData.type}
+                      onChange={(e) => setFormData({ ...formData, type: e.target.value })}
+                      className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                    >
+                      <option value="tarea">Tarea</option>
+                      <option value="examen">Examen</option>
+                      <option value="trabajo">Trabajo</option>
+                      <option value="quiz">Quiz</option>
+                      <option value="participación">Participación</option>
+                      <option value="proyecto">Proyecto</option>
+                    </select>
+                  </div>
                 </div>
-                <div>
-                  <label className="block text-sm font-medium text-dark-text-secondary mb-2">
-                    Nota Máxima
-                  </label>
-                  <input
-                    type="number"
-                    value={newGrade.maxScore}
-                    onChange={(e) => setNewGrade(prev => ({ ...prev, maxScore: Number(e.target.value) }))}
-                    className="w-full bg-dark-bg-primary border border-dark-border rounded-lg px-3 py-2 text-dark-text-primary focus:outline-none focus:border-course-blue"
-                    min="1"
-                  />
+
+                <div className="flex space-x-3 pt-4">
+                  <button
+                    type="submit"
+                    className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-md transition-colors"
+                  >
+                    {editingGrade ? 'Actualizar' : 'Agregar'}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowAddModal(false);
+                      setEditingGrade(null);
+                      setFormData({ name: '', score: '', maxScore: '', weight: '', type: 'tarea' });
+                    }}
+                    className="flex-1 bg-gray-600 hover:bg-gray-700 text-white font-medium py-2 px-4 rounded-md transition-colors"
+                  >
+                    Cancelar
+                  </button>
                 </div>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-dark-text-secondary mb-2">
-                  Nota Obtenida
-                </label>
-                <input
-                  type="number"
-                  value={newGrade.score}
-                  onChange={(e) => setNewGrade(prev => ({ ...prev, score: Number(e.target.value) }))}
-                  className="w-full bg-dark-bg-primary border border-dark-border rounded-lg px-3 py-2 text-dark-text-primary focus:outline-none focus:border-course-blue"
-                  min="0"
-                  max={newGrade.maxScore}
-                  step="0.1"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-dark-text-secondary mb-2">
-                  Notas (opcional)
-                </label>
-                <textarea
-                  value={newGrade.notes}
-                  onChange={(e) => setNewGrade(prev => ({ ...prev, notes: e.target.value }))}
-                  className="w-full bg-dark-bg-primary border border-dark-border rounded-lg px-3 py-2 text-dark-text-primary focus:outline-none focus:border-course-blue"
-                  rows={3}
-                  placeholder="Comentarios sobre la evaluación..."
-                />
-              </div>
-            </div>
-
-            <div className="flex gap-2 mt-6">
-              <button
-                onClick={() => {
-                  setShowAddModal(false);
-                  setEditingGrade(null);
-                  setNewGrade({
-                    name: '',
-                    type: 'exam',
-                    weight: 0,
-                    score: 0,
-                    maxScore: 100,
-                    notes: ''
-                  });
-                }}
-                className="btn-secondary flex-1"
-              >
-                Cancelar
-              </button>
-              <button
-                onClick={editingGrade ? handleEditGrade : handleAddGrade}
-                disabled={!newGrade.name.trim() || newGrade.weight <= 0}
-                className="btn-primary flex-1 disabled:opacity-50"
-              >
-                {editingGrade ? 'Guardar' : 'Agregar'}
-              </button>
+              </form>
             </div>
           </div>
         </div>
       )}
     </div>
   );
-}
+};
