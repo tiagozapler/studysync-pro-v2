@@ -1,6 +1,12 @@
 import { type ClassValue, clsx } from 'clsx';
 import { twMerge } from 'tailwind-merge';
-import { format, formatDistanceToNow, isToday, isTomorrow, isYesterday } from 'date-fns';
+import {
+  format,
+  formatDistanceToNow,
+  isToday,
+  isTomorrow,
+  isYesterday,
+} from 'date-fns';
 import { es } from 'date-fns/locale';
 
 // Función para combinar clases de Tailwind
@@ -18,10 +24,10 @@ export const dateUtils = {
     if (isToday(date)) return 'Hoy';
     if (isTomorrow(date)) return 'Mañana';
     if (isYesterday(date)) return 'Ayer';
-    
-    return formatDistanceToNow(date, { 
-      addSuffix: true, 
-      locale: es 
+
+    return formatDistanceToNow(date, {
+      addSuffix: true,
+      locale: es,
     });
   },
 
@@ -43,20 +49,20 @@ export const dateUtils = {
   daysBetween: (date1: Date, date2: Date) => {
     const diffTime = Math.abs(date2.getTime() - date1.getTime());
     return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-  }
+  },
 };
 
 // Utilidades de archivos
 export const fileUtils = {
   formatBytes: (bytes: number, decimals: number = 2) => {
     if (bytes === 0) return '0 Bytes';
-    
+
     const k = 1024;
     const dm = decimals < 0 ? 0 : decimals;
     const sizes = ['Bytes', 'KB', 'MB', 'GB'];
-    
+
     const i = Math.floor(Math.log(bytes) / Math.log(k));
-    
+
     return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
   },
 
@@ -66,8 +72,10 @@ export const fileUtils = {
     if (mimeType.includes('video')) return '🎥';
     if (mimeType.includes('audio')) return '🎵';
     if (mimeType.includes('word') || mimeType.includes('document')) return '📝';
-    if (mimeType.includes('excel') || mimeType.includes('spreadsheet')) return '📊';
-    if (mimeType.includes('powerpoint') || mimeType.includes('presentation')) return '📋';
+    if (mimeType.includes('excel') || mimeType.includes('spreadsheet'))
+      return '📊';
+    if (mimeType.includes('powerpoint') || mimeType.includes('presentation'))
+      return '📋';
     if (mimeType.includes('zip') || mimeType.includes('rar')) return '📦';
     return '📁';
   },
@@ -85,10 +93,12 @@ export const fileUtils = {
   },
 
   isTextFile: (mimeType: string) => {
-    return mimeType.startsWith('text/') || 
-           mimeType.includes('word') || 
-           mimeType.includes('document');
-  }
+    return (
+      mimeType.startsWith('text/') ||
+      mimeType.includes('word') ||
+      mimeType.includes('document')
+    );
+  },
 };
 
 // Utilidades de colores
@@ -103,38 +113,40 @@ export const colorUtils = {
     '#F97316', // Naranja
     '#06B6D4', // Cian
     '#84CC16', // Lima
-    '#F59E0B'  // Ámbar
+    '#F59E0B', // Ámbar
   ],
 
   getRandomColor: () => {
-    return colorUtils.courseColors[Math.floor(Math.random() * colorUtils.courseColors.length)];
+    return colorUtils.courseColors[
+      Math.floor(Math.random() * colorUtils.courseColors.length)
+    ];
   },
 
   getContrastColor: (hexColor: string) => {
     // Remover el # si existe
     const hex = hexColor.replace('#', '');
-    
+
     // Convertir a RGB
     const r = parseInt(hex.substr(0, 2), 16);
     const g = parseInt(hex.substr(2, 2), 16);
     const b = parseInt(hex.substr(4, 2), 16);
-    
+
     // Calcular luminancia
     const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
-    
+
     return luminance > 0.5 ? '#000000' : '#FFFFFF';
   },
 
   hexToRgba: (hex: string, alpha: number = 1) => {
     const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
     if (!result) return 'rgba(0, 0, 0, 1)';
-    
+
     const r = parseInt(result[1] || '0', 16);
     const g = parseInt(result[2] || '0', 16);
     const b = parseInt(result[3] || '0', 16);
-    
+
     return `rgba(${r}, ${g}, ${b}, ${alpha})`;
-  }
+  },
 };
 
 // Utilidades de texto
@@ -161,7 +173,7 @@ export const textUtils = {
 
   highlightText: (text: string, query: string) => {
     if (!query.trim()) return text;
-    
+
     const regex = new RegExp(`(${query})`, 'gi');
     return text.replace(regex, '<mark>$1</mark>');
   },
@@ -172,17 +184,17 @@ export const textUtils = {
       .replace(/[^\w\s]/g, '')
       .split(/\s+/)
       .filter(word => word.length > 3);
-    
+
     const frequency: Record<string, number> = {};
     words.forEach(word => {
       frequency[word] = (frequency[word] || 0) + 1;
     });
-    
+
     return Object.entries(frequency)
-      .sort(([,a], [,b]) => b - a)
+      .sort(([, a], [, b]) => b - a)
       .slice(0, maxWords)
       .map(([word]) => word);
-  }
+  },
 };
 
 // Utilidades de validación
@@ -211,7 +223,7 @@ export const validation = {
 
   sanitizeFilename: (filename: string) => {
     return filename.replace(/[^a-z0-9\.\-_]/gi, '_');
-  }
+  },
 };
 
 // Utilidades de rendimiento
@@ -221,7 +233,7 @@ export const performance = {
     wait: number
   ): ((...args: Parameters<T>) => void) => {
     let timeout: NodeJS.Timeout;
-    
+
     return (...args: Parameters<T>) => {
       clearTimeout(timeout);
       timeout = setTimeout(() => func(...args), wait);
@@ -233,15 +245,15 @@ export const performance = {
     limit: number
   ): ((...args: Parameters<T>) => void) => {
     let inThrottle: boolean;
-    
+
     return (...args: Parameters<T>) => {
       if (!inThrottle) {
         func(...args);
         inThrottle = true;
-        setTimeout(() => inThrottle = false, limit);
+        setTimeout(() => (inThrottle = false), limit);
       }
     };
-  }
+  },
 };
 
 // Utilidades de ID
@@ -251,7 +263,8 @@ export const idUtils = {
   },
 
   nanoid: (size: number = 10) => {
-    const alphabet = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz';
+    const alphabet =
+      '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz';
     let id = '';
     for (let i = 0; i < size; i++) {
       id += alphabet[Math.floor(Math.random() * alphabet.length)];
@@ -260,12 +273,15 @@ export const idUtils = {
   },
 
   uuid: () => {
-    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
-      const r = Math.random() * 16 | 0;
-      const v = c === 'x' ? r : (r & 0x3 | 0x8);
-      return v.toString(16);
-    });
-  }
+    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(
+      /[xy]/g,
+      function (c) {
+        const r = (Math.random() * 16) | 0;
+        const v = c === 'x' ? r : (r & 0x3) | 0x8;
+        return v.toString(16);
+      }
+    );
+  },
 };
 
 // Utilidades de localStorage
@@ -298,7 +314,7 @@ export const storageUtils = {
       console.error('Error removing from localStorage:', error);
       return false;
     }
-  }
+  },
 };
 
 // Utilidades de desarrollo
@@ -329,7 +345,7 @@ export const dev = {
     if (import.meta.env.DEV) {
       console.timeEnd(label);
     }
-  }
+  },
 };
 
 // Exportar todo

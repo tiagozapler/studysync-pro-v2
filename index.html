@@ -4,39 +4,51 @@
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    
+
     <!-- Título y descripción -->
     <title>StudySync Pro - Asistente Académico</title>
-    <meta name="description" content="Asistente académico profesional con IA local y almacenamiento offline. Gestiona cursos, archivos, notas y calendario académico." />
-    
+    <meta
+      name="description"
+      content="Asistente académico profesional con IA local y almacenamiento offline. Gestiona cursos, archivos, notas y calendario académico."
+    />
+
     <!-- PWA Meta tags -->
     <meta name="theme-color" content="#0B0F17" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta
+      name="apple-mobile-web-app-status-bar-style"
+      content="black-translucent"
+    />
     <meta name="apple-mobile-web-app-title" content="StudySync Pro" />
-    
+
     <!-- Manifest -->
     <link rel="manifest" href="/manifest.json" />
-    
+
     <!-- Icons for various devices -->
     <link rel="apple-touch-icon" sizes="192x192" href="/icon-192.png" />
     <link rel="icon" type="image/png" sizes="192x192" href="/icon-192.png" />
     <link rel="icon" type="image/png" sizes="512x512" href="/icon-512.png" />
-    
+
     <!-- Preload critical fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-    
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+
     <!-- SEO y Open Graph -->
     <meta property="og:title" content="StudySync Pro - Asistente Académico" />
-    <meta property="og:description" content="Gestiona tu vida académica con IA local y almacenamiento offline seguro" />
+    <meta
+      property="og:description"
+      content="Gestiona tu vida académica con IA local y almacenamiento offline seguro"
+    />
     <meta property="og:type" content="website" />
     <meta property="og:url" content="https://studysync.pro" />
-    
+
     <!-- No-index para desarrollo -->
     <meta name="robots" content="noindex, nofollow" />
-    
+
     <!-- Optimización de carga -->
     <link rel="dns-prefetch" href="https://fonts.googleapis.com" />
     <link rel="dns-prefetch" href="https://fonts.gstatic.com" />
@@ -44,19 +56,20 @@
   <body>
     <!-- Aplicación React -->
     <div id="root"></div>
-    
+
     <!-- Script principal -->
     <script type="module" src="/src/main.tsx"></script>
-    
+
     <!-- Script para registro de Service Worker -->
     <script>
       // Registrar Service Worker cuando la página carga
-      if ('serviceWorker' in navigator && import.meta.env.PROD) {
+      if ('serviceWorker' in navigator) {
         window.addEventListener('load', async () => {
           try {
-            const registration = await navigator.serviceWorker.register('/sw.js');
+            const registration =
+              await navigator.serviceWorker.register('/sw.js');
             console.log('✅ Service Worker registrado:', registration);
-            
+
             // Escuchar actualizaciones
             registration.addEventListener('updatefound', () => {
               console.log('🔄 Nueva versión de la app disponible');
@@ -66,15 +79,15 @@
           }
         });
       }
-      
+
       // Detectar instalación de PWA
       let deferredPrompt;
-      window.addEventListener('beforeinstallprompt', (e) => {
+      window.addEventListener('beforeinstallprompt', e => {
         e.preventDefault();
         deferredPrompt = e;
         console.log('📱 PWA lista para instalar');
       });
-      
+
       // Función global para instalar PWA
       window.installPWA = async () => {
         if (deferredPrompt) {
@@ -85,26 +98,31 @@
         }
       };
     </script>
-    
+
     <!-- Fallback para navegadores sin JavaScript -->
     <noscript>
-      <div style="
-        display: flex; 
-        align-items: center; 
-        justify-content: center; 
-        min-height: 100vh; 
-        background: #0B0F17; 
-        color: #F9FAFB; 
-        font-family: system-ui, -apple-system, sans-serif;
-        text-align: center;
-        padding: 2rem;
-      ">
+      <div
+        style="
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          min-height: 100vh;
+          background: #0b0f17;
+          color: #f9fafb;
+          font-family:
+            system-ui,
+            -apple-system,
+            sans-serif;
+          text-align: center;
+          padding: 2rem;
+        "
+      >
         <div>
-          <h1 style="margin-bottom: 1rem; font-size: 1.5rem;">StudySync Pro</h1>
-          <p style="margin-bottom: 1rem; opacity: 0.8;">
+          <h1 style="margin-bottom: 1rem; font-size: 1.5rem">StudySync Pro</h1>
+          <p style="margin-bottom: 1rem; opacity: 0.8">
             Esta aplicación requiere JavaScript para funcionar.
           </p>
-          <p style="font-size: 0.9rem; opacity: 0.6;">
+          <p style="font-size: 0.9rem; opacity: 0.6">
             Por favor, habilita JavaScript en tu navegador y recarga la página.
           </p>
         </div>

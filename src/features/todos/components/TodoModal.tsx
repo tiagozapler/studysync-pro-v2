@@ -19,9 +19,11 @@ export function TodoModal() {
             <X size={20} />
           </button>
         </div>
-        
+
         <div className="p-6">
-          <p className="text-dark-text-muted">Placeholder - Implementar gestión de tareas</p>
+          <p className="text-dark-text-muted">
+            Placeholder - Implementar gestión de tareas
+          </p>
         </div>
       </div>
     </div>

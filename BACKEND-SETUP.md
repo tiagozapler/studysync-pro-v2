@@ -108,14 +108,14 @@ VITE_HUGGING_FACE_TOKEN=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
 
 ```typescript
 // Los datos se guardaban solo en el navegador
-const courses = localStorage.getItem('courses')
+const courses = localStorage.getItem('courses');
 ```
 
 ### **Ahora (Con Supabase)**
 
 ```typescript
 // Los datos se guardan en la nube y se sincronizan
-const courses = await databaseService.getCourses()
+const courses = await databaseService.getCourses();
 ```
 
 ## **🚀 BENEFICIOS IMPLEMENTADOS**

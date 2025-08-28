@@ -19,9 +19,11 @@ export function EventModal() {
             <X size={20} />
           </button>
         </div>
-        
+
         <div className="p-6">
-          <p className="text-dark-text-muted">Placeholder - Implementar creación de eventos</p>
+          <p className="text-dark-text-muted">
+            Placeholder - Implementar creación de eventos
+          </p>
         </div>
       </div>
     </div>

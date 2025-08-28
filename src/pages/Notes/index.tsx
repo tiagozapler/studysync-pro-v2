@@ -13,17 +13,19 @@ export function Notes() {
     { id: 'general', label: 'General' },
     { id: 'estudio', label: 'Estudio' },
     { id: 'recordatorio', label: 'Recordatorio' },
-    { id: 'idea', label: 'Idea' }
+    { id: 'idea', label: 'Idea' },
   ];
 
   const filteredNotes = React.useMemo(() => {
     return quickNotes.filter(note => {
-      const matchesSearch = !searchQuery || 
+      const matchesSearch =
+        !searchQuery ||
         note.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
         note.content.toLowerCase().includes(searchQuery.toLowerCase());
-      
-      const matchesCategory = selectedCategory === 'all' || note.category === selectedCategory;
-      
+
+      const matchesCategory =
+        selectedCategory === 'all' || note.category === selectedCategory;
+
       return matchesSearch && matchesCategory;
     });
   }, [quickNotes, searchQuery, selectedCategory]);
@@ -60,11 +62,14 @@ export function Notes() {
       <div className="flex flex-col sm:flex-row gap-4 mb-8">
         {/* Búsqueda */}
         <div className="flex-1 relative">
-          <Search size={20} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-dark-text-muted" />
+          <Search
+            size={20}
+            className="absolute left-3 top-1/2 transform -translate-y-1/2 text-dark-text-muted"
+          />
           <input
             type="text"
             value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
+            onChange={e => setSearchQuery(e.target.value)}
             placeholder="Buscar en notas..."
             className="input pl-10"
           />
@@ -73,7 +78,7 @@ export function Notes() {
         {/* Filtro por categoría */}
         <select
           value={selectedCategory}
-          onChange={(e) => setSelectedCategory(e.target.value)}
+          onChange={e => setSelectedCategory(e.target.value)}
           className="input w-auto"
         >
           {categories.map(category => (
@@ -89,16 +94,17 @@ export function Notes() {
         <div className="empty-state">
           <div className="empty-state-icon">📝</div>
           <h3 className="empty-state-title">
-            {quickNotes.length === 0 ? 'No tienes notas aún' : 'No se encontraron notas'}
+            {quickNotes.length === 0
+              ? 'No tienes notas aún'
+              : 'No se encontraron notas'}
           </h3>
           <p className="empty-state-description">
-            {quickNotes.length === 0 
+            {quickNotes.length === 0
               ? 'Crea tu primera nota rápida para organizar tus ideas'
-              : 'Intenta con otros términos de búsqueda'
-            }
+              : 'Intenta con otros términos de búsqueda'}
           </p>
           {quickNotes.length === 0 && (
-            <button 
+            <button
               onClick={() => toggleModal('quickNoteModal')}
               className="btn btn-primary"
             >
@@ -118,20 +124,27 @@ export function Notes() {
                     {note.title}
                   </h3>
                   <div className="flex items-center space-x-2 mt-1">
-                    <span className={`px-2 py-1 text-xs rounded-sm ${{
-                      general: 'bg-dark-bg-tertiary text-dark-text-muted',
-                      estudio: 'bg-course-blue/20 text-course-blue',
-                      recordatorio: 'bg-course-yellow/20 text-course-yellow',
-                      idea: 'bg-course-purple/20 text-course-purple'
-                    }[note.category]}`}>
+                    <span
+                      className={`px-2 py-1 text-xs rounded-sm ${
+                        {
+                          general: 'bg-dark-bg-tertiary text-dark-text-muted',
+                          estudio: 'bg-course-blue/20 text-course-blue',
+                          recordatorio:
+                            'bg-course-yellow/20 text-course-yellow',
+                          idea: 'bg-course-purple/20 text-course-purple',
+                        }[note.category]
+                      }`}
+                    >
                       {categories.find(c => c.id === note.category)?.label}
                     </span>
                   </div>
                 </div>
-                
+
                 <div className="flex items-center space-x-1 ml-2">
                   <button
-                    onClick={() => {/* TODO: Implementar edición */}}
+                    onClick={() => {
+                      /* TODO: Implementar edición */
+                    }}
                     className="p-1 text-dark-text-muted hover:text-dark-text-primary"
                   >
                     <Edit size={16} />
@@ -179,7 +192,8 @@ export function Notes() {
       {quickNotes.length > 0 && (
         <div className="mt-8 pt-8 border-t border-dark-border">
           <div className="text-center text-sm text-dark-text-muted">
-            Total de notas: {quickNotes.length} • Mostrando: {filteredNotes.length}
+            Total de notas: {quickNotes.length} • Mostrando:{' '}
+            {filteredNotes.length}
           </div>
         </div>
       )}

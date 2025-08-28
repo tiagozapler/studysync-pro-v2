@@ -1,6 +1,6 @@
-import { create } from 'zustand'
-import { subscribeWithSelector } from 'zustand/middleware'
-import { persist } from 'zustand/middleware'
+import { create } from 'zustand';
+import { subscribeWithSelector } from 'zustand/middleware';
+import { persist } from 'zustand/middleware';
 import {
   db,
   initDatabase,
@@ -10,245 +10,260 @@ import {
   type Event,
   type Todo,
   type QuickNote,
-} from '../db/database'
+} from '../db/database';
 import {
   storage,
   type AppSettings,
   type UserPreferences,
-} from '../storage/localStorage'
-import { idUtils } from '../utils'
+} from '../storage/localStorage';
+import { idUtils } from '../utils';
+import { supabase } from '../supabase/config';
+import { env } from '../config/env';
 
 // Tipos para el estado global
 interface AppState {
   // Estado de la aplicación
-  isLoading: boolean
-  isInitialized: boolean
-  currentView: string
-  currentCourse: Course | null
+  isLoading: boolean;
+  isInitialized: boolean;
+  currentView: string;
+  currentCourse: Course | null;
 
   // Datos principales
-  courses: Course[]
-  files: Record<string, FileRecord[]> // Por courseId
-  notes: Record<string, Note[]> // Por courseId
-  events: Event[]
-  todos: Record<string, Todo[]> // Por courseId
-  quickNotes: QuickNote[]
-  grades: Record<string, any[]> // Por courseId
-  courseEvents: Record<string, any[]> // Por courseId
+  courses: Course[];
+  files: Record<string, FileRecord[]>; // Por courseId
+  notes: Record<string, Note[]>; // Por courseId
+  events: Event[];
+  todos: Record<string, Todo[]>; // Por courseId
+  quickNotes: QuickNote[];
+  grades: Record<string, any[]>; // Por courseId
+  courseEvents: Record<string, any[]>; // Por courseId
 
   // Configuración
-  settings: AppSettings
-  preferences: UserPreferences
+  settings: AppSettings;
+  preferences: UserPreferences;
 
   // UI
   modals: {
-    courseModal: boolean
-    fileModal: boolean
-    noteModal: boolean
-    eventModal: boolean
-    todoModal: boolean
-    quickNoteModal: boolean
-    settingsModal: boolean
-    commandPalette: boolean
-    onboarding: boolean
-  }
+    courseModal: boolean;
+    fileModal: boolean;
+    noteModal: boolean;
+    eventModal: boolean;
+    todoModal: boolean;
+    quickNoteModal: boolean;
+    settingsModal: boolean;
+    commandPalette: boolean;
+    onboarding: boolean;
+  };
 
   // Búsqueda
-  searchQuery: string
-  searchResults: any[]
+  searchQuery: string;
+  searchResults: any[];
 
   // Focus mode
   focusMode: {
-    active: boolean
-    currentTodo: Todo | null
-    pomodoroTime: number
-    pomodoroActive: boolean
-    sessions: number
-  }
+    active: boolean;
+    currentTodo: Todo | null;
+    pomodoroTime: number;
+    pomodoroActive: boolean;
+    sessions: number;
+  };
 }
 
 // Acciones del store
 interface AppActions {
   // Inicialización
-  initialize: () => Promise<void>
-  initializeRobust: () => Promise<void>
+  initialize: () => Promise<void>;
+  initializeRobust: () => Promise<void>;
+
+  // Verificar Supabase
+  checkSupabaseConnection: () => Promise<boolean>;
+
+  // Cambiar base de datos
+  switchToSupabase: () => Promise<void>;
+  switchToIndexedDB: () => Promise<void>;
 
   // Cursos
   addCourse: (
     courseData: Omit<Course, 'id' | 'createdAt' | 'updatedAt'>
-  ) => Promise<void>
-  updateCourse: (id: string, updates: Partial<Course>) => Promise<void>
-  deleteCourse: (id: string) => Promise<void>
-  archiveCourse: (id: string) => Promise<void>
-  setCurrentCourse: (course: Course | null) => void
+  ) => Promise<void>;
+  updateCourse: (id: string, updates: Partial<Course>) => Promise<void>;
+  deleteCourse: (id: string) => Promise<void>;
+  archiveCourse: (id: string) => Promise<void>;
+  setCurrentCourse: (course: Course | null) => void;
 
   // Archivos
-  addFile: (courseId: string, file: File, tags: string[]) => Promise<void>
-  deleteFile: (courseId: string, fileId: string) => Promise<void>
+  addFile: (courseId: string, file: File, tags: string[]) => Promise<void>;
+  deleteFile: (courseId: string, fileId: string) => Promise<void>;
   updateFileTags: (
     courseId: string,
     fileId: string,
     tags: string[]
-  ) => Promise<void>
+  ) => Promise<void>;
 
   // Materiales del curso
   addCourseMaterial: (
     courseId: string,
     material: {
-      name: string
-      type: 'file' | 'folder'
-      size?: number
-      tags: string[]
-      parentId?: string
-      fileUrl?: string
-      mimeType?: string
+      name: string;
+      type: 'file' | 'folder';
+      size?: number;
+      tags: string[];
+      parentId?: string;
+      fileUrl?: string;
+      mimeType?: string;
     }
-  ) => Promise<void>
+  ) => Promise<void>;
   updateCourseMaterial: (
     courseId: string,
     materialId: string,
     updates: {
-      name?: string
-      tags?: string[]
-      parentId?: string
+      name?: string;
+      tags?: string[];
+      parentId?: string;
     }
-  ) => Promise<void>
-  deleteCourseMaterial: (courseId: string, materialId: string) => Promise<void>
+  ) => Promise<void>;
+  deleteCourseMaterial: (courseId: string, materialId: string) => Promise<void>;
   moveCourseMaterial: (
     courseId: string,
     materialId: string,
     newParentId?: string
-  ) => Promise<void>
+  ) => Promise<void>;
 
   // Notas del curso
   addCourseGrade: (
     courseId: string,
     grade: {
-      name: string
-      type: 'exam' | 'quiz' | 'project' | 'homework' | 'participation' | 'other'
-      weight: number
-      score: number
-      maxScore: number
-      notes?: string
+      name: string;
+      type:
+        | 'exam'
+        | 'quiz'
+        | 'project'
+        | 'homework'
+        | 'participation'
+        | 'other';
+      weight: number;
+      score: number;
+      maxScore: number;
+      notes?: string;
     }
-  ) => Promise<void>
+  ) => Promise<void>;
   updateCourseGrade: (
     courseId: string,
     gradeId: string,
     updates: {
-      name?: string
+      name?: string;
       type?:
         | 'exam'
         | 'quiz'
         | 'project'
         | 'homework'
         | 'participation'
-        | 'other'
-      weight?: number
-      score?: number
-      maxScore?: number
-      notes?: string
+        | 'other';
+      weight?: number;
+      score?: number;
+      maxScore?: number;
+      notes?: string;
     }
-  ) => Promise<void>
-  deleteCourseGrade: (courseId: string, gradeId: string) => Promise<void>
+  ) => Promise<void>;
+  deleteCourseGrade: (courseId: string, gradeId: string) => Promise<void>;
 
   // Eventos del calendario del curso
   addCourseEvent: (
     courseId: string,
     event: {
-      title: string
-      description?: string
-      date: Date
-      time?: string
-      location?: string
-      type: 'exam' | 'assignment' | 'class' | 'meeting' | 'other'
-      priority: 'low' | 'medium' | 'high'
-      source: 'manual' | 'auto-detected'
-      sourceFile?: string
+      title: string;
+      description?: string;
+      date: Date;
+      time?: string;
+      location?: string;
+      type: 'exam' | 'assignment' | 'class' | 'meeting' | 'other';
+      priority: 'low' | 'medium' | 'high';
+      source: 'manual' | 'auto-detected';
+      sourceFile?: string;
     }
-  ) => Promise<void>
+  ) => Promise<void>;
   updateCourseEvent: (
     courseId: string,
     eventId: string,
     updates: {
-      title?: string
-      description?: string
-      date?: Date
-      time?: string
-      location?: string
-      type?: 'exam' | 'assignment' | 'class' | 'meeting' | 'other'
-      priority?: 'low' | 'medium' | 'high'
+      title?: string;
+      description?: string;
+      date?: Date;
+      time?: string;
+      location?: string;
+      type?: 'exam' | 'assignment' | 'class' | 'meeting' | 'other';
+      priority?: 'low' | 'medium' | 'high';
     }
-  ) => Promise<void>
-  deleteCourseEvent: (courseId: string, eventId: string) => Promise<void>
+  ) => Promise<void>;
+  deleteCourseEvent: (courseId: string, eventId: string) => Promise<void>;
 
   // Notas
   addNote: (
     courseId: string,
     noteData: Omit<Note, 'id' | 'courseId' | 'createdAt' | 'updatedAt'>
-  ) => Promise<void>
+  ) => Promise<void>;
   updateNote: (
     courseId: string,
     noteId: string,
     updates: Partial<Note>
-  ) => Promise<void>
-  deleteNote: (courseId: string, noteId: string) => Promise<void>
+  ) => Promise<void>;
+  deleteNote: (courseId: string, noteId: string) => Promise<void>;
 
   // Eventos
   addEvent: (
     eventData: Omit<Event, 'id' | 'createdAt' | 'updatedAt'>
-  ) => Promise<void>
-  updateEvent: (eventId: string, updates: Partial<Event>) => Promise<void>
-  deleteEvent: (eventId: string) => Promise<void>
+  ) => Promise<void>;
+  updateEvent: (eventId: string, updates: Partial<Event>) => Promise<void>;
+  deleteEvent: (eventId: string) => Promise<void>;
 
   // Todos
   addTodo: (
     courseId: string,
     todoData: Omit<Todo, 'id' | 'courseId' | 'createdAt' | 'updatedAt'>
-  ) => Promise<void>
+  ) => Promise<void>;
   updateTodo: (
     courseId: string,
     todoId: string,
     updates: Partial<Todo>
-  ) => Promise<void>
-  deleteTodo: (courseId: string, todoId: string) => Promise<void>
-  toggleTodo: (courseId: string, todoId: string) => Promise<void>
+  ) => Promise<void>;
+  deleteTodo: (courseId: string, todoId: string) => Promise<void>;
+  toggleTodo: (courseId: string, todoId: string) => Promise<void>;
 
   // Notas rápidas
   addQuickNote: (
     noteData: Omit<QuickNote, 'id' | 'createdAt' | 'updatedAt'>
-  ) => Promise<void>
+  ) => Promise<void>;
   updateQuickNote: (
     noteId: string,
     updates: Partial<QuickNote>
-  ) => Promise<void>
-  deleteQuickNote: (noteId: string) => Promise<void>
+  ) => Promise<void>;
+  deleteQuickNote: (noteId: string) => Promise<void>;
 
   // Configuración
-  updateSettings: (updates: Partial<AppSettings>) => void
-  updatePreferences: (updates: Partial<UserPreferences>) => void
+  updateSettings: (updates: Partial<AppSettings>) => void;
+  updatePreferences: (updates: Partial<UserPreferences>) => void;
 
   // UI
-  setCurrentView: (view: string) => void
-  toggleModal: (modal: keyof AppState['modals']) => void
-  setModal: (modal: keyof AppState['modals'], open: boolean) => void
+  setCurrentView: (view: string) => void;
+  toggleModal: (modal: keyof AppState['modals']) => void;
+  setModal: (modal: keyof AppState['modals'], open: boolean) => void;
 
   // Búsqueda
-  setSearchQuery: (query: string) => void
-  performSearch: (query: string) => Promise<void>
+  setSearchQuery: (query: string) => void;
+  performSearch: (query: string) => Promise<void>;
 
   // Focus mode
-  startFocusMode: (todo?: Todo) => void
-  exitFocusMode: () => void
-  startPomodoro: () => void
-  pausePomodoro: () => void
-  resetPomodoro: () => void
+  startFocusMode: (todo?: Todo) => void;
+  exitFocusMode: () => void;
+  startPomodoro: () => void;
+  pausePomodoro: () => void;
+  resetPomodoro: () => void;
 
   // Utilidades
-  loadCourseData: (courseId: string) => Promise<void>
-  exportData: () => Promise<any>
-  importData: (data: any) => Promise<void>
-  clearAllData: () => Promise<void>
+  loadCourseData: (courseId: string) => Promise<void>;
+  exportData: () => Promise<any>;
+  importData: (data: any) => Promise<void>;
+  clearAllData: () => Promise<void>;
 }
 
 // Store principal con Zustand
@@ -300,28 +315,31 @@ export const useAppStore = create<AppState & AppActions>()(
         // Inicialización
         initialize: async () => {
           // Usar la función robusta de inicialización
-          await get().initializeRobust()
+          await get().initializeRobust();
         },
 
         // Inicialización robusta con fallback
         initializeRobust: async () => {
-          set({ isLoading: true })
+          set({ isLoading: true });
 
           try {
             // Inicializar la base de datos
-            console.log('🔄 Inicializando base de datos...')
-            await initDatabase()
+            console.log('🔄 Inicializando base de datos...');
+            await initDatabase();
 
             // Verificar si la base de datos está disponible
             if (!db.isOpen()) {
               console.warn(
                 '⚠️ Base de datos no está abierta, intentando abrir...'
-              )
+              );
               try {
-                await db.open()
-                console.log('✅ Base de datos abierta correctamente')
+                await db.open();
+                console.log('✅ Base de datos abierta correctamente');
               } catch (openError) {
-                console.warn('⚠️ No se pudo abrir la base de datos:', openError)
+                console.warn(
+                  '⚠️ No se pudo abrir la base de datos:',
+                  openError
+                );
               }
             }
 
@@ -337,7 +355,7 @@ export const useAppStore = create<AppState & AppActions>()(
               courseEvents: {},
               isInitialized: true,
               isLoading: false,
-            }
+            };
 
             // Intentar cargar datos de la base de datos
             try {
@@ -345,17 +363,17 @@ export const useAppStore = create<AppState & AppActions>()(
                 db.courses.where('archived').equals(0).toArray(),
                 db.events.toArray(),
                 db.quickNotes.toArray(),
-              ])
+              ]);
 
               // Procesar resultados exitosos
               if (courses.status === 'fulfilled') {
-                initialState.courses = courses.value
+                initialState.courses = courses.value;
               }
               if (events.status === 'fulfilled') {
-                initialState.events = events.value
+                initialState.events = events.value;
               }
               if (quickNotes.status === 'fulfilled') {
-                initialState.quickNotes = quickNotes.value
+                initialState.quickNotes = quickNotes.value;
               }
 
               // Cargar datos relacionados de cursos
@@ -366,49 +384,49 @@ export const useAppStore = create<AppState & AppActions>()(
                       db.files.where('courseId').equals(course.id).toArray(),
                       db.notes.where('courseId').equals(course.id).toArray(),
                       db.todos.where('courseId').equals(course.id).toArray(),
-                    ])
+                    ]);
 
                   if (courseFiles.status === 'fulfilled') {
-                    ;(initialState.files || {})[course.id] = courseFiles.value
+                    (initialState.files || {})[course.id] = courseFiles.value;
                   } else {
-                    ;(initialState.files || {})[course.id] = []
+                    (initialState.files || {})[course.id] = [];
                   }
 
                   if (courseNotes.status === 'fulfilled') {
-                    ;(initialState.notes || {})[course.id] = courseNotes.value
+                    (initialState.notes || {})[course.id] = courseNotes.value;
                   } else {
-                    ;(initialState.notes || {})[course.id] = []
+                    (initialState.notes || {})[course.id] = [];
                   }
 
                   if (courseTodos.status === 'fulfilled') {
-                    ;(initialState.todos || {})[course.id] = courseTodos.value
+                    (initialState.todos || {})[course.id] = courseTodos.value;
                   } else {
-                    ;(initialState.todos || {})[course.id] = []
+                    (initialState.todos || {})[course.id] = [];
                   }
                 } catch (courseError) {
                   console.warn(
                     `⚠️ Error cargando datos del curso ${course.id}:`,
                     courseError
-                  )
-                  ;(initialState.files || {})[course.id] = []
-                  ;(initialState.notes || {})[course.id] = []
-                  ;(initialState.todos || {})[course.id] = []
+                  );
+                  (initialState.files || {})[course.id] = [];
+                  (initialState.notes || {})[course.id] = [];
+                  (initialState.todos || {})[course.id] = [];
                 }
               }
 
-              console.log('✅ Datos cargados de la base de datos')
+              console.log('✅ Datos cargados de la base de datos');
             } catch (dbError) {
               console.warn(
                 '⚠️ Error cargando datos de la base de datos, usando estado vacío:',
                 dbError
-              )
+              );
             }
 
             // Establecer el estado
-            set(initialState as any)
-            console.log('✅ App state initialized successfully')
+            set(initialState as any);
+            console.log('✅ App state initialized successfully');
           } catch (error) {
-            console.error('❌ Error critical initializing app state:', error)
+            console.error('❌ Error critical initializing app state:', error);
             // Establecer estado mínimo para que la app funcione
             set({
               courses: [],
@@ -421,7 +439,7 @@ export const useAppStore = create<AppState & AppActions>()(
               courseEvents: {},
               isInitialized: true,
               isLoading: false,
-            } as Partial<AppState>)
+            } as Partial<AppState>);
           }
         },
 
@@ -433,20 +451,20 @@ export const useAppStore = create<AppState & AppActions>()(
             archived: false,
             createdAt: new Date(),
             updatedAt: new Date(),
-          }
+          };
 
-          await db.courses.add(newCourse)
+          await db.courses.add(newCourse);
 
           set(state => ({
             courses: [...state.courses, newCourse],
             files: { ...state.files, [newCourse.id]: [] },
             notes: { ...state.notes, [newCourse.id]: [] },
             todos: { ...state.todos, [newCourse.id]: [] },
-          }))
+          }));
         },
 
         updateCourse: async (id, updates) => {
-          await db.courses.update(id, { ...updates, updatedAt: new Date() })
+          await db.courses.update(id, { ...updates, updatedAt: new Date() });
 
           set(state => ({
             courses: state.courses.map(course =>
@@ -454,7 +472,7 @@ export const useAppStore = create<AppState & AppActions>()(
                 ? { ...course, ...updates, updatedAt: new Date() }
                 : course
             ),
-          }))
+          }));
         },
 
         deleteCourse: async id => {
@@ -463,18 +481,18 @@ export const useAppStore = create<AppState & AppActions>()(
             'rw',
             [db.courses, db.files, db.notes, db.events, db.todos],
             async () => {
-              await db.courses.delete(id)
-              await db.files.where('courseId').equals(id).delete()
-              await db.notes.where('courseId').equals(id).delete()
-              await db.events.where('courseId').equals(id).delete()
-              await db.todos.where('courseId').equals(id).delete()
+              await db.courses.delete(id);
+              await db.files.where('courseId').equals(id).delete();
+              await db.notes.where('courseId').equals(id).delete();
+              await db.events.where('courseId').equals(id).delete();
+              await db.todos.where('courseId').equals(id).delete();
             }
-          )
+          );
 
           set(state => {
-            const { [id]: deletedFiles, ...restFiles } = state.files
-            const { [id]: deletedNotes, ...restNotes } = state.notes
-            const { [id]: deletedTodos, ...restTodos } = state.todos
+            const { [id]: deletedFiles, ...restFiles } = state.files;
+            const { [id]: deletedNotes, ...restNotes } = state.notes;
+            const { [id]: deletedTodos, ...restTodos } = state.todos;
 
             return {
               courses: state.courses.filter(course => course.id !== id),
@@ -484,22 +502,25 @@ export const useAppStore = create<AppState & AppActions>()(
               events: state.events.filter(event => event.courseId !== id),
               currentCourse:
                 state.currentCourse?.id === id ? null : state.currentCourse,
-            }
-          })
+            };
+          });
         },
 
         archiveCourse: async id => {
-          await db.courses.update(id, { archived: true, updatedAt: new Date() })
+          await db.courses.update(id, {
+            archived: true,
+            updatedAt: new Date(),
+          });
 
           set(state => ({
             courses: state.courses.filter(course => course.id !== id),
             currentCourse:
               state.currentCourse?.id === id ? null : state.currentCourse,
-          }))
+          }));
         },
 
         setCurrentCourse: course => {
-          set({ currentCourse: course })
+          set({ currentCourse: course });
         },
 
         // Gestión de archivos
@@ -514,20 +535,20 @@ export const useAppStore = create<AppState & AppActions>()(
             blob: file,
             createdAt: new Date(),
             updatedAt: new Date(),
-          }
+          };
 
-          await db.files.add(fileRecord)
+          await db.files.add(fileRecord);
 
           set(state => ({
             files: {
               ...state.files,
               [courseId]: [...(state.files[courseId] || []), fileRecord],
             },
-          }))
+          }));
         },
 
         deleteFile: async (courseId, fileId) => {
-          await db.files.delete(fileId)
+          await db.files.delete(fileId);
 
           set(state => ({
             files: {
@@ -535,11 +556,11 @@ export const useAppStore = create<AppState & AppActions>()(
               [courseId]:
                 state.files[courseId]?.filter(file => file.id !== fileId) || [],
             },
-          }))
+          }));
         },
 
         updateFileTags: async (courseId, fileId, tags) => {
-          await db.files.update(fileId, { tags, updatedAt: new Date() })
+          await db.files.update(fileId, { tags, updatedAt: new Date() });
 
           set(state => ({
             files: {
@@ -551,7 +572,7 @@ export const useAppStore = create<AppState & AppActions>()(
                     : file
                 ) || [],
             },
-          }))
+          }));
         },
 
         // Gestión de materiales del curso
@@ -562,7 +583,7 @@ export const useAppStore = create<AppState & AppActions>()(
             courseId,
             uploadedAt: new Date(),
             updatedAt: new Date(),
-          }
+          };
 
           // TODO: Agregar a la base de datos cuando se implemente la tabla de materiales
           // await db.materials.add(newMaterial);
@@ -575,7 +596,7 @@ export const useAppStore = create<AppState & AppActions>()(
                 newMaterial as any,
               ],
             },
-          }))
+          }));
         },
 
         updateCourseMaterial: async (courseId, materialId, updates) => {
@@ -592,7 +613,7 @@ export const useAppStore = create<AppState & AppActions>()(
                     : material
                 ) || [],
             },
-          }))
+          }));
         },
 
         deleteCourseMaterial: async (courseId, materialId) => {
@@ -607,7 +628,7 @@ export const useAppStore = create<AppState & AppActions>()(
                   material => material.id !== materialId
                 ) || [],
             },
-          }))
+          }));
         },
 
         moveCourseMaterial: async (courseId, materialId, newParentId) => {
@@ -628,7 +649,7 @@ export const useAppStore = create<AppState & AppActions>()(
                     : material
                 ) || [],
             },
-          }))
+          }));
         },
 
         // Gestión de notas del curso
@@ -640,7 +661,7 @@ export const useAppStore = create<AppState & AppActions>()(
             date: new Date(),
             createdAt: new Date(),
             updatedAt: new Date(),
-          }
+          };
 
           // TODO: Agregar a la base de datos cuando se implemente la tabla de notas
           // await db.grades.add(newGrade);
@@ -650,7 +671,7 @@ export const useAppStore = create<AppState & AppActions>()(
               ...state.grades,
               [courseId]: [...(state.grades[courseId] || []), newGrade],
             },
-          }))
+          }));
         },
 
         updateCourseGrade: async (courseId, gradeId, updates) => {
@@ -667,7 +688,7 @@ export const useAppStore = create<AppState & AppActions>()(
                     : grade
                 ) || [],
             },
-          }))
+          }));
         },
 
         deleteCourseGrade: async (courseId, gradeId) => {
@@ -682,7 +703,7 @@ export const useAppStore = create<AppState & AppActions>()(
                   (grade: any) => grade.id !== gradeId
                 ) || [],
             },
-          }))
+          }));
         },
 
         // Gestión de eventos del calendario del curso
@@ -693,7 +714,7 @@ export const useAppStore = create<AppState & AppActions>()(
             courseId,
             createdAt: new Date(),
             updatedAt: new Date(),
-          }
+          };
 
           // TODO: Agregar a la base de datos cuando se implemente la tabla de eventos
           // await db.courseEvents.add(newEvent);
@@ -703,7 +724,7 @@ export const useAppStore = create<AppState & AppActions>()(
               ...state.courseEvents,
               [courseId]: [...(state.courseEvents[courseId] || []), newEvent],
             },
-          }))
+          }));
         },
 
         updateCourseEvent: async (courseId, eventId, updates) => {
@@ -720,7 +741,7 @@ export const useAppStore = create<AppState & AppActions>()(
                     : event
                 ) || [],
             },
-          }))
+          }));
         },
 
         deleteCourseEvent: async (courseId, eventId) => {
@@ -735,7 +756,7 @@ export const useAppStore = create<AppState & AppActions>()(
                   (event: any) => event.id !== eventId
                 ) || [],
             },
-          }))
+          }));
         },
 
         // Gestión de notas
@@ -746,20 +767,20 @@ export const useAppStore = create<AppState & AppActions>()(
             courseId,
             createdAt: new Date(),
             updatedAt: new Date(),
-          }
+          };
 
-          await db.notes.add(newNote)
+          await db.notes.add(newNote);
 
           set(state => ({
             notes: {
               ...state.notes,
               [courseId]: [...(state.notes[courseId] || []), newNote],
             },
-          }))
+          }));
         },
 
         updateNote: async (courseId, noteId, updates) => {
-          await db.notes.update(noteId, { ...updates, updatedAt: new Date() })
+          await db.notes.update(noteId, { ...updates, updatedAt: new Date() });
 
           set(state => ({
             notes: {
@@ -771,11 +792,11 @@ export const useAppStore = create<AppState & AppActions>()(
                     : note
                 ) || [],
             },
-          }))
+          }));
         },
 
         deleteNote: async (courseId, noteId) => {
-          await db.notes.delete(noteId)
+          await db.notes.delete(noteId);
 
           set(state => ({
             notes: {
@@ -783,7 +804,7 @@ export const useAppStore = create<AppState & AppActions>()(
               [courseId]:
                 state.notes[courseId]?.filter(note => note.id !== noteId) || [],
             },
-          }))
+          }));
         },
 
         // Gestión de eventos
@@ -793,17 +814,20 @@ export const useAppStore = create<AppState & AppActions>()(
             id: idUtils.generate(),
             createdAt: new Date(),
             updatedAt: new Date(),
-          }
+          };
 
-          await db.events.add(newEvent)
+          await db.events.add(newEvent);
 
           set(state => ({
             events: [...state.events, newEvent],
-          }))
+          }));
         },
 
         updateEvent: async (eventId, updates) => {
-          await db.events.update(eventId, { ...updates, updatedAt: new Date() })
+          await db.events.update(eventId, {
+            ...updates,
+            updatedAt: new Date(),
+          });
 
           set(state => ({
             events: state.events.map(event =>
@@ -811,15 +835,15 @@ export const useAppStore = create<AppState & AppActions>()(
                 ? { ...event, ...updates, updatedAt: new Date() }
                 : event
             ),
-          }))
+          }));
         },
 
         deleteEvent: async eventId => {
-          await db.events.delete(eventId)
+          await db.events.delete(eventId);
 
           set(state => ({
             events: state.events.filter(event => event.id !== eventId),
-          }))
+          }));
         },
 
         // Gestión de todos
@@ -830,20 +854,20 @@ export const useAppStore = create<AppState & AppActions>()(
             courseId,
             createdAt: new Date(),
             updatedAt: new Date(),
-          }
+          };
 
-          await db.todos.add(newTodo)
+          await db.todos.add(newTodo);
 
           set(state => ({
             todos: {
               ...state.todos,
               [courseId]: [...(state.todos[courseId] || []), newTodo],
             },
-          }))
+          }));
         },
 
         updateTodo: async (courseId, todoId, updates) => {
-          await db.todos.update(todoId, { ...updates, updatedAt: new Date() })
+          await db.todos.update(todoId, { ...updates, updatedAt: new Date() });
 
           set(state => ({
             todos: {
@@ -855,11 +879,11 @@ export const useAppStore = create<AppState & AppActions>()(
                     : todo
                 ) || [],
             },
-          }))
+          }));
         },
 
         deleteTodo: async (courseId, todoId) => {
-          await db.todos.delete(todoId)
+          await db.todos.delete(todoId);
 
           set(state => ({
             todos: {
@@ -867,15 +891,15 @@ export const useAppStore = create<AppState & AppActions>()(
               [courseId]:
                 state.todos[courseId]?.filter(todo => todo.id !== todoId) || [],
             },
-          }))
+          }));
         },
 
         toggleTodo: async (courseId, todoId) => {
-          const currentTodos = get().todos[courseId] || []
-          const todo = currentTodos.find(t => t.id === todoId)
+          const currentTodos = get().todos[courseId] || [];
+          const todo = currentTodos.find(t => t.id === todoId);
 
           if (todo) {
-            await get().updateTodo(courseId, todoId, { done: !todo.done })
+            await get().updateTodo(courseId, todoId, { done: !todo.done });
           }
         },
 
@@ -886,20 +910,20 @@ export const useAppStore = create<AppState & AppActions>()(
             id: idUtils.generate(),
             createdAt: new Date(),
             updatedAt: new Date(),
-          }
+          };
 
-          await db.quickNotes.add(newNote)
+          await db.quickNotes.add(newNote);
 
           set(state => ({
             quickNotes: [...state.quickNotes, newNote],
-          }))
+          }));
         },
 
         updateQuickNote: async (noteId, updates) => {
           await db.quickNotes.update(noteId, {
             ...updates,
             updatedAt: new Date(),
-          })
+          });
 
           set(state => ({
             quickNotes: state.quickNotes.map(note =>
@@ -907,33 +931,33 @@ export const useAppStore = create<AppState & AppActions>()(
                 ? { ...note, ...updates, updatedAt: new Date() }
                 : note
             ),
-          }))
+          }));
         },
 
         deleteQuickNote: async noteId => {
-          await db.quickNotes.delete(noteId)
+          await db.quickNotes.delete(noteId);
 
           set(state => ({
             quickNotes: state.quickNotes.filter(note => note.id !== noteId),
-          }))
+          }));
         },
 
         // Configuración
         updateSettings: updates => {
-          const newSettings = { ...get().settings, ...updates }
-          storage.saveSettings(updates)
-          set({ settings: newSettings })
+          const newSettings = { ...get().settings, ...updates };
+          storage.saveSettings(updates);
+          set({ settings: newSettings });
         },
 
         updatePreferences: updates => {
-          const newPreferences = { ...get().preferences, ...updates }
-          storage.savePreferences(updates)
-          set({ preferences: newPreferences })
+          const newPreferences = { ...get().preferences, ...updates };
+          storage.savePreferences(updates);
+          set({ preferences: newPreferences });
         },
 
         // UI
         setCurrentView: view => {
-          set({ currentView: view })
+          set({ currentView: view });
         },
 
         toggleModal: modal => {
@@ -942,7 +966,7 @@ export const useAppStore = create<AppState & AppActions>()(
               ...state.modals,
               [modal]: !state.modals[modal],
             },
-          }))
+          }));
         },
 
         setModal: (modal, open) => {
@@ -951,17 +975,17 @@ export const useAppStore = create<AppState & AppActions>()(
               ...state.modals,
               [modal]: open,
             },
-          }))
+          }));
         },
 
         // Búsqueda
         setSearchQuery: query => {
-          set({ searchQuery: query })
+          set({ searchQuery: query });
         },
 
         performSearch: async (_query: string) => {
           // Búsqueda global aquí - implementar con FlexSearch más tarde
-          set({ searchResults: [] })
+          set({ searchResults: [] });
         },
 
         // Focus mode
@@ -974,7 +998,7 @@ export const useAppStore = create<AppState & AppActions>()(
               pomodoroActive: false,
               sessions: 0,
             },
-          })
+          });
         },
 
         exitFocusMode: () => {
@@ -986,7 +1010,7 @@ export const useAppStore = create<AppState & AppActions>()(
               pomodoroActive: false,
               sessions: 0,
             },
-          })
+          });
         },
 
         startPomodoro: () => {
@@ -995,7 +1019,7 @@ export const useAppStore = create<AppState & AppActions>()(
               ...state.focusMode,
               pomodoroActive: true,
             },
-          }))
+          }));
         },
 
         pausePomodoro: () => {
@@ -1004,7 +1028,7 @@ export const useAppStore = create<AppState & AppActions>()(
               ...state.focusMode,
               pomodoroActive: false,
             },
-          }))
+          }));
         },
 
         resetPomodoro: () => {
@@ -1014,13 +1038,13 @@ export const useAppStore = create<AppState & AppActions>()(
               pomodoroTime: get().settings.pomodoroSettings.workTime * 60,
               pomodoroActive: false,
             },
-          }))
+          }));
         },
 
         // Utilidades
         loadCourseData: async courseId => {
           // Cargar datos específicos de un curso si no están en memoria
-          const state = get()
+          const state = get();
           if (
             !state.files[courseId] ||
             !state.notes[courseId] ||
@@ -1030,19 +1054,19 @@ export const useAppStore = create<AppState & AppActions>()(
               db.files.where('courseId').equals(courseId).toArray(),
               db.notes.where('courseId').equals(courseId).toArray(),
               db.todos.where('courseId').equals(courseId).toArray(),
-            ])
+            ]);
 
             set(state => ({
               files: { ...state.files, [courseId]: courseFiles },
               notes: { ...state.notes, [courseId]: courseNotes },
               todos: { ...state.todos, [courseId]: courseTodos },
-            }))
+            }));
           }
         },
 
         exportData: async () => {
           // Conectar IA real aquí - exportar datos para backup
-          const state = get()
+          const state = get();
           return {
             courses: state.courses,
             notes: state.notes,
@@ -1053,23 +1077,98 @@ export const useAppStore = create<AppState & AppActions>()(
             preferences: state.preferences,
             exportedAt: new Date(),
             version: '2.0',
-          }
+          };
         },
 
         importData: async data => {
           // Conectar IA real aquí - importar datos desde backup
-          if (data.courses) set({ courses: data.courses })
-          if (data.notes) set({ notes: data.notes })
-          if (data.events) set({ events: data.events })
-          if (data.todos) set({ todos: data.todos })
-          if (data.quickNotes) set({ quickNotes: data.quickNotes })
+          if (data.courses) set({ courses: data.courses });
+          if (data.notes) set({ notes: data.notes });
+          if (data.events) set({ events: data.events });
+          if (data.todos) set({ todos: data.todos });
+          if (data.quickNotes) set({ quickNotes: data.quickNotes });
           if (data.settings) {
-            storage.saveSettings(data.settings)
-            set({ settings: data.settings })
+            storage.saveSettings(data.settings);
+            set({ settings: data.settings });
           }
           if (data.preferences) {
-            storage.savePreferences(data.preferences)
-            set({ preferences: data.preferences })
+            storage.savePreferences(data.preferences);
+            set({ preferences: data.preferences });
+          }
+        },
+
+        checkSupabaseConnection: async () => {
+          try {
+            // Verificar si Supabase está configurado
+            if (!env.SUPABASE_URL || !env.SUPABASE_ANON_KEY) {
+              console.log('❌ Supabase no configurado');
+              return false;
+            }
+
+            // Verificar conexión a Supabase
+            const { data, error } = await supabase
+              .from('courses')
+              .select('count')
+              .limit(1);
+
+            if (error) {
+              console.log('❌ Error conectando a Supabase:', error);
+              return false;
+            }
+
+            console.log('✅ Conexión a Supabase exitosa');
+            return true;
+          } catch (error) {
+            console.log('❌ Error verificando Supabase:', error);
+            return false;
+          }
+        },
+
+        switchToSupabase: async () => {
+          try {
+            console.log('🔄 Cambiando a Supabase...');
+
+            // Verificar conexión a Supabase
+            const isConnected = await get().checkSupabaseConnection();
+            if (!isConnected) {
+              throw new Error('No se puede conectar a Supabase');
+            }
+
+            // Actualizar configuración
+            const newSettings = {
+              ...get().settings,
+              useSupabase: true,
+              useIndexedDB: false,
+            };
+
+            storage.saveSettings(newSettings);
+            set({ settings: newSettings });
+
+            console.log('✅ Cambiado a Supabase exitosamente');
+          } catch (error) {
+            console.error('❌ Error cambiando a Supabase:', error);
+            throw error;
+          }
+        },
+
+        switchToIndexedDB: async () => {
+          try {
+            console.log('🔄 Cambiando a IndexedDB...');
+
+            // Actualizar configuración
+            const newSettings = {
+              ...get().settings,
+              useSupabase: false,
+              useIndexedDB: true,
+            };
+
+            storage.saveSettings(newSettings);
+            set({ settings: newSettings });
+
+            console.log('✅ Cambiado a IndexedDB exitosamente');
+          } catch (error) {
+            console.error('❌ Error cambiando a IndexedDB:', error);
+            throw error;
           }
         },
 
@@ -1086,16 +1185,16 @@ export const useAppStore = create<AppState & AppActions>()(
               db.quickNotes,
             ],
             async () => {
-              await db.courses.clear()
-              await db.files.clear()
-              await db.notes.clear()
-              await db.events.clear()
-              await db.todos.clear()
-              await db.quickNotes.clear()
+              await db.courses.clear();
+              await db.files.clear();
+              await db.notes.clear();
+              await db.events.clear();
+              await db.todos.clear();
+              await db.quickNotes.clear();
             }
-          )
+          );
 
-          storage.clear()
+          storage.clear();
 
           set({
             courses: [],
@@ -1108,7 +1207,7 @@ export const useAppStore = create<AppState & AppActions>()(
             courseEvents: {},
             settings: storage.getSettings(),
             preferences: storage.getPreferences(),
-          } as any)
+          } as any);
         },
       }),
       {
@@ -1116,11 +1215,134 @@ export const useAppStore = create<AppState & AppActions>()(
       }
     )
   )
-)
+);
 
 // Hooks específicos para facilitar el uso
-export const useCurrentCourse = () => useAppStore(state => state.currentCourse)
-export const useCourses = () => useAppStore(state => state.courses)
-export const useSettings = () => useAppStore(state => state.settings)
-export const useModals = () => useAppStore(state => state.modals)
-export const useFocusMode = () => useAppStore(state => state.focusMode)
+export const useCurrentCourse = () => useAppStore(state => state.currentCourse);
+export const useCourses = () => useAppStore(state => state.courses);
+export const useSettings = () => useAppStore(state => state.settings);
+export const useModals = () => useAppStore(state => state.modals);
+export const useFocusMode = () => useAppStore(state => state.focusMode);
+
+// Exportar globalmente para debugging con verificación robusta
+if (typeof window !== 'undefined') {
+  // Función para exportar el store de manera robusta
+  const exportStoreGlobally = () => {
+    try {
+      // Verificar que useAppStore esté disponible
+      if (typeof useAppStore === 'undefined') {
+        console.warn('⚠️ useAppStore no está disponible aún, reintentando...');
+        setTimeout(exportStoreGlobally, 100);
+        return;
+      }
+
+      // Verificar que useAppStore sea una función
+      if (typeof useAppStore !== 'function') {
+        console.error('❌ useAppStore no es una función:', typeof useAppStore);
+        return;
+      }
+
+      // Verificar que getState esté disponible
+      if (typeof useAppStore.getState !== 'function') {
+        console.error(
+          '❌ useAppStore.getState no es una función:',
+          typeof useAppStore.getState
+        );
+        return;
+      }
+
+      // Exportar el store completo
+      (window as any).appStore = useAppStore;
+
+      // Exportar acciones específicas con verificación
+      (window as any).appStoreActions = {
+        addCourse: (courseData: any) => {
+          try {
+            return useAppStore.getState().addCourse(courseData);
+          } catch (error) {
+            console.error('❌ Error en addCourse:', error);
+            throw error;
+          }
+        },
+        switchToSupabase: () => {
+          try {
+            return useAppStore.getState().switchToSupabase();
+          } catch (error) {
+            console.error('❌ Error en switchToSupabase:', error);
+            throw error;
+          }
+        },
+        switchToIndexedDB: () => {
+          try {
+            return useAppStore.getState().switchToIndexedDB();
+          } catch (error) {
+            console.error('❌ Error en switchToIndexedDB:', error);
+            throw error;
+          }
+        },
+        checkSupabaseConnection: () => {
+          try {
+            return useAppStore.getState().checkSupabaseConnection();
+          } catch (error) {
+            console.error('❌ Error en checkSupabaseConnection:', error);
+            throw error;
+          }
+        },
+        getState: () => {
+          try {
+            return useAppStore.getState();
+          } catch (error) {
+            console.error('❌ Error en getState:', error);
+            throw error;
+          }
+        },
+      };
+
+      // Exportar también como store directo
+      (window as any).store = useAppStore;
+
+      // Exportar storeInstance para acceso directo
+      (window as any).storeInstance = useAppStore.getState();
+
+      console.log('✅ Store exportado globalmente de manera robusta:', {
+        appStore: !!window.appStore,
+        appStoreActions: !!window.appStoreActions,
+        store: !!window.store,
+        storeInstance: !!window.storeInstance,
+      });
+
+      // Verificar que la exportación sea exitosa
+      if (window.appStore && window.appStoreActions && window.store) {
+        console.log('🎯 Exportación del store completada exitosamente');
+
+        // Verificar que las acciones funcionen
+        try {
+          const testState = window.appStoreActions.getState();
+          console.log('✅ Acciones del store funcionando correctamente');
+          console.log('📊 Estado inicial del store:', {
+            courses: testState.courses?.length || 0,
+            isInitialized: testState.isInitialized,
+            useSupabase: testState.settings?.useSupabase,
+            useIndexedDB: testState.settings?.useIndexedDB,
+          });
+        } catch (error) {
+          console.error('❌ Error verificando acciones del store:', error);
+        }
+      } else {
+        console.error('❌ Exportación del store incompleta');
+      }
+    } catch (error) {
+      console.error('❌ Error crítico exportando store globalmente:', error);
+
+      // Reintentar después de un delay
+      setTimeout(exportStoreGlobally, 200);
+    }
+  };
+
+  // Iniciar exportación con retry automático
+  exportStoreGlobally();
+
+  // También exportar después de un delay para asegurar que funcione
+  setTimeout(exportStoreGlobally, 500);
+  setTimeout(exportStoreGlobally, 1000);
+}

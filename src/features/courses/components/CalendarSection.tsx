@@ -15,15 +15,18 @@ interface Event {
   courseId: string;
 }
 
-export const CalendarSection: React.FC<CalendarSectionProps> = ({ courseId }) => {
-  const { courseEvents, addCourseEvent, updateCourseEvent, deleteCourseEvent } = useAppStore();
+export const CalendarSection: React.FC<CalendarSectionProps> = ({
+  courseId,
+}) => {
+  const { courseEvents, addCourseEvent, updateCourseEvent, deleteCourseEvent } =
+    useAppStore();
   const [showAddModal, setShowAddModal] = useState(false);
   const [editingEvent, setEditingEvent] = useState<Event | null>(null);
   const [formData, setFormData] = useState({
     title: '',
     description: '',
     date: '',
-    type: 'clase'
+    type: 'clase',
   });
 
   const courseEventList = courseEvents[courseId] || [];
@@ -33,10 +36,13 @@ export const CalendarSection: React.FC<CalendarSectionProps> = ({ courseId }) =>
     const now = new Date();
     const currentMonth = now.getMonth();
     const currentYear = now.getFullYear();
-    
+
     return courseEventList.filter(event => {
       const eventDate = new Date(event.date);
-      return eventDate.getMonth() === currentMonth && eventDate.getFullYear() === currentYear;
+      return (
+        eventDate.getMonth() === currentMonth &&
+        eventDate.getFullYear() === currentYear
+      );
     });
   };
 
@@ -44,18 +50,20 @@ export const CalendarSection: React.FC<CalendarSectionProps> = ({ courseId }) =>
   const getNextWeekEvents = () => {
     const now = new Date();
     const nextWeek = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
-    
-    return courseEventList.filter(event => {
-      const eventDate = new Date(event.date);
-      return eventDate >= now && eventDate <= nextWeek;
-    }).sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+
+    return courseEventList
+      .filter(event => {
+        const eventDate = new Date(event.date);
+        return eventDate >= now && eventDate <= nextWeek;
+      })
+      .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
   };
 
   // Obtener eventos del día actual
   const getTodayEvents = () => {
     const today = new Date();
     const todayString = today.toDateString();
-    
+
     return courseEventList.filter(event => {
       const eventDate = new Date(event.date);
       return eventDate.toDateString() === todayString;
@@ -98,7 +106,7 @@ export const CalendarSection: React.FC<CalendarSectionProps> = ({ courseId }) =>
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!formData.title.trim() || !formData.date) {
       return;
     }
@@ -118,7 +126,7 @@ export const CalendarSection: React.FC<CalendarSectionProps> = ({ courseId }) =>
       } else {
         await addCourseEvent(courseId, eventData as any);
       }
-      
+
       setFormData({ title: '', description: '', date: '', type: 'clase' });
       setShowAddModal(false);
     } catch (error) {
@@ -132,7 +140,7 @@ export const CalendarSection: React.FC<CalendarSectionProps> = ({ courseId }) =>
       title: event.title,
       description: event.description,
       date: new Date(event.date).toISOString().split('T')[0],
-      type: event.type
+      type: event.type,
     });
     setShowAddModal(true);
   };
@@ -152,14 +160,14 @@ export const CalendarSection: React.FC<CalendarSectionProps> = ({ courseId }) =>
       weekday: 'long',
       year: 'numeric',
       month: 'long',
-      day: 'numeric'
+      day: 'numeric',
     });
   };
 
   const formatTime = (date: Date) => {
     return new Date(date).toLocaleTimeString('es-ES', {
       hour: '2-digit',
-      minute: '2-digit'
+      minute: '2-digit',
     });
   };
 
@@ -171,7 +179,9 @@ export const CalendarSection: React.FC<CalendarSectionProps> = ({ courseId }) =>
     <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <h3 className="text-lg font-semibold text-gray-900">Calendario del Curso</h3>
+        <h3 className="text-lg font-semibold text-gray-900">
+          Calendario del Curso
+        </h3>
         <button
           onClick={() => setShowAddModal(true)}
           className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
@@ -189,10 +199,15 @@ export const CalendarSection: React.FC<CalendarSectionProps> = ({ courseId }) =>
             Eventos de Hoy
           </h4>
           <div className="space-y-2">
-            {todayEvents.map((event) => (
-              <div key={event.id} className="flex items-center justify-between p-3 bg-green-50 rounded-lg border border-green-200">
+            {todayEvents.map(event => (
+              <div
+                key={event.id}
+                className="flex items-center justify-between p-3 bg-green-50 rounded-lg border border-green-200"
+              >
                 <div className="flex items-center">
-                  <span className="text-lg mr-3">{getEventTypeIcon(event.type)}</span>
+                  <span className="text-lg mr-3">
+                    {getEventTypeIcon(event.type)}
+                  </span>
                   <div>
                     <p className="font-medium text-gray-900">{event.title}</p>
                     <p className="text-sm text-gray-600">{event.description}</p>
@@ -203,7 +218,9 @@ export const CalendarSection: React.FC<CalendarSectionProps> = ({ courseId }) =>
                   </div>
                 </div>
                 <div className="flex items-center space-x-2">
-                  <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full border ${getEventTypeColor(event.type)}`}>
+                  <span
+                    className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full border ${getEventTypeColor(event.type)}`}
+                  >
                     {event.type}
                   </span>
                   <button
@@ -233,19 +250,29 @@ export const CalendarSection: React.FC<CalendarSectionProps> = ({ courseId }) =>
             Próximos Eventos (Esta Semana)
           </h4>
           <div className="space-y-2">
-            {nextWeekEvents.map((event) => {
+            {nextWeekEvents.map(event => {
               const eventDate = new Date(event.date);
-              const isToday = eventDate.toDateString() === new Date().toDateString();
-              
+              const isToday =
+                eventDate.toDateString() === new Date().toDateString();
+
               return (
-                <div key={event.id} className={`flex items-center justify-between p-3 rounded-lg border ${
-                  isToday ? 'bg-green-50 border-green-200' : 'bg-blue-50 border-blue-200'
-                }`}>
+                <div
+                  key={event.id}
+                  className={`flex items-center justify-between p-3 rounded-lg border ${
+                    isToday
+                      ? 'bg-green-50 border-green-200'
+                      : 'bg-blue-50 border-blue-200'
+                  }`}
+                >
                   <div className="flex items-center">
-                    <span className="text-lg mr-3">{getEventTypeIcon(event.type)}</span>
+                    <span className="text-lg mr-3">
+                      {getEventTypeIcon(event.type)}
+                    </span>
                     <div>
                       <p className="font-medium text-gray-900">{event.title}</p>
-                      <p className="text-sm text-gray-600">{event.description}</p>
+                      <p className="text-sm text-gray-600">
+                        {event.description}
+                      </p>
                       <div className="flex items-center text-xs text-gray-500 mt-1">
                         <Calendar className="h-3 w-3 mr-1" />
                         {formatDate(eventDate)}
@@ -259,7 +286,9 @@ export const CalendarSection: React.FC<CalendarSectionProps> = ({ courseId }) =>
                     </div>
                   </div>
                   <div className="flex items-center space-x-2">
-                    <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full border ${getEventTypeColor(event.type)}`}>
+                    <span
+                      className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full border ${getEventTypeColor(event.type)}`}
+                    >
                       {event.type}
                     </span>
                     <button
@@ -290,10 +319,15 @@ export const CalendarSection: React.FC<CalendarSectionProps> = ({ courseId }) =>
             Todos los Eventos del Mes
           </h4>
           <div className="space-y-2">
-            {currentMonthEvents.map((event) => (
-              <div key={event.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-200">
+            {currentMonthEvents.map(event => (
+              <div
+                key={event.id}
+                className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-200"
+              >
                 <div className="flex items-center">
-                  <span className="text-lg mr-3">{getEventTypeIcon(event.type)}</span>
+                  <span className="text-lg mr-3">
+                    {getEventTypeIcon(event.type)}
+                  </span>
                   <div>
                     <p className="font-medium text-gray-900">{event.title}</p>
                     <p className="text-sm text-gray-600">{event.description}</p>
@@ -304,7 +338,9 @@ export const CalendarSection: React.FC<CalendarSectionProps> = ({ courseId }) =>
                   </div>
                 </div>
                 <div className="flex items-center space-x-2">
-                  <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full border ${getEventTypeColor(event.type)}`}>
+                  <span
+                    className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full border ${getEventTypeColor(event.type)}`}
+                  >
                     {event.type}
                   </span>
                   <button
@@ -330,9 +366,12 @@ export const CalendarSection: React.FC<CalendarSectionProps> = ({ courseId }) =>
       {courseEventList.length === 0 && (
         <div className="text-center py-8">
           <Calendar className="mx-auto h-12 w-12 text-gray-400" />
-          <h3 className="mt-2 text-sm font-medium text-gray-900">No hay eventos programados</h3>
+          <h3 className="mt-2 text-sm font-medium text-gray-900">
+            No hay eventos programados
+          </h3>
           <p className="mt-1 text-sm text-gray-500">
-            Los eventos se agregarán automáticamente cuando subas archivos con fechas importantes.
+            Los eventos se agregarán automáticamente cuando subas archivos con
+            fechas importantes.
           </p>
           <div className="mt-6">
             <button
@@ -362,7 +401,9 @@ export const CalendarSection: React.FC<CalendarSectionProps> = ({ courseId }) =>
                   <input
                     type="text"
                     value={formData.title}
-                    onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                    onChange={e =>
+                      setFormData({ ...formData, title: e.target.value })
+                    }
                     className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
                     placeholder="Examen Parcial 1"
                     required
@@ -375,7 +416,9 @@ export const CalendarSection: React.FC<CalendarSectionProps> = ({ courseId }) =>
                   </label>
                   <textarea
                     value={formData.description}
-                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                    onChange={e =>
+                      setFormData({ ...formData, description: e.target.value })
+                    }
                     className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
                     rows={3}
                     placeholder="Descripción del evento..."
@@ -390,7 +433,9 @@ export const CalendarSection: React.FC<CalendarSectionProps> = ({ courseId }) =>
                     <input
                       type="date"
                       value={formData.date}
-                      onChange={(e) => setFormData({ ...formData, date: e.target.value })}
+                      onChange={e =>
+                        setFormData({ ...formData, date: e.target.value })
+                      }
                       className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
                       required
                     />
@@ -401,7 +446,9 @@ export const CalendarSection: React.FC<CalendarSectionProps> = ({ courseId }) =>
                     </label>
                     <select
                       value={formData.type}
-                      onChange={(e) => setFormData({ ...formData, type: e.target.value })}
+                      onChange={e =>
+                        setFormData({ ...formData, type: e.target.value })
+                      }
                       className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
                     >
                       <option value="clase">Clase</option>
@@ -426,7 +473,12 @@ export const CalendarSection: React.FC<CalendarSectionProps> = ({ courseId }) =>
                     onClick={() => {
                       setShowAddModal(false);
                       setEditingEvent(null);
-                      setFormData({ title: '', description: '', date: '', type: 'clase' });
+                      setFormData({
+                        title: '',
+                        description: '',
+                        date: '',
+                        type: 'clase',
+                      });
                     }}
                     className="flex-1 bg-gray-600 hover:bg-gray-700 text-white font-medium py-2 px-4 rounded-md transition-colors"
                   >

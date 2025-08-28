@@ -19,11 +19,14 @@ export function Search() {
       <div className="card p-6 mb-8">
         <div className="flex gap-4">
           <div className="flex-1 relative">
-            <SearchIcon size={20} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-dark-text-muted" />
+            <SearchIcon
+              size={20}
+              className="absolute left-3 top-1/2 transform -translate-y-1/2 text-dark-text-muted"
+            />
             <input
               type="text"
               value={query}
-              onChange={(e) => setQuery(e.target.value)}
+              onChange={e => setQuery(e.target.value)}
               placeholder="Buscar en todos los cursos..."
               className="input pl-10 text-lg"
               autoFocus

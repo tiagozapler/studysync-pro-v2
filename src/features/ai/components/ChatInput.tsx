@@ -6,7 +6,10 @@ interface ChatInputProps {
   isLoading?: boolean;
 }
 
-export function ChatInput({ onSendMessage, isLoading = false }: ChatInputProps) {
+export function ChatInput({
+  onSendMessage,
+  isLoading = false,
+}: ChatInputProps) {
   const [message, setMessage] = useState('');
   const [isAttaching, setIsAttaching] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -24,7 +27,7 @@ export function ChatInput({ onSendMessage, isLoading = false }: ChatInputProps) 
     if (message.trim() && !isLoading) {
       onSendMessage(message.trim());
       setMessage('');
-      
+
       // Resetear altura del textarea
       if (textareaRef.current) {
         textareaRef.current.style.height = 'auto';
@@ -64,7 +67,7 @@ export function ChatInput({ onSendMessage, isLoading = false }: ChatInputProps) 
         <textarea
           ref={textareaRef}
           value={message}
-          onChange={(e) => setMessage(e.target.value)}
+          onChange={e => setMessage(e.target.value)}
           onKeyDown={handleKeyDown}
           placeholder="Escribe tu mensaje... (Shift + Enter para nueva línea)"
           className="w-full min-h-[44px] max-h-32 resize-none bg-dark-bg-tertiary border border-dark-border rounded-lg px-3 py-2 text-dark-text-primary placeholder-dark-text-muted focus:outline-none focus:border-course-blue transition-colors"

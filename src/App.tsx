@@ -1,108 +1,108 @@
-import React, { useEffect } from 'react'
+import React, { useEffect } from 'react';
 import {
   BrowserRouter as Router,
   Routes,
   Route,
   Navigate,
-} from 'react-router-dom'
-import { Toaster } from 'react-hot-toast'
+} from 'react-router-dom';
+import { Toaster } from 'react-hot-toast';
 
 // Stores y hooks
-import { useAppStore } from './lib/store'
+import { useAppStore } from './lib/store';
 
 // Componentes de layout
-import { Layout } from './components/Layout'
-import { LoadingScreen } from './components/LoadingScreen'
-import { ErrorBoundary } from './components/ErrorBoundary'
+import { Layout } from './components/Layout';
+import { LoadingScreen } from './components/LoadingScreen';
+import { ErrorBoundary } from './components/ErrorBoundary';
 
 // Páginas (lazy loading para mejor rendimiento)
 const Dashboard = React.lazy(() =>
   import('./pages/Dashboard').then(m => ({ default: m.Dashboard }))
-)
+);
 const Course = React.lazy(() =>
   import('./pages/Course').then(m => ({ default: m.Course }))
-)
+);
 const Calendar = React.lazy(() =>
   import('./pages/Calendar').then(m => ({ default: m.Calendar }))
-)
+);
 const Notes = React.lazy(() =>
   import('./pages/Notes').then(m => ({ default: m.Notes }))
-)
+);
 const Search = React.lazy(() =>
   import('./pages/Search').then(m => ({ default: m.Search }))
-)
+);
 const Settings = React.lazy(() =>
   import('./pages/Settings').then(m => ({ default: m.Settings }))
-)
+);
 const Help = React.lazy(() =>
   import('./pages/Help').then(m => ({ default: m.Help }))
-)
+);
 const Focus = React.lazy(() =>
   import('./pages/Focus').then(m => ({ default: m.Focus }))
-)
+);
 const Chat = React.lazy(() =>
   import('./features/ai/pages/Chat').then(m => ({ default: m.Chat }))
-)
+);
 
 // Modales globales
-import { CourseModal } from './features/courses/components/CourseModal'
-import { FileModal } from './features/files/components/FileModal'
-import { NoteModal } from './features/notes/components/NoteModal'
-import { EventModal } from './features/calendar/components/EventModal'
-import { TodoModal } from './features/todos/components/TodoModal'
-import { QuickNoteModal } from './features/notes/components/QuickNoteModal'
-import { SettingsModal } from './components/SettingsModal'
-import { CommandPalette } from './components/CommandPalette'
-import { OnboardingTour } from './components/OnboardingTour'
+import { CourseModal } from './features/courses/components/CourseModal';
+import { FileModal } from './features/files/components/FileModal';
+import { NoteModal } from './features/notes/components/NoteModal';
+import { EventModal } from './features/calendar/components/EventModal';
+import { TodoModal } from './features/todos/components/TodoModal';
+import { QuickNoteModal } from './features/notes/components/QuickNoteModal';
+import { SettingsModal } from './components/SettingsModal';
+import { CommandPalette } from './components/CommandPalette';
+import { OnboardingTour } from './components/OnboardingTour';
 
 export function App() {
   const { isLoading, isInitialized, initialize, settings, modals, focusMode } =
-    useAppStore()
+    useAppStore();
 
   // Inicializar la aplicación
   useEffect(() => {
     const initTimeout = setTimeout(() => {
-      console.warn('⚠️ Timeout de inicialización, forzando estado inicial')
+      console.warn('⚠️ Timeout de inicialización, forzando estado inicial');
       // @ts-ignore - setInitialized no existe en el store actual
-      ;(useAppStore.getState() as any).setInitialized?.(true)
-    }, 10000) // 10 segundos de timeout
+      (useAppStore.getState() as any).setInitialized?.(true);
+    }, 10000); // 10 segundos de timeout
 
     initialize().finally(() => {
-      clearTimeout(initTimeout)
-    })
+      clearTimeout(initTimeout);
+    });
 
-    return () => clearTimeout(initTimeout)
-  }, [initialize])
+    return () => clearTimeout(initTimeout);
+  }, [initialize]);
 
   // Keyboard shortcuts globales
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
       // Command Palette (Ctrl/Cmd + K)
       if ((event.ctrlKey || event.metaKey) && event.key === 'k') {
-        event.preventDefault()
-        useAppStore.getState().toggleModal('commandPalette')
-        return
+        event.preventDefault();
+        useAppStore.getState().toggleModal('commandPalette');
+        return;
       }
 
       // Navegación rápida
       if (event.ctrlKey || event.metaKey) {
         switch (event.key) {
           case '1':
-            event.preventDefault()
-            window.location.hash = '#/dashboard'
-            break
+            event.preventDefault();
+            window.location.hash = '#/dashboard';
+            break;
           case '2':
-            event.preventDefault()
-            window.location.hash = '#/calendar'
-            break
+            event.preventDefault();
+            window.location.hash = '#/calendar';
+            break;
           case '3':
-            event.preventDefault()
-            window.location.hash = '#/notes'
-            break
+            event.preventDefault();
+            window.location.hash = '#/notes';
+            break;
           case '/':
-            event.preventDefault()
-            window.location.hash = '#/search'
-            break
+            event.preventDefault();
+            window.location.hash = '#/search';
+            break;
         }
       }
 
@@ -111,96 +111,98 @@ export function App() {
         switch (event.key) {
           case ' ':
             if (event.target === document.body) {
-              event.preventDefault()
+              event.preventDefault();
               if (focusMode.pomodoroActive) {
-                useAppStore.getState().pausePomodoro()
+                useAppStore.getState().pausePomodoro();
               } else {
-                useAppStore.getState().startPomodoro()
+                useAppStore.getState().startPomodoro();
               }
             }
-            break
+            break;
           case 'Escape':
-            event.preventDefault()
-            useAppStore.getState().exitFocusMode()
-            break
+            event.preventDefault();
+            useAppStore.getState().exitFocusMode();
+            break;
           case 'n':
             if (event.target === document.body) {
-              event.preventDefault()
-              useAppStore.getState().toggleModal('quickNoteModal')
+              event.preventDefault();
+              useAppStore.getState().toggleModal('quickNoteModal');
             }
-            break
+            break;
         }
       }
 
       // Escape para cerrar modales
       if (event.key === 'Escape') {
-        const openModals = Object.entries(modals).filter(([, isOpen]) => isOpen)
+        const openModals = Object.entries(modals).filter(
+          ([, isOpen]) => isOpen
+        );
         if (openModals.length > 0) {
-          const lastModal = openModals[openModals.length - 1]?.[0]
+          const lastModal = openModals[openModals.length - 1]?.[0];
           useAppStore
             .getState()
-            .setModal(lastModal as keyof typeof modals, false)
+            .setModal(lastModal as keyof typeof modals, false);
         }
       }
-    }
+    };
 
-    window.addEventListener('keydown', handleKeyDown)
-    return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [modals, focusMode.active, focusMode.pomodoroActive])
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [modals, focusMode.active, focusMode.pomodoroActive]);
 
   // Mostrar pantalla de carga mientras se inicializa
   if (isLoading || !isInitialized) {
-    return <LoadingScreen />
+    return <LoadingScreen />;
   }
 
   return (
     <ErrorBoundary>
       <Router>
-        <div className='min-h-screen bg-dark-bg-primary text-dark-text-primary'>
+        <div className="min-h-screen bg-dark-bg-primary text-dark-text-primary">
           {/* Skip link para accesibilidad */}
-          <a href='#main-content' className='skip-link' tabIndex={0}>
+          <a href="#main-content" className="skip-link" tabIndex={0}>
             Saltar al contenido principal
           </a>
 
           {/* Layout principal */}
           <Layout>
-            <main id='main-content' tabIndex={-1}>
+            <main id="main-content" tabIndex={-1}>
               <React.Suspense fallback={<LoadingScreen />}>
                 <Routes>
                   {/* Ruta principal */}
                   <Route
-                    path='/'
-                    element={<Navigate to='/dashboard' replace />}
+                    path="/"
+                    element={<Navigate to="/dashboard" replace />}
                   />
 
                   {/* Dashboard */}
-                  <Route path='/dashboard' element={<Dashboard />} />
+                  <Route path="/dashboard" element={<Dashboard />} />
 
                   {/* Curso específico */}
-                  <Route path='/course/:courseId' element={<Course />} />
+                  <Route path="/course/:courseId" element={<Course />} />
                   <Route
-                    path='/course/:courseId/:section'
+                    path="/course/:courseId/:section"
                     element={<Course />}
                   />
 
                   {/* Páginas principales */}
-                  <Route path='/calendar' element={<Calendar />} />
-                  <Route path='/notes' element={<Notes />} />
-                  <Route path='/search' element={<Search />} />
-                  <Route path='/settings' element={<Settings />} />
-                  <Route path='/help' element={<Help />} />
+                  <Route path="/calendar" element={<Calendar />} />
+                  <Route path="/notes" element={<Notes />} />
+                  <Route path="/search" element={<Search />} />
+                  <Route path="/settings" element={<Settings />} />
+                  <Route path="/help" element={<Help />} />
 
                   {/* Focus mode */}
-                  <Route path='/focus' element={<Focus />} />
-                  <Route path='/focus/:courseId' element={<Focus />} />
+                  <Route path="/focus" element={<Focus />} />
+                  <Route path="/focus/:courseId" element={<Focus />} />
 
                   {/* Chat con IA */}
-                  <Route path='/chat' element={<Chat />} />
+                  <Route path="/chat" element={<Chat />} />
 
                   {/* 404 - Redirigir al dashboard */}
                   <Route
-                    path='*'
-                    element={<Navigate to='/dashboard' replace />}
+                    path="*"
+                    element={<Navigate to="/dashboard" replace />}
                   />
                 </Routes>
               </React.Suspense>
@@ -224,7 +226,7 @@ export function App() {
 
           {/* Toast notifications */}
           <Toaster
-            position='bottom-right'
+            position="bottom-right"
             toastOptions={{
               duration: 4000,
               className: 'toast-custom',
@@ -260,12 +262,12 @@ export function App() {
 
           {/* Indicador de modo focus */}
           {focusMode.active && (
-            <div className='fixed top-4 right-4 z-50 bg-course-blue text-white px-4 py-2 rounded-sm shadow-modal'>
-              <div className='flex items-center gap-2'>
-                <span className='animate-pulse'>🎯</span>
-                <span className='font-semibold'>Modo Focus</span>
+            <div className="fixed top-4 right-4 z-50 bg-course-blue text-white px-4 py-2 rounded-sm shadow-modal">
+              <div className="flex items-center gap-2">
+                <span className="animate-pulse">🎯</span>
+                <span className="font-semibold">Modo Focus</span>
                 {focusMode.pomodoroActive && (
-                  <span className='text-sm'>
+                  <span className="text-sm">
                     {Math.floor(focusMode.pomodoroTime / 60)}:
                     {(focusMode.pomodoroTime % 60).toString().padStart(2, '0')}
                   </span>
@@ -279,36 +281,36 @@ export function App() {
         </div>
       </Router>
     </ErrorBoundary>
-  )
+  );
 }
 
 // Componente para mostrar estado offline
 function OfflineIndicator() {
-  const [isOnline, setIsOnline] = React.useState(navigator.onLine)
+  const [isOnline, setIsOnline] = React.useState(navigator.onLine);
 
   React.useEffect(() => {
-    const handleOnline = () => setIsOnline(true)
-    const handleOffline = () => setIsOnline(false)
+    const handleOnline = () => setIsOnline(true);
+    const handleOffline = () => setIsOnline(false);
 
-    window.addEventListener('online', handleOnline)
-    window.addEventListener('offline', handleOffline)
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
 
     return () => {
-      window.removeEventListener('online', handleOnline)
-      window.removeEventListener('offline', handleOffline)
-    }
-  }, [])
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, []);
 
-  if (isOnline) return null
+  if (isOnline) return null;
 
   return (
-    <div className='fixed bottom-4 left-4 z-50 bg-warning text-dark-bg-primary px-4 py-2 rounded-sm shadow-modal'>
-      <div className='flex items-center gap-2'>
+    <div className="fixed bottom-4 left-4 z-50 bg-warning text-dark-bg-primary px-4 py-2 rounded-sm shadow-modal">
+      <div className="flex items-center gap-2">
         <span>📡</span>
-        <span className='font-semibold'>Modo Offline</span>
+        <span className="font-semibold">Modo Offline</span>
       </div>
     </div>
-  )
+  );
 }
 
-export default App
+export default App;

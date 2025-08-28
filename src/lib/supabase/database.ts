@@ -34,7 +34,9 @@ export class DatabaseService {
     }
   }
 
-  async createCourse(courseData: Omit<Course, 'id' | 'created_at' | 'updated_at'>): Promise<Course | null> {
+  async createCourse(
+    courseData: Omit<Course, 'id' | 'created_at' | 'updated_at'>
+  ): Promise<Course | null> {
     try {
       const user = authService.getCurrentUser();
       if (!user) throw new Error('Usuario no autenticado');
@@ -53,7 +55,10 @@ export class DatabaseService {
     }
   }
 
-  async updateCourse(id: string, updates: Partial<Course>): Promise<Course | null> {
+  async updateCourse(
+    id: string,
+    updates: Partial<Course>
+  ): Promise<Course | null> {
     try {
       const user = authService.getCurrentUser();
       if (!user) throw new Error('Usuario no autenticado');
@@ -114,7 +119,9 @@ export class DatabaseService {
     }
   }
 
-  async createFile(fileData: Omit<FileRecord, 'id' | 'created_at' | 'updated_at'>): Promise<FileRecord | null> {
+  async createFile(
+    fileData: Omit<FileRecord, 'id' | 'created_at' | 'updated_at'>
+  ): Promise<FileRecord | null> {
     try {
       const user = authService.getCurrentUser();
       if (!user) throw new Error('Usuario no autenticado');
@@ -173,7 +180,9 @@ export class DatabaseService {
     }
   }
 
-  async createGrade(gradeData: Omit<Grade, 'id' | 'created_at' | 'updated_at'>): Promise<Grade | null> {
+  async createGrade(
+    gradeData: Omit<Grade, 'id' | 'created_at' | 'updated_at'>
+  ): Promise<Grade | null> {
     try {
       const user = authService.getCurrentUser();
       if (!user) throw new Error('Usuario no autenticado');
@@ -192,7 +201,10 @@ export class DatabaseService {
     }
   }
 
-  async updateGrade(id: string, updates: Partial<Grade>): Promise<Grade | null> {
+  async updateGrade(
+    id: string,
+    updates: Partial<Grade>
+  ): Promise<Grade | null> {
     try {
       const user = authService.getCurrentUser();
       if (!user) throw new Error('Usuario no autenticado');
@@ -253,7 +265,9 @@ export class DatabaseService {
     }
   }
 
-  async createEvent(eventData: Omit<Event, 'id' | 'created_at' | 'updated_at'>): Promise<Event | null> {
+  async createEvent(
+    eventData: Omit<Event, 'id' | 'created_at' | 'updated_at'>
+  ): Promise<Event | null> {
     try {
       const user = authService.getCurrentUser();
       if (!user) throw new Error('Usuario no autenticado');
@@ -272,7 +286,10 @@ export class DatabaseService {
     }
   }
 
-  async updateEvent(id: string, updates: Partial<Event>): Promise<Event | null> {
+  async updateEvent(
+    id: string,
+    updates: Partial<Event>
+  ): Promise<Event | null> {
     try {
       const user = authService.getCurrentUser();
       if (!user) throw new Error('Usuario no autenticado');
@@ -333,7 +350,9 @@ export class DatabaseService {
     }
   }
 
-  async createNote(noteData: Omit<Note, 'id' | 'created_at' | 'updated_at'>): Promise<Note | null> {
+  async createNote(
+    noteData: Omit<Note, 'id' | 'created_at' | 'updated_at'>
+  ): Promise<Note | null> {
     try {
       const user = authService.getCurrentUser();
       if (!user) throw new Error('Usuario no autenticado');
@@ -402,7 +421,7 @@ export class DatabaseService {
       // Aquí podrías implementar lógica de sincronización más compleja
       // Por ahora, solo verificamos la conexión
       const { error } = await supabase.from('courses').select('count').limit(1);
-      
+
       if (error) throw error;
       return true;
     } catch (error) {

@@ -25,10 +25,12 @@ export class GroqAdapter {
       const messages: GroqMessage[] = [];
 
       // Agregar prompt del sistema
-      const systemPrompt = context?.systemPrompt || this.getDefaultSystemPrompt(context?.courseName);
+      const systemPrompt =
+        context?.systemPrompt ||
+        this.getDefaultSystemPrompt(context?.courseName);
       messages.push({
         role: 'system',
-        content: systemPrompt
+        content: systemPrompt,
       });
 
       // Agregar historial de conversación
@@ -39,14 +41,14 @@ export class GroqAdapter {
       // Agregar el mensaje actual del usuario
       messages.push({
         role: 'user',
-        content: message
+        content: message,
       });
 
       // Realizar la petición a la API de Groq
       const response = await fetch(`${this.baseUrl}/chat/completions`, {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${this.apiKey}`,
+          Authorization: `Bearer ${this.apiKey}`,
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
@@ -59,7 +61,9 @@ export class GroqAdapter {
       });
 
       if (!response.ok) {
-        throw new Error(`Error de API: ${response.status} ${response.statusText}`);
+        throw new Error(
+          `Error de API: ${response.status} ${response.statusText}`
+        );
       }
 
       if (!response.body) {
@@ -68,14 +72,15 @@ export class GroqAdapter {
 
       // Crear y retornar el stream de lectura
       return this.createStreamReader(response.body);
-
     } catch (error) {
       console.error('Error en GroqAdapter:', error);
       throw error;
     }
   }
 
-  private createStreamReader(body: ReadableStream<Uint8Array>): ReadableStream<string> {
+  private createStreamReader(
+    body: ReadableStream<Uint8Array>
+  ): ReadableStream<string> {
     const reader = body.getReader();
     const decoder = new TextDecoder();
 
@@ -94,7 +99,7 @@ export class GroqAdapter {
             for (const line of lines) {
               if (line.startsWith('data: ')) {
                 const data = line.slice(6);
-                
+
                 if (data === '[DONE]') {
                   controller.close();
                   return;
@@ -103,7 +108,7 @@ export class GroqAdapter {
                 try {
                   const parsed = JSON.parse(data);
                   const content = parsed.choices[0]?.delta?.content;
-                  
+
                   if (content) {
                     controller.enqueue(content);
                   }
@@ -121,7 +126,7 @@ export class GroqAdapter {
       },
       cancel() {
         reader.cancel();
-      }
+      },
     });
   }
 
@@ -154,7 +159,7 @@ Recuerda: Tu objetivo es facilitar el aprendizaje y ayudar al estudiante a compr
     try {
       const response = await fetch(`${this.baseUrl}/models`, {
         headers: {
-          'Authorization': `Bearer ${this.apiKey}`,
+          Authorization: `Bearer ${this.apiKey}`,
         },
       });
       return response.ok;

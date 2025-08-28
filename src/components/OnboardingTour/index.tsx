@@ -9,34 +9,39 @@ export function OnboardingTour() {
   const steps = [
     {
       title: 'Bienvenido a StudySync Pro',
-      content: 'Tu asistente académico profesional con IA local y almacenamiento offline.',
-      icon: '🎓'
+      content:
+        'Tu asistente académico profesional con IA local y almacenamiento offline.',
+      icon: '🎓',
     },
     {
       title: 'Gestiona tus cursos',
-      content: 'Agrega, organiza y personaliza tus cursos universitarios con colores únicos.',
-      icon: '📚'
+      content:
+        'Agrega, organiza y personaliza tus cursos universitarios con colores únicos.',
+      icon: '📚',
     },
     {
       title: 'Sube tus materiales',
-      content: 'PDFs, PPTs, lecturas - todo almacenado de forma segura en tu dispositivo.',
-      icon: '📁'
+      content:
+        'PDFs, PPTs, lecturas - todo almacenado de forma segura en tu dispositivo.',
+      icon: '📁',
     },
     {
       title: 'Chat con IA (opcional)',
       content: 'Haz preguntas sobre tus materiales usando IA gratuita local.',
-      icon: '🤖'
+      icon: '🤖',
     },
     {
       title: 'Controla tus notas',
-      content: 'Calcula promedios automáticamente y simula escenarios de calificaciones.',
-      icon: '📊'
+      content:
+        'Calcula promedios automáticamente y simula escenarios de calificaciones.',
+      icon: '📊',
     },
     {
       title: '¡Todo listo!',
-      content: 'Comienza a usar StudySync Pro para organizar tu vida académica.',
-      icon: '✨'
-    }
+      content:
+        'Comienza a usar StudySync Pro para organizar tu vida académica.',
+      icon: '✨',
+    },
   ];
 
   const handleComplete = () => {
@@ -110,10 +115,7 @@ export function OnboardingTour() {
               {currentStep + 1} de {steps.length}
             </span>
 
-            <button
-              onClick={handleNext}
-              className="btn btn-primary"
-            >
+            <button onClick={handleNext} className="btn btn-primary">
               {currentStep === steps.length - 1 ? 'Comenzar' : 'Siguiente'}
               <ArrowRight size={16} />
             </button>

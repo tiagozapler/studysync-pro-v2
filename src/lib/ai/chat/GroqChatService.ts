@@ -22,7 +22,8 @@ export interface ChatSession {
 export class GroqChatService {
   private adapter: GroqAdapter;
   private sessions: Map<string, ChatSession> = new Map();
-  private updateCallbacks: Map<string, Set<(message: ChatMessage) => void>> = new Map();
+  private updateCallbacks: Map<string, Set<(message: ChatMessage) => void>> =
+    new Map();
 
   constructor(apiKey: string) {
     this.adapter = new GroqAdapter(apiKey);
@@ -34,7 +35,11 @@ export class GroqChatService {
   }
 
   // Crear una nueva sesión
-  createSession(title: string, courseId?: string, courseName?: string): ChatSession {
+  createSession(
+    title: string,
+    courseId?: string,
+    courseName?: string
+  ): ChatSession {
     const session: ChatSession = {
       id: this.generateId(),
       courseId: courseId || '',
@@ -42,7 +47,7 @@ export class GroqChatService {
       title,
       messages: [],
       createdAt: new Date(),
-      updatedAt: new Date()
+      updatedAt: new Date(),
     };
 
     this.sessions.set(session.id, session);
@@ -52,8 +57,8 @@ export class GroqChatService {
 
   // Obtener todas las sesiones
   getAllSessions(): ChatSession[] {
-    return Array.from(this.sessions.values()).sort((a, b) => 
-      b.updatedAt.getTime() - a.updatedAt.getTime()
+    return Array.from(this.sessions.values()).sort(
+      (a, b) => b.updatedAt.getTime() - a.updatedAt.getTime()
     );
   }
 
@@ -63,7 +68,11 @@ export class GroqChatService {
   }
 
   // Enviar un mensaje
-  async sendMessage(sessionId: string, content: string, attachments?: string[]): Promise<ChatMessage> {
+  async sendMessage(
+    sessionId: string,
+    content: string,
+    attachments?: string[]
+  ): Promise<ChatMessage> {
     const session = this.sessions.get(sessionId);
     if (!session) {
       throw new Error(`Sesión no encontrada: ${sessionId}`);
@@ -75,7 +84,7 @@ export class GroqChatService {
       role: 'user',
       content,
       timestamp: new Date(),
-      attachments: attachments || []
+      attachments: attachments || [],
     };
 
     // Agregar mensaje del usuario a la sesión
@@ -89,7 +98,7 @@ export class GroqChatService {
       role: 'assistant',
       content: '',
       timestamp: new Date(),
-      isStreaming: true
+      isStreaming: true,
     };
 
     // Agregar mensaje de la IA a la sesión
@@ -106,13 +115,13 @@ export class GroqChatService {
         .slice(0, -2) // Excluir el mensaje actual del usuario y la respuesta de la IA
         .map(msg => ({
           role: msg.role,
-          content: msg.content
+          content: msg.content,
         }));
 
       // Obtener stream de respuesta de la IA
       const stream = await this.adapter.sendMessageStream(content, {
         history,
-        ...(session.courseName && { courseName: session.courseName })
+        ...(session.courseName && { courseName: session.courseName }),
       });
 
       // Leer el stream y actualizar el mensaje en tiempo real
@@ -122,12 +131,12 @@ export class GroqChatService {
       try {
         while (true) {
           const { done, value } = await reader.read();
-          
+
           if (done) break;
-          
+
           fullContent += value;
           aiMessage.content = fullContent;
-          
+
           // Emitir actualización en tiempo real
           this.emitUpdate(sessionId, aiMessage);
         }
@@ -144,7 +153,6 @@ export class GroqChatService {
       this.emitUpdate(sessionId, aiMessage);
 
       return aiMessage;
-
     } catch (error) {
       // En caso de error, actualizar el mensaje con el error
       aiMessage.content = `Error: ${error instanceof Error ? error.message : 'Error desconocido'}`;
@@ -152,7 +160,7 @@ export class GroqChatService {
       session.updatedAt = new Date();
       this.saveToLocalStorage();
       this.emitUpdate(sessionId, aiMessage);
-      
+
       throw error;
     }
   }
@@ -175,13 +183,16 @@ export class GroqChatService {
   }
 
   // Suscribirse a actualizaciones de una sesión
-  onUpdate(sessionId: string, callback: (message: ChatMessage) => void): () => void {
+  onUpdate(
+    sessionId: string,
+    callback: (message: ChatMessage) => void
+  ): () => void {
     if (!this.updateCallbacks.has(sessionId)) {
       this.updateCallbacks.set(sessionId, new Set());
     }
-    
+
     this.updateCallbacks.get(sessionId)!.add(callback);
-    
+
     // Retornar función para desuscribirse
     return () => {
       const callbacks = this.updateCallbacks.get(sessionId);
@@ -212,7 +223,10 @@ export class GroqChatService {
   private saveToLocalStorage(): void {
     try {
       const sessionsData = Array.from(this.sessions.values());
-      localStorage.setItem('studysync_chat_sessions', JSON.stringify(sessionsData));
+      localStorage.setItem(
+        'studysync_chat_sessions',
+        JSON.stringify(sessionsData)
+      );
     } catch (error) {
       console.error('Error guardando sesiones en localStorage:', error);
     }
@@ -225,7 +239,7 @@ export class GroqChatService {
       if (sessionsData) {
         const sessions = JSON.parse(sessionsData);
         this.sessions.clear();
-        
+
         sessions.forEach((session: any) => {
           // Convertir fechas de string a Date
           session.createdAt = new Date(session.createdAt);
@@ -233,7 +247,7 @@ export class GroqChatService {
           session.messages.forEach((msg: any) => {
             msg.timestamp = new Date(msg.timestamp);
           });
-          
+
           this.sessions.set(session.id, session);
         });
       }

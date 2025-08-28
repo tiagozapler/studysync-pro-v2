@@ -11,32 +11,35 @@ interface ErrorBoundaryProps {
   children: React.ReactNode;
 }
 
-export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundaryState> {
+export class ErrorBoundary extends React.Component<
+  ErrorBoundaryProps,
+  ErrorBoundaryState
+> {
   constructor(props: ErrorBoundaryProps) {
     super(props);
     this.state = {
       hasError: false,
       error: null,
-      errorInfo: null
+      errorInfo: null,
     };
   }
 
   static getDerivedStateFromError(error: Error): Partial<ErrorBoundaryState> {
     return {
       hasError: true,
-      error
+      error,
     };
   }
 
   componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
     this.setState({
       error,
-      errorInfo
+      errorInfo,
     });
 
     // Log del error para debugging
     console.error('🔥 Error boundary caught:', error, errorInfo);
-    
+
     // Aquí podríamos enviar el error a un servicio de logging
     // Por ahora solo lo guardamos en localStorage para debugging
     if (typeof window !== 'undefined') {
@@ -45,20 +48,25 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
           error: {
             name: error.name,
             message: error.message,
-            stack: error.stack
+            stack: error.stack,
           },
           errorInfo,
           timestamp: new Date().toISOString(),
           userAgent: navigator.userAgent,
-          url: window.location.href
+          url: window.location.href,
         };
-        
-        const existingLogs = JSON.parse(localStorage.getItem('studysync_error_logs') || '[]');
+
+        const existingLogs = JSON.parse(
+          localStorage.getItem('studysync_error_logs') || '[]'
+        );
         existingLogs.push(errorLog);
-        
+
         // Mantener solo los últimos 10 errores
         const recentLogs = existingLogs.slice(-10);
-        localStorage.setItem('studysync_error_logs', JSON.stringify(recentLogs));
+        localStorage.setItem(
+          'studysync_error_logs',
+          JSON.stringify(recentLogs)
+        );
       } catch (e) {
         console.warn('No se pudo guardar el log de error:', e);
       }
@@ -73,7 +81,7 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
     this.setState({
       hasError: false,
       error: null,
-      errorInfo: null
+      errorInfo: null,
     });
     window.location.href = '/dashboard';
   };
@@ -82,7 +90,7 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
     this.setState({
       hasError: false,
       error: null,
-      errorInfo: null
+      errorInfo: null,
     });
   };
 
@@ -107,7 +115,9 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
             {/* Información del error (solo en desarrollo) */}
             {import.meta.env.DEV && this.state.error && (
               <div className="mb-6 p-4 bg-dark-bg-secondary border border-dark-border rounded-sm text-left">
-                <h3 className="font-semibold text-danger mb-2">Error Details:</h3>
+                <h3 className="font-semibold text-danger mb-2">
+                  Error Details:
+                </h3>
                 <pre className="text-xs text-dark-text-muted overflow-auto max-h-32">
                   {this.state.error.stack}
                 </pre>
@@ -123,15 +133,12 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
                 <RefreshCw size={16} />
                 Recargar Aplicación
               </button>
-              
-              <button
-                onClick={this.handleGoHome}
-                className="btn w-full"
-              >
+
+              <button onClick={this.handleGoHome} className="btn w-full">
                 <Home size={16} />
                 Ir al Dashboard
               </button>
-              
+
               <button
                 onClick={this.handleReset}
                 className="btn btn-ghost w-full"
@@ -156,7 +163,8 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
             {/* Información de soporte */}
             <div className="mt-6 text-xs text-dark-text-muted">
               <p>
-                Si el problema persiste, puedes reportarlo con los detalles del error.
+                Si el problema persiste, puedes reportarlo con los detalles del
+                error.
                 <br />
                 Todos los datos se mantienen seguros localmente.
               </p>
@@ -174,7 +182,7 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
 export function useErrorHandler() {
   return React.useCallback((error: Error, errorInfo?: React.ErrorInfo) => {
     console.error('🔥 Error manejado por hook:', error);
-    
+
     // Lanzar el error para que sea capturado por ErrorBoundary
     throw error;
   }, []);
@@ -189,15 +197,17 @@ interface ErrorDisplayProps {
 
 export function ErrorDisplay({ error, onRetry, onDismiss }: ErrorDisplayProps) {
   const errorMessage = typeof error === 'string' ? error : error.message;
-  
+
   return (
     <div className="bg-danger/10 border border-danger rounded-sm p-4">
       <div className="flex items-start space-x-3">
         <AlertTriangle size={20} className="text-danger flex-shrink-0 mt-0.5" />
         <div className="flex-1">
           <h3 className="font-semibold text-danger mb-1">Error</h3>
-          <p className="text-sm text-dark-text-secondary mb-3">{errorMessage}</p>
-          
+          <p className="text-sm text-dark-text-secondary mb-3">
+            {errorMessage}
+          </p>
+
           <div className="flex space-x-2">
             {onRetry && (
               <button

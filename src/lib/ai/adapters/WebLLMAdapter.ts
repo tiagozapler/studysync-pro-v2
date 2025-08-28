@@ -16,7 +16,7 @@ export class WebLLMAdapter {
     try {
       // Importar WebLLM dinámicamente
       const webllm = await import('@mlc-ai/web-llm');
-      
+
       // @ts-ignore - WebLLM types may not be fully compatible
       this.model = new (webllm as any).ChatModule();
       await this.model.reload(this.modelName);
@@ -43,7 +43,9 @@ export class WebLLMAdapter {
 
     try {
       // Construir el prompt completo
-      const systemPrompt = context?.systemPrompt || this.getDefaultSystemPrompt(context?.courseName);
+      const systemPrompt =
+        context?.systemPrompt ||
+        this.getDefaultSystemPrompt(context?.courseName);
       let fullPrompt = `${systemPrompt}\n\n`;
 
       // Agregar historial
@@ -60,11 +62,10 @@ export class WebLLMAdapter {
       const response = await this.model.generate(fullPrompt, {
         max_gen_len: 1024,
         temperature: 0.7,
-        top_p: 0.9
+        top_p: 0.9,
       });
 
       return this.createStreamFromResponse(response);
-
     } catch (error) {
       console.error('Error in WebLLM generation:', error);
       return this.createFallbackStream(message, context);
@@ -80,7 +81,7 @@ export class WebLLMAdapter {
     }
   ): ReadableStream<string> {
     const courseName = context?.courseName || 'este curso';
-    
+
     // Respuestas predefinidas basadas en el contexto
     const responses = [
       `Entiendo tu pregunta sobre ${courseName}. Como asistente académico, puedo ayudarte con:`,
@@ -90,7 +91,7 @@ export class WebLLMAdapter {
       `- Generar preguntas de práctica`,
       `- Ayudar con la organización del estudio`,
       ``,
-      `¿En qué aspecto específico de ${courseName} te gustaría que te ayude?`
+      `¿En qué aspecto específico de ${courseName} te gustaría que te ayude?`,
     ];
 
     return new ReadableStream({
@@ -105,7 +106,7 @@ export class WebLLMAdapter {
             controller.close();
           }
         }, 100);
-      }
+      },
     });
   }
 
@@ -113,10 +114,10 @@ export class WebLLMAdapter {
     return new ReadableStream({
       start(controller) {
         let buffer = '';
-        
+
         const processChunk = (chunk: string) => {
           buffer += chunk;
-          
+
           // Enviar palabras completas
           const words = buffer.split(' ');
           if (words.length > 1) {
@@ -140,7 +141,7 @@ export class WebLLMAdapter {
         } else {
           controller.close();
         }
-      }
+      },
     });
   }
 
@@ -169,7 +170,7 @@ Responde de manera clara, concisa y educativa. Si no estás seguro de algo, adm�
       name: this.modelName,
       type: 'WebLLM',
       isReady: this.isReady(),
-      isFree: true
+      isFree: true,
     };
   }
 }

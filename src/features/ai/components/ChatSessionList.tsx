@@ -15,7 +15,7 @@ export function ChatSessionList({
   sessions,
   currentSession,
   onSelectSession,
-  onDeleteSession
+  onDeleteSession,
 }: ChatSessionListProps) {
   const [editingSession, setEditingSession] = useState<string | null>(null);
   const [editTitle, setEditTitle] = useState('');
@@ -47,9 +47,7 @@ export function ChatSessionList({
     return (
       <div className="flex-1 flex items-center justify-center p-4">
         <div className="text-center">
-          <p className="text-dark-text-muted text-sm">
-            No hay conversaciones
-          </p>
+          <p className="text-dark-text-muted text-sm">No hay conversaciones</p>
           <p className="text-dark-text-muted text-xs mt-1">
             Crea una nueva para comenzar
           </p>
@@ -60,11 +58,15 @@ export function ChatSessionList({
 
   return (
     <div className="flex-1 overflow-y-auto">
-      {sessions.map((session) => {
+      {sessions.map(session => {
         const isCurrent = currentSession?.id === session.id;
         const isEditing = editingSession === session.id;
         const lastMessage = session.messages[session.messages.length - 1];
-        const preview = lastMessage?.content?.slice(0, 50) + (lastMessage?.content?.length && lastMessage.content.length > 50 ? '...' : '');
+        const preview =
+          lastMessage?.content?.slice(0, 50) +
+          (lastMessage?.content?.length && lastMessage.content.length > 50
+            ? '...'
+            : '');
 
         return (
           <div
@@ -81,10 +83,10 @@ export function ChatSessionList({
                   <input
                     type="text"
                     value={editTitle}
-                    onChange={(e) => setEditTitle(e.target.value)}
+                    onChange={e => setEditTitle(e.target.value)}
                     className="flex-1 bg-dark-bg-primary border border-dark-border rounded px-2 py-1 text-sm text-dark-text-primary"
                     autoFocus
-                    onKeyDown={(e) => {
+                    onKeyDown={e => {
                       if (e.key === 'Enter') {
                         handleEditSave(session.id);
                       } else if (e.key === 'Escape') {
@@ -125,13 +127,15 @@ export function ChatSessionList({
                       </p>
                     )}
                     <p className="text-xs text-dark-text-muted mt-1">
-                      {format(session.updatedAt, 'dd/MM/yyyy HH:mm', { locale: es })}
+                      {format(session.updatedAt, 'dd/MM/yyyy HH:mm', {
+                        locale: es,
+                      })}
                     </p>
                   </div>
-                  
+
                   <div className="flex items-center gap-1 ml-2">
                     <button
-                      onClick={(e) => {
+                      onClick={e => {
                         e.stopPropagation();
                         handleEditStart(session);
                       }}
@@ -141,7 +145,7 @@ export function ChatSessionList({
                       <Edit3 size={12} />
                     </button>
                     <button
-                      onClick={(e) => handleDelete(session.id, e)}
+                      onClick={e => handleDelete(session.id, e)}
                       className="p-1 text-dark-text-muted hover:text-danger transition-colors"
                       title="Eliminar conversación"
                     >

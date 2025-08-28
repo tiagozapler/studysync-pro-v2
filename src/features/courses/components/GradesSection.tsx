@@ -17,7 +17,8 @@ interface Grade {
 }
 
 export const GradesSection: React.FC<GradesSectionProps> = ({ courseId }) => {
-  const { grades, addCourseGrade, updateCourseGrade, deleteCourseGrade } = useAppStore();
+  const { grades, addCourseGrade, updateCourseGrade, deleteCourseGrade } =
+    useAppStore();
   const [showAddModal, setShowAddModal] = useState(false);
   const [editingGrade, setEditingGrade] = useState<Grade | null>(null);
   const [formData, setFormData] = useState({
@@ -25,7 +26,7 @@ export const GradesSection: React.FC<GradesSectionProps> = ({ courseId }) => {
     score: '',
     maxScore: '',
     weight: '',
-    type: 'tarea'
+    type: 'tarea',
   });
 
   const courseGrades = grades[courseId] || [];
@@ -40,21 +41,27 @@ export const GradesSection: React.FC<GradesSectionProps> = ({ courseId }) => {
         percentage: 0,
         remainingWeight: 100,
         projectedGrade: 0,
-        letterGrade: 'N/A'
+        letterGrade: 'N/A',
       };
     }
 
-    const totalWeight = courseGrades.reduce((sum, grade) => sum + grade.weight, 0);
-    const currentWeight = courseGrades.reduce((sum, grade) => sum + grade.weight, 0);
+    const totalWeight = courseGrades.reduce(
+      (sum, grade) => sum + grade.weight,
+      0
+    );
+    const currentWeight = courseGrades.reduce(
+      (sum, grade) => sum + grade.weight,
+      0
+    );
     const weightedSum = courseGrades.reduce((sum, grade) => {
       const percentage = (grade.score / grade.maxScore) * 100;
-      return sum + (percentage * grade.weight);
+      return sum + percentage * grade.weight;
     }, 0);
-    
+
     const average = weightedSum / totalWeight;
-    const percentage = (weightedSum / totalWeight);
+    const percentage = weightedSum / totalWeight;
     const remainingWeight = Math.max(0, 100 - totalWeight);
-    
+
     // Calcular nota proyectada si hay peso restante
     let projectedGrade = average;
     if (remainingWeight > 0) {
@@ -72,7 +79,7 @@ export const GradesSection: React.FC<GradesSectionProps> = ({ courseId }) => {
       percentage: Math.round(percentage * 100) / 100,
       remainingWeight,
       projectedGrade: Math.round(projectedGrade * 100) / 100,
-      letterGrade
+      letterGrade,
     };
   };
 
@@ -101,7 +108,7 @@ export const GradesSection: React.FC<GradesSectionProps> = ({ courseId }) => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!formData.name.trim() || !formData.score || !formData.maxScore) {
       return;
     }
@@ -111,8 +118,14 @@ export const GradesSection: React.FC<GradesSectionProps> = ({ courseId }) => {
       score: parseFloat(formData.score),
       maxScore: parseFloat(formData.maxScore),
       weight: parseFloat(formData.weight) || 100,
-      type: formData.type as 'exam' | 'quiz' | 'project' | 'homework' | 'participation' | 'other',
-      date: new Date()
+      type: formData.type as
+        | 'exam'
+        | 'quiz'
+        | 'project'
+        | 'homework'
+        | 'participation'
+        | 'other',
+      date: new Date(),
     };
 
     try {
@@ -122,8 +135,14 @@ export const GradesSection: React.FC<GradesSectionProps> = ({ courseId }) => {
       } else {
         await addCourseGrade(courseId, gradeData);
       }
-      
-      setFormData({ name: '', score: '', maxScore: '', weight: '', type: 'tarea' });
+
+      setFormData({
+        name: '',
+        score: '',
+        maxScore: '',
+        weight: '',
+        type: 'tarea',
+      });
       setShowAddModal(false);
     } catch (error) {
       console.error('Error saving grade:', error);
@@ -137,7 +156,7 @@ export const GradesSection: React.FC<GradesSectionProps> = ({ courseId }) => {
       score: grade.score.toString(),
       maxScore: grade.maxScore.toString(),
       weight: grade.weight.toString(),
-      type: grade.type
+      type: grade.type,
     });
     setShowAddModal(true);
   };
@@ -176,8 +195,12 @@ export const GradesSection: React.FC<GradesSectionProps> = ({ courseId }) => {
               <TrendingUp className="h-6 w-6 text-blue-600" />
             </div>
             <div className="ml-3">
-              <p className="text-sm font-medium text-gray-500">Promedio Actual</p>
-              <p className={`text-2xl font-bold ${getGradeColor(stats.average)}`}>
+              <p className="text-sm font-medium text-gray-500">
+                Promedio Actual
+              </p>
+              <p
+                className={`text-2xl font-bold ${getGradeColor(stats.average)}`}
+              >
                 {stats.average}%
               </p>
             </div>
@@ -191,7 +214,9 @@ export const GradesSection: React.FC<GradesSectionProps> = ({ courseId }) => {
             </div>
             <div className="ml-3">
               <p className="text-sm font-medium text-gray-500">Nota Letra</p>
-              <p className={`text-2xl font-bold ${getGradeColor(stats.average)}`}>
+              <p
+                className={`text-2xl font-bold ${getGradeColor(stats.average)}`}
+              >
                 {stats.letterGrade}
               </p>
             </div>
@@ -230,7 +255,9 @@ export const GradesSection: React.FC<GradesSectionProps> = ({ courseId }) => {
       {/* Barra de progreso del peso */}
       <div className="bg-white p-4 rounded-lg shadow border">
         <div className="flex items-center justify-between mb-2">
-          <h4 className="text-sm font-medium text-gray-900">Progreso del Curso</h4>
+          <h4 className="text-sm font-medium text-gray-900">
+            Progreso del Curso
+          </h4>
           <span className="text-sm text-gray-500">
             {stats.totalWeight}% de 100% evaluado
           </span>
@@ -242,10 +269,9 @@ export const GradesSection: React.FC<GradesSectionProps> = ({ courseId }) => {
           />
         </div>
         <p className="text-xs text-gray-500 mt-1">
-          {stats.remainingWeight > 0 
+          {stats.remainingWeight > 0
             ? `Faltan ${stats.remainingWeight}% de evaluaciones para completar el curso`
-            : 'Curso completamente evaluado'
-          }
+            : 'Curso completamente evaluado'}
         </p>
       </div>
 
@@ -282,7 +308,7 @@ export const GradesSection: React.FC<GradesSectionProps> = ({ courseId }) => {
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
-                {courseGrades.map((grade) => {
+                {courseGrades.map(grade => {
                   const percentage = (grade.score / grade.maxScore) * 100;
                   return (
                     <tr key={grade.id} className="hover:bg-gray-50">
@@ -293,16 +319,22 @@ export const GradesSection: React.FC<GradesSectionProps> = ({ courseId }) => {
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex items-center">
-                          <span className={`text-sm font-semibold ${getGradeColor(percentage)}`}>
+                          <span
+                            className={`text-sm font-semibold ${getGradeColor(percentage)}`}
+                          >
                             {grade.score}/{grade.maxScore}
                           </span>
-                          <span className={`ml-2 text-xs ${getGradeColor(percentage)}`}>
+                          <span
+                            className={`ml-2 text-xs ${getGradeColor(percentage)}`}
+                          >
                             ({percentage.toFixed(1)}%)
                           </span>
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <span className="text-sm text-gray-900">{grade.weight}%</span>
+                        <span className="text-sm text-gray-900">
+                          {grade.weight}%
+                        </span>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">
@@ -338,7 +370,9 @@ export const GradesSection: React.FC<GradesSectionProps> = ({ courseId }) => {
       ) : (
         <div className="text-center py-8">
           <Award className="mx-auto h-12 w-12 text-gray-400" />
-          <h3 className="mt-2 text-sm font-medium text-gray-900">No hay notas</h3>
+          <h3 className="mt-2 text-sm font-medium text-gray-900">
+            No hay notas
+          </h3>
           <p className="mt-1 text-sm text-gray-500">
             Comienza agregando la primera evaluación del curso.
           </p>
@@ -370,7 +404,9 @@ export const GradesSection: React.FC<GradesSectionProps> = ({ courseId }) => {
                   <input
                     type="text"
                     value={formData.name}
-                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                    onChange={e =>
+                      setFormData({ ...formData, name: e.target.value })
+                    }
                     className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
                     placeholder="Examen Parcial 1"
                     required
@@ -387,7 +423,9 @@ export const GradesSection: React.FC<GradesSectionProps> = ({ courseId }) => {
                       step="0.01"
                       min="0"
                       value={formData.score}
-                      onChange={(e) => setFormData({ ...formData, score: e.target.value })}
+                      onChange={e =>
+                        setFormData({ ...formData, score: e.target.value })
+                      }
                       className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
                       placeholder="85"
                       required
@@ -402,7 +440,9 @@ export const GradesSection: React.FC<GradesSectionProps> = ({ courseId }) => {
                       step="0.01"
                       min="0"
                       value={formData.maxScore}
-                      onChange={(e) => setFormData({ ...formData, maxScore: e.target.value })}
+                      onChange={e =>
+                        setFormData({ ...formData, maxScore: e.target.value })
+                      }
                       className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
                       placeholder="100"
                       required
@@ -421,7 +461,9 @@ export const GradesSection: React.FC<GradesSectionProps> = ({ courseId }) => {
                       min="0"
                       max="100"
                       value={formData.weight}
-                      onChange={(e) => setFormData({ ...formData, weight: e.target.value })}
+                      onChange={e =>
+                        setFormData({ ...formData, weight: e.target.value })
+                      }
                       className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
                       placeholder="25"
                     />
@@ -432,7 +474,9 @@ export const GradesSection: React.FC<GradesSectionProps> = ({ courseId }) => {
                     </label>
                     <select
                       value={formData.type}
-                      onChange={(e) => setFormData({ ...formData, type: e.target.value })}
+                      onChange={e =>
+                        setFormData({ ...formData, type: e.target.value })
+                      }
                       className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
                     >
                       <option value="tarea">Tarea</option>
@@ -457,7 +501,13 @@ export const GradesSection: React.FC<GradesSectionProps> = ({ courseId }) => {
                     onClick={() => {
                       setShowAddModal(false);
                       setEditingGrade(null);
-                      setFormData({ name: '', score: '', maxScore: '', weight: '', type: 'tarea' });
+                      setFormData({
+                        name: '',
+                        score: '',
+                        maxScore: '',
+                        weight: '',
+                        type: 'tarea',
+                      });
                     }}
                     className="flex-1 bg-gray-600 hover:bg-gray-700 text-white font-medium py-2 px-4 rounded-md transition-colors"
                   >

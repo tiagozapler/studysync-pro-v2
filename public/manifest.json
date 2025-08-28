@@ -33,7 +33,7 @@
     },
     {
       "name": "Calendario",
-      "short_name": "Calendario", 
+      "short_name": "Calendario",
       "description": "Ver calendario académico",
       "url": "/calendar",
       "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }]

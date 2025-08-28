@@ -1,11 +1,28 @@
 import { createClient } from '@supabase/supabase-js';
+import { env, validateEnv } from '../config/env';
+
+// Validar variables de entorno
+validateEnv();
 
 // Configuración de Supabase desde variables de entorno
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://your-project.supabase.co';
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || 'your-anon-key';
+const supabaseUrl = env.SUPABASE_URL;
+const supabaseAnonKey = env.SUPABASE_ANON_KEY;
 
 // Crear cliente de Supabase
 export const supabase = createClient(supabaseUrl, supabaseAnonKey);
+
+// Exportar globalmente para debugging
+if (typeof window !== 'undefined') {
+  (window as any).supabase = supabase;
+}
+
+// Log de configuración (solo en desarrollo)
+if (env.IS_DEVELOPMENT) {
+  console.log('🔧 Configuración Supabase:', {
+    url: supabaseUrl,
+    hasKey: !!supabaseAnonKey,
+  });
+}
 
 // Tipos de base de datos
 export interface Database {

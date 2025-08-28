@@ -10,9 +10,9 @@ import { CalendarSection } from '../../features/courses/components/CalendarSecti
 export function Course() {
   const { courseId, section = 'materials' } = useParams();
   const { courses } = useAppStore();
-  
+
   const course = courses.find(c => c.id === courseId);
-  
+
   if (!course) {
     return (
       <div className="container-app py-8">
@@ -45,7 +45,7 @@ export function Course() {
             <ArrowLeft size={16} />
             Volver
           </Link>
-          <div 
+          <div
             className="w-4 h-4 rounded-sm"
             style={{ backgroundColor: course.color }}
           />
@@ -77,18 +77,10 @@ export function Course() {
 
       {/* Content */}
       <div className="h-[calc(100vh-200px)]">
-        {section === 'materials' && (
-          <MaterialsSection courseId={courseId!} />
-        )}
-        {section === 'ai' && (
-          <CourseAIAssistant courseId={courseId!} />
-        )}
-        {section === 'grades' && (
-          <GradesSection courseId={courseId!} />
-        )}
-        {section === 'calendar' && (
-          <CalendarSection courseId={courseId!} />
-        )}
+        {section === 'materials' && <MaterialsSection courseId={courseId!} />}
+        {section === 'ai' && <CourseAIAssistant courseId={courseId!} />}
+        {section === 'grades' && <GradesSection courseId={courseId!} />}
+        {section === 'calendar' && <CalendarSection courseId={courseId!} />}
       </div>
     </div>
   );

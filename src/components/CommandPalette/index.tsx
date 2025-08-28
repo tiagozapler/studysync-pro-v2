@@ -1,5 +1,14 @@
 import React from 'react';
-import { Search, Command, Plus, Calendar, FileText, Settings, Home, Focus } from 'lucide-react';
+import {
+  Search,
+  Command,
+  Plus,
+  Calendar,
+  FileText,
+  Settings,
+  Home,
+  Focus,
+} from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAppStore } from '../../lib/store';
 import { cn } from '../../lib/utils';
@@ -32,7 +41,7 @@ export function CommandPalette() {
           navigate('/dashboard');
           toggleModal('commandPalette');
         },
-        keywords: ['dashboard', 'inicio', 'home', 'principal']
+        keywords: ['dashboard', 'inicio', 'home', 'principal'],
       },
       {
         id: 'nav-calendar',
@@ -42,7 +51,7 @@ export function CommandPalette() {
           navigate('/calendar');
           toggleModal('commandPalette');
         },
-        keywords: ['calendario', 'calendar', 'eventos', 'fechas']
+        keywords: ['calendario', 'calendar', 'eventos', 'fechas'],
       },
       {
         id: 'nav-notes',
@@ -52,7 +61,7 @@ export function CommandPalette() {
           navigate('/notes');
           toggleModal('commandPalette');
         },
-        keywords: ['notas', 'notes', 'rapidas', 'apuntes']
+        keywords: ['notas', 'notes', 'rapidas', 'apuntes'],
       },
       {
         id: 'nav-search',
@@ -62,7 +71,7 @@ export function CommandPalette() {
           navigate('/search');
           toggleModal('commandPalette');
         },
-        keywords: ['buscar', 'search', 'encontrar']
+        keywords: ['buscar', 'search', 'encontrar'],
       },
       {
         id: 'nav-focus',
@@ -72,7 +81,7 @@ export function CommandPalette() {
           navigate('/focus');
           toggleModal('commandPalette');
         },
-        keywords: ['focus', 'concentración', 'pomodoro', 'estudiar']
+        keywords: ['focus', 'concentración', 'pomodoro', 'estudiar'],
       },
       {
         id: 'nav-settings',
@@ -82,7 +91,7 @@ export function CommandPalette() {
           navigate('/settings');
           toggleModal('commandPalette');
         },
-        keywords: ['configuración', 'settings', 'ajustes', 'config']
+        keywords: ['configuración', 'settings', 'ajustes', 'config'],
       },
 
       // Acciones
@@ -94,7 +103,7 @@ export function CommandPalette() {
           toggleModal('commandPalette');
           toggleModal('courseModal');
         },
-        keywords: ['curso', 'nuevo', 'agregar', 'crear', 'course']
+        keywords: ['curso', 'nuevo', 'agregar', 'crear', 'course'],
       },
       {
         id: 'action-new-note',
@@ -104,7 +113,7 @@ export function CommandPalette() {
           toggleModal('commandPalette');
           toggleModal('quickNoteModal');
         },
-        keywords: ['nota', 'rápida', 'nueva', 'apunte', 'note']
+        keywords: ['nota', 'rápida', 'nueva', 'apunte', 'note'],
       },
       {
         id: 'action-new-event',
@@ -114,8 +123,8 @@ export function CommandPalette() {
           toggleModal('commandPalette');
           toggleModal('eventModal');
         },
-        keywords: ['evento', 'calendar', 'fecha', 'recordatorio']
-      }
+        keywords: ['evento', 'calendar', 'fecha', 'recordatorio'],
+      },
     ];
 
     // Agregar comandos para cada curso
@@ -124,7 +133,7 @@ export function CommandPalette() {
       title: `Ir a ${course.name}`,
       subtitle: course.teacher,
       icon: () => (
-        <div 
+        <div
           className="w-4 h-4 rounded-sm"
           style={{ backgroundColor: course.color }}
         />
@@ -133,7 +142,12 @@ export function CommandPalette() {
         navigate(`/course/${course.id}`);
         toggleModal('commandPalette');
       },
-      keywords: [course.name.toLowerCase(), course.teacher?.toLowerCase() || '', 'curso', 'course']
+      keywords: [
+        course.name.toLowerCase(),
+        course.teacher?.toLowerCase() || '',
+        'curso',
+        'course',
+      ],
     }));
 
     return [...baseCommands, ...courseCommands];
@@ -142,12 +156,13 @@ export function CommandPalette() {
   // Filtrar comandos por query
   const filteredCommands = React.useMemo(() => {
     if (!query.trim()) return commands.slice(0, 8); // Mostrar solo los primeros 8 por defecto
-    
+
     const queryLower = query.toLowerCase();
-    return commands.filter(command => 
-      command.title.toLowerCase().includes(queryLower) ||
-      command.subtitle?.toLowerCase().includes(queryLower) ||
-      command.keywords.some(keyword => keyword.includes(queryLower))
+    return commands.filter(
+      command =>
+        command.title.toLowerCase().includes(queryLower) ||
+        command.subtitle?.toLowerCase().includes(queryLower) ||
+        command.keywords.some(keyword => keyword.includes(queryLower))
     );
   }, [commands, query]);
 
@@ -157,13 +172,13 @@ export function CommandPalette() {
       switch (e.key) {
         case 'ArrowDown':
           e.preventDefault();
-          setSelectedIndex(prev => 
+          setSelectedIndex(prev =>
             prev < filteredCommands.length - 1 ? prev + 1 : 0
           );
           break;
         case 'ArrowUp':
           e.preventDefault();
-          setSelectedIndex(prev => 
+          setSelectedIndex(prev =>
             prev > 0 ? prev - 1 : filteredCommands.length - 1
           );
           break;
@@ -194,8 +209,11 @@ export function CommandPalette() {
   }, []);
 
   return (
-    <div className="modal-backdrop" onClick={() => toggleModal('commandPalette')}>
-      <div 
+    <div
+      className="modal-backdrop"
+      onClick={() => toggleModal('commandPalette')}
+    >
+      <div
         className="max-w-lg w-full mx-auto mt-20"
         onClick={e => e.stopPropagation()}
       >
@@ -207,14 +225,18 @@ export function CommandPalette() {
               ref={inputRef}
               type="text"
               value={query}
-              onChange={(e) => setQuery(e.target.value)}
+              onChange={e => setQuery(e.target.value)}
               placeholder="Buscar comandos..."
               className="flex-1 bg-transparent text-dark-text-primary placeholder-dark-text-muted outline-none"
             />
             <div className="flex items-center space-x-1 text-xs text-dark-text-muted">
-              <kbd className="px-1.5 py-0.5 bg-dark-bg-tertiary rounded text-xs">↑↓</kbd>
+              <kbd className="px-1.5 py-0.5 bg-dark-bg-tertiary rounded text-xs">
+                ↑↓
+              </kbd>
               <span>navegar</span>
-              <kbd className="px-1.5 py-0.5 bg-dark-bg-tertiary rounded text-xs">↵</kbd>
+              <kbd className="px-1.5 py-0.5 bg-dark-bg-tertiary rounded text-xs">
+                ↵
+              </kbd>
               <span>seleccionar</span>
             </div>
           </div>
@@ -236,12 +258,15 @@ export function CommandPalette() {
                     onClick={command.action}
                     className={cn(
                       'w-full px-4 py-3 text-left flex items-center space-x-3 transition-colors',
-                      index === selectedIndex 
-                        ? 'bg-course-blue/20 border-r-2 border-course-blue' 
+                      index === selectedIndex
+                        ? 'bg-course-blue/20 border-r-2 border-course-blue'
                         : 'hover:bg-dark-bg-tertiary'
                     )}
                   >
-                    <Icon size={20} className="text-dark-text-muted flex-shrink-0" />
+                    <Icon
+                      size={20}
+                      className="text-dark-text-muted flex-shrink-0"
+                    />
                     <div className="flex-1 min-w-0">
                       <div className="font-medium text-dark-text-primary">
                         {command.title}
@@ -267,7 +292,9 @@ export function CommandPalette() {
               <span>Comando Rápido</span>
               <div className="flex items-center space-x-2">
                 <span>Presiona</span>
-                <kbd className="px-1.5 py-0.5 bg-dark-bg-secondary rounded">Esc</kbd>
+                <kbd className="px-1.5 py-0.5 bg-dark-bg-secondary rounded">
+                  Esc
+                </kbd>
                 <span>para cerrar</span>
               </div>
             </div>

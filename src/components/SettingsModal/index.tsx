@@ -6,7 +6,10 @@ export function SettingsModal() {
   const { toggleModal } = useAppStore();
 
   return (
-    <div className="modal-backdrop" onClick={() => toggleModal('settingsModal')}>
+    <div
+      className="modal-backdrop"
+      onClick={() => toggleModal('settingsModal')}
+    >
       <div className="modal-content" onClick={e => e.stopPropagation()}>
         <div className="flex items-center justify-between p-6 border-b border-dark-border">
           <h2 className="text-xl font-display font-bold text-dark-text-primary">
@@ -19,9 +22,11 @@ export function SettingsModal() {
             <X size={20} />
           </button>
         </div>
-        
+
         <div className="p-6">
-          <p className="text-dark-text-muted">Placeholder - Implementar panel de configuración</p>
+          <p className="text-dark-text-muted">
+            Placeholder - Implementar panel de configuración
+          </p>
         </div>
       </div>
     </div>

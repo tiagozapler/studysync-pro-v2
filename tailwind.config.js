@@ -1,9 +1,6 @@
 /** @type {import('tailwindcss').Config} */
 export default {
-  content: [
-    "./index.html",
-    "./src/**/*.{js,ts,jsx,tsx}",
-  ],
+  content: ['./index.html', './src/**/*.{js,ts,jsx,tsx}'],
   theme: {
     extend: {
       colors: {
@@ -15,11 +12,11 @@ export default {
         'dark-text-secondary': '#cbd5e1',
         'dark-text-muted': '#9ca3af',
         'dark-border': '#475569',
-        'warning': '#fbbf24',
-        'danger': '#ef4444',
-        'success': '#10b981',
-        'info': '#3b82f6',
-        'gray': {
+        warning: '#fbbf24',
+        danger: '#ef4444',
+        success: '#10b981',
+        info: '#3b82f6',
+        gray: {
           950: '#0f172a', // Background principal
           900: '#111827', // Contenedores
           800: '#1f2937', // Bordes y elementos secundarios
@@ -31,7 +28,7 @@ export default {
           100: '#f3f4f6', // Texto off-white
         },
         // Vibrant Course Colors
-        'course': {
+        course: {
           blue: '#3B82F6',
           emerald: '#10B981',
           amber: '#F59E0B',
@@ -41,18 +38,20 @@ export default {
           cyan: '#06B6D4',
           lime: '#84CC16',
           orange: '#F97316',
-          indigo: '#6366F1'
-        }
+          indigo: '#6366F1',
+        },
       },
       fontFamily: {
-        'inter': ['Inter', 'system-ui', 'sans-serif'],
+        inter: ['Inter', 'system-ui', 'sans-serif'],
         'space-grotesk': ['Space Grotesk', 'system-ui', 'sans-serif'],
       },
       boxShadow: {
-        'hard': '0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -1px rgba(0, 0, 0, 0.2)',
-        'hard-lg': '0 10px 15px -3px rgba(0, 0, 0, 0.4), 0 4px 6px -2px rgba(0, 0, 0, 0.3)',
-        'card': '0 8px 25px -5px rgba(0, 0, 0, 0.4), 0 4px 10px -2px rgba(0, 0, 0, 0.3)',
-        'modal': '0 20px 25px -5px rgba(0, 0, 0, 0.5), 0 10px 10px -5px rgba(0, 0, 0, 0.4)',
+        hard: '0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -1px rgba(0, 0, 0, 0.2)',
+        'hard-lg':
+          '0 10px 15px -3px rgba(0, 0, 0, 0.4), 0 4px 6px -2px rgba(0, 0, 0, 0.3)',
+        card: '0 8px 25px -5px rgba(0, 0, 0, 0.4), 0 4px 10px -2px rgba(0, 0, 0, 0.3)',
+        modal:
+          '0 20px 25px -5px rgba(0, 0, 0, 0.5), 0 10px 10px -5px rgba(0, 0, 0, 0.4)',
       },
       animation: {
         'fade-in': 'fadeIn 0.3s ease-out',
@@ -62,48 +61,48 @@ export default {
       keyframes: {
         fadeIn: {
           '0%': { opacity: '0', transform: 'translateY(10px)' },
-          '100%': { opacity: '1', transform: 'translateY(0)' }
+          '100%': { opacity: '1', transform: 'translateY(0)' },
         },
         slideIn: {
           '0%': { transform: 'translateX(-100%)' },
-          '100%': { transform: 'translateX(0)' }
-        }
+          '100%': { transform: 'translateX(0)' },
+        },
       },
       transitionDuration: {
-        'fast': '150ms',
-        'normal': '300ms',
-        'slow': '500ms'
+        fast: '150ms',
+        normal: '300ms',
+        slow: '500ms',
       },
       borderRadius: {
-        'sm': '0.125rem', // 2px - minimal rounded
-        'md': '0.375rem', // 6px - slightly rounded
-        'lg': '0.5rem',   // 8px - rounded
+        sm: '0.125rem', // 2px - minimal rounded
+        md: '0.375rem', // 6px - slightly rounded
+        lg: '0.5rem', // 8px - rounded
       },
       spacing: {
-        '18': '4.5rem',   // 72px
-        '88': '22rem',    // 352px
-        '128': '32rem',   // 512px
+        18: '4.5rem', // 72px
+        88: '22rem', // 352px
+        128: '32rem', // 512px
       },
       maxWidth: {
-        '8xl': '88rem',   // 1408px
-        '9xl': '96rem',   // 1536px
+        '8xl': '88rem', // 1408px
+        '9xl': '96rem', // 1536px
       },
       minHeight: {
         'screen-75': '75vh',
         'screen-85': '85vh',
       },
       zIndex: {
-        '60': '60',
-        '70': '70',
-        '80': '80',
-        '90': '90',
-        '100': '100',
-      }
+        60: '60',
+        70: '70',
+        80: '80',
+        90: '90',
+        100: '100',
+      },
     },
   },
   plugins: [
     // Plugin personalizado para componentes
-    function({ addComponents, theme }) {
+    function ({ addComponents, theme }) {
       addComponents({
         '.btn-primary': {
           backgroundColor: theme('colors.blue.600'),
@@ -118,7 +117,7 @@ export default {
           '&:disabled': {
             opacity: '0.5',
             cursor: 'not-allowed',
-          }
+          },
         },
         '.btn-secondary': {
           backgroundColor: theme('colors.gray.700'),
@@ -129,7 +128,7 @@ export default {
           transition: 'all 0.15s ease-in-out',
           '&:hover': {
             backgroundColor: theme('colors.gray.600'),
-          }
+          },
         },
         '.btn-danger': {
           backgroundColor: theme('colors.red.600'),
@@ -140,7 +139,7 @@ export default {
           transition: 'all 0.15s ease-in-out',
           '&:hover': {
             backgroundColor: theme('colors.red.700'),
-          }
+          },
         },
         '.input-field': {
           width: '100%',
@@ -154,7 +153,7 @@ export default {
             outline: 'none',
             borderColor: theme('colors.blue.500'),
             boxShadow: `0 0 0 3px ${theme('colors.blue.500')}20`,
-          }
+          },
         },
         '.card': {
           backgroundColor: theme('colors.gray.900'),
@@ -180,10 +179,10 @@ export default {
             backgroundColor: theme('colors.blue.600'),
             '&:hover': {
               backgroundColor: theme('colors.blue.700'),
-            }
-          }
-        }
-      })
-    }
+            },
+          },
+        },
+      });
+    },
   ],
-}
+};

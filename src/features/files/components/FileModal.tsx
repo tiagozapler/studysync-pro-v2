@@ -20,9 +20,11 @@ export function FileModal() {
             <X size={20} />
           </button>
         </div>
-        
+
         <div className="p-6">
-          <p className="text-dark-text-muted">Placeholder - Implementar gestión de archivos</p>
+          <p className="text-dark-text-muted">
+            Placeholder - Implementar gestión de archivos
+          </p>
         </div>
       </div>
     </div>

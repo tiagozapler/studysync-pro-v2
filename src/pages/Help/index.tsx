@@ -47,25 +47,28 @@ export function Help() {
                 ¿Los datos están seguros?
               </summary>
               <p className="text-dark-text-muted mt-2 pl-4">
-                Sí, todos tus datos se almacenan localmente en tu dispositivo. No se envía información a servidores externos.
+                Sí, todos tus datos se almacenan localmente en tu dispositivo.
+                No se envía información a servidores externos.
               </p>
             </details>
-            
+
             <details className="group">
               <summary className="cursor-pointer text-dark-text-primary font-medium">
                 ¿Funciona sin internet?
               </summary>
               <p className="text-dark-text-muted mt-2 pl-4">
-                Completamente. StudySync Pro está diseñado para funcionar offline.
+                Completamente. StudySync Pro está diseñado para funcionar
+                offline.
               </p>
             </details>
-            
+
             <details className="group">
               <summary className="cursor-pointer text-dark-text-primary font-medium">
                 ¿Cómo funciona la IA?
               </summary>
               <p className="text-dark-text-muted mt-2 pl-4">
-                Ofrecemos opciones gratuitas de IA local que funcionan en tu navegador.
+                Ofrecemos opciones gratuitas de IA local que funcionan en tu
+                navegador.
               </p>
             </details>
           </div>
@@ -104,58 +107,84 @@ export function Help() {
         <h2 className="text-xl font-semibold text-dark-text-primary mb-6">
           Atajos de Teclado
         </h2>
-        
+
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           <div>
-            <h3 className="font-medium text-dark-text-primary mb-3">Navegación</h3>
+            <h3 className="font-medium text-dark-text-primary mb-3">
+              Navegación
+            </h3>
             <div className="space-y-2 text-sm">
               <div className="flex justify-between">
                 <span className="text-dark-text-secondary">Comando rápido</span>
-                <kbd className="px-2 py-1 bg-dark-bg-tertiary rounded text-xs">Ctrl+K</kbd>
+                <kbd className="px-2 py-1 bg-dark-bg-tertiary rounded text-xs">
+                  Ctrl+K
+                </kbd>
               </div>
               <div className="flex justify-between">
                 <span className="text-dark-text-secondary">Dashboard</span>
-                <kbd className="px-2 py-1 bg-dark-bg-tertiary rounded text-xs">Ctrl+1</kbd>
+                <kbd className="px-2 py-1 bg-dark-bg-tertiary rounded text-xs">
+                  Ctrl+1
+                </kbd>
               </div>
               <div className="flex justify-between">
                 <span className="text-dark-text-secondary">Calendario</span>
-                <kbd className="px-2 py-1 bg-dark-bg-tertiary rounded text-xs">Ctrl+2</kbd>
+                <kbd className="px-2 py-1 bg-dark-bg-tertiary rounded text-xs">
+                  Ctrl+2
+                </kbd>
               </div>
             </div>
           </div>
-          
+
           <div>
-            <h3 className="font-medium text-dark-text-primary mb-3">Acciones</h3>
+            <h3 className="font-medium text-dark-text-primary mb-3">
+              Acciones
+            </h3>
             <div className="space-y-2 text-sm">
               <div className="flex justify-between">
                 <span className="text-dark-text-secondary">Nuevo curso</span>
-                <kbd className="px-2 py-1 bg-dark-bg-tertiary rounded text-xs">Ctrl+Shift+C</kbd>
+                <kbd className="px-2 py-1 bg-dark-bg-tertiary rounded text-xs">
+                  Ctrl+Shift+C
+                </kbd>
               </div>
               <div className="flex justify-between">
                 <span className="text-dark-text-secondary">Nueva nota</span>
-                <kbd className="px-2 py-1 bg-dark-bg-tertiary rounded text-xs">Ctrl+Shift+N</kbd>
+                <kbd className="px-2 py-1 bg-dark-bg-tertiary rounded text-xs">
+                  Ctrl+Shift+N
+                </kbd>
               </div>
               <div className="flex justify-between">
                 <span className="text-dark-text-secondary">Subir archivo</span>
-                <kbd className="px-2 py-1 bg-dark-bg-tertiary rounded text-xs">Ctrl+U</kbd>
+                <kbd className="px-2 py-1 bg-dark-bg-tertiary rounded text-xs">
+                  Ctrl+U
+                </kbd>
               </div>
             </div>
           </div>
-          
+
           <div>
-            <h3 className="font-medium text-dark-text-primary mb-3">Modo Focus</h3>
+            <h3 className="font-medium text-dark-text-primary mb-3">
+              Modo Focus
+            </h3>
             <div className="space-y-2 text-sm">
               <div className="flex justify-between">
                 <span className="text-dark-text-secondary">Iniciar/Pausar</span>
-                <kbd className="px-2 py-1 bg-dark-bg-tertiary rounded text-xs">Espacio</kbd>
+                <kbd className="px-2 py-1 bg-dark-bg-tertiary rounded text-xs">
+                  Espacio
+                </kbd>
               </div>
               <div className="flex justify-between">
-                <span className="text-dark-text-secondary">Nueva nota rápida</span>
-                <kbd className="px-2 py-1 bg-dark-bg-tertiary rounded text-xs">N</kbd>
+                <span className="text-dark-text-secondary">
+                  Nueva nota rápida
+                </span>
+                <kbd className="px-2 py-1 bg-dark-bg-tertiary rounded text-xs">
+                  N
+                </kbd>
               </div>
               <div className="flex justify-between">
                 <span className="text-dark-text-secondary">Salir</span>
-                <kbd className="px-2 py-1 bg-dark-bg-tertiary rounded text-xs">Esc</kbd>
+                <kbd className="px-2 py-1 bg-dark-bg-tertiary rounded text-xs">
+                  Esc
+                </kbd>
               </div>
             </div>
           </div>

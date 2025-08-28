@@ -7,16 +7,30 @@ export function Calendar() {
   const [currentDate, setCurrentDate] = React.useState(new Date());
 
   const monthNames = [
-    'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
-    'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'
+    'Enero',
+    'Febrero',
+    'Marzo',
+    'Abril',
+    'Mayo',
+    'Junio',
+    'Julio',
+    'Agosto',
+    'Septiembre',
+    'Octubre',
+    'Noviembre',
+    'Diciembre',
   ];
 
   const handlePrevMonth = () => {
-    setCurrentDate(prev => new Date(prev.getFullYear(), prev.getMonth() - 1, 1));
+    setCurrentDate(
+      prev => new Date(prev.getFullYear(), prev.getMonth() - 1, 1)
+    );
   };
 
   const handleNextMonth = () => {
-    setCurrentDate(prev => new Date(prev.getFullYear(), prev.getMonth() + 1, 1));
+    setCurrentDate(
+      prev => new Date(prev.getFullYear(), prev.getMonth() + 1, 1)
+    );
   };
 
   return (
@@ -46,16 +60,10 @@ export function Calendar() {
                 {monthNames[currentDate.getMonth()]} {currentDate.getFullYear()}
               </h2>
               <div className="flex items-center space-x-2">
-                <button
-                  onClick={handlePrevMonth}
-                  className="btn btn-ghost p-2"
-                >
+                <button onClick={handlePrevMonth} className="btn btn-ghost p-2">
                   <ChevronLeft size={20} />
                 </button>
-                <button
-                  onClick={handleNextMonth}
-                  className="btn btn-ghost p-2"
-                >
+                <button onClick={handleNextMonth} className="btn btn-ghost p-2">
                   <ChevronRight size={20} />
                 </button>
               </div>
@@ -66,15 +74,23 @@ export function Calendar() {
               <div className="grid grid-cols-7 gap-px bg-dark-border rounded-sm overflow-hidden">
                 {/* Headers de días */}
                 {['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'].map(day => (
-                  <div key={day} className="bg-dark-bg-tertiary p-3 text-center text-sm font-medium text-dark-text-muted">
+                  <div
+                    key={day}
+                    className="bg-dark-bg-tertiary p-3 text-center text-sm font-medium text-dark-text-muted"
+                  >
                     {day}
                   </div>
                 ))}
-                
+
                 {/* Placeholder para días del mes */}
                 {Array.from({ length: 35 }, (_, i) => (
-                  <div key={i} className="bg-dark-bg-secondary p-3 min-h-[80px] text-sm">
-                    <span className="text-dark-text-primary">{(i % 31) + 1}</span>
+                  <div
+                    key={i}
+                    className="bg-dark-bg-secondary p-3 min-h-[80px] text-sm"
+                  >
+                    <span className="text-dark-text-primary">
+                      {(i % 31) + 1}
+                    </span>
                   </div>
                 ))}
               </div>
@@ -104,11 +120,15 @@ export function Calendar() {
             <div className="space-y-2">
               <label className="flex items-center">
                 <input type="checkbox" className="mr-2" defaultChecked />
-                <span className="text-sm text-dark-text-secondary">Exámenes</span>
+                <span className="text-sm text-dark-text-secondary">
+                  Exámenes
+                </span>
               </label>
               <label className="flex items-center">
                 <input type="checkbox" className="mr-2" defaultChecked />
-                <span className="text-sm text-dark-text-secondary">Entregas</span>
+                <span className="text-sm text-dark-text-secondary">
+                  Entregas
+                </span>
               </label>
               <label className="flex items-center">
                 <input type="checkbox" className="mr-2" defaultChecked />

@@ -10,7 +10,7 @@ export const demoCourses: Omit<Course, 'createdAt' | 'updatedAt'>[] = [
     color: '#3B82F6',
     credits: 4,
     semester: '2024-I',
-    archived: false
+    archived: false,
   },
   {
     id: 'physics',
@@ -19,7 +19,7 @@ export const demoCourses: Omit<Course, 'createdAt' | 'updatedAt'>[] = [
     color: '#10B981',
     credits: 5,
     semester: '2024-I',
-    archived: false
+    archived: false,
   },
   {
     id: 'programming',
@@ -28,7 +28,7 @@ export const demoCourses: Omit<Course, 'createdAt' | 'updatedAt'>[] = [
     color: '#EF4444',
     credits: 3,
     semester: '2024-I',
-    archived: false
+    archived: false,
   },
   {
     id: 'statistics',
@@ -37,7 +37,7 @@ export const demoCourses: Omit<Course, 'createdAt' | 'updatedAt'>[] = [
     color: '#FACC15',
     credits: 3,
     semester: '2024-I',
-    archived: false
+    archived: false,
   },
   {
     id: 'databases',
@@ -46,8 +46,8 @@ export const demoCourses: Omit<Course, 'createdAt' | 'updatedAt'>[] = [
     color: '#8B5CF6',
     credits: 4,
     semester: '2024-I',
-    archived: false
-  }
+    archived: false,
+  },
 ];
 
 // Persistencia aquí - función para cargar datos de demo
@@ -55,27 +55,26 @@ export async function loadDemoData() {
   try {
     const { db } = await import('../lib/db/database');
     const { storage } = await import('../lib/storage/localStorage');
-    
+
     // Verificar si ya se cargaron datos demo
     if (storage.isDemoLoaded()) {
       console.log('📋 Datos demo ya cargados previamente');
       return;
     }
-    
+
     // Cargar cursos demo
     const coursesToAdd = demoCourses.map(course => ({
       ...course,
       createdAt: new Date(),
-      updatedAt: new Date()
+      updatedAt: new Date(),
     }));
-    
+
     await db.courses.bulkAdd(coursesToAdd);
-    
+
     // Marcar como cargados
     storage.setDemoLoaded(true);
-    
+
     console.log('✅ Datos demo cargados correctamente');
-    
   } catch (error) {
     console.error('❌ Error cargando datos demo:', error);
   }
@@ -86,20 +85,23 @@ export async function clearDemoData() {
   try {
     const { db } = await import('../lib/db/database');
     const { storage } = await import('../lib/storage/localStorage');
-    
-    await db.transaction('rw', [db.courses, db.files, db.notes, db.events, db.todos, db.quickNotes], async () => {
-      await db.courses.clear();
-      await db.files.clear();
-      await db.notes.clear();
-      await db.events.clear();
-      await db.todos.clear();
-      await db.quickNotes.clear();
-    });
-    
+
+    await db.transaction(
+      'rw',
+      [db.courses, db.files, db.notes, db.events, db.todos, db.quickNotes],
+      async () => {
+        await db.courses.clear();
+        await db.files.clear();
+        await db.notes.clear();
+        await db.events.clear();
+        await db.todos.clear();
+        await db.quickNotes.clear();
+      }
+    );
+
     storage.setDemoLoaded(false);
-    
+
     console.log('🗑️ Datos demo eliminados');
-    
   } catch (error) {
     console.error('❌ Error eliminando datos demo:', error);
   }

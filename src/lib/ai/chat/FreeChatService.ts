@@ -22,7 +22,8 @@ export interface ChatSession {
 export class FreeChatService {
   private adapter: WebLLMAdapter;
   private sessions: Map<string, ChatSession> = new Map();
-  private updateCallbacks: Map<string, Set<(message: ChatMessage) => void>> = new Map();
+  private updateCallbacks: Map<string, Set<(message: ChatMessage) => void>> =
+    new Map();
 
   constructor() {
     this.adapter = new WebLLMAdapter();
@@ -35,7 +36,11 @@ export class FreeChatService {
   }
 
   // Crear una nueva sesión
-  createSession(title: string, courseId?: string, courseName?: string): ChatSession {
+  createSession(
+    title: string,
+    courseId?: string,
+    courseName?: string
+  ): ChatSession {
     const session: ChatSession = {
       id: this.generateId(),
       courseId: courseId || '',
@@ -43,7 +48,7 @@ export class FreeChatService {
       title,
       messages: [],
       createdAt: new Date(),
-      updatedAt: new Date()
+      updatedAt: new Date(),
     };
 
     this.sessions.set(session.id, session);
@@ -53,8 +58,8 @@ export class FreeChatService {
 
   // Obtener todas las sesiones
   getAllSessions(): ChatSession[] {
-    return Array.from(this.sessions.values()).sort((a, b) => 
-      b.updatedAt.getTime() - a.updatedAt.getTime()
+    return Array.from(this.sessions.values()).sort(
+      (a, b) => b.updatedAt.getTime() - a.updatedAt.getTime()
     );
   }
 
@@ -64,7 +69,11 @@ export class FreeChatService {
   }
 
   // Enviar un mensaje
-  async sendMessage(sessionId: string, content: string, attachments?: string[]): Promise<ChatMessage> {
+  async sendMessage(
+    sessionId: string,
+    content: string,
+    attachments?: string[]
+  ): Promise<ChatMessage> {
     const session = this.sessions.get(sessionId);
     if (!session) {
       throw new Error(`Sesión no encontrada: ${sessionId}`);
@@ -76,7 +85,7 @@ export class FreeChatService {
       role: 'user',
       content,
       timestamp: new Date(),
-      attachments: attachments || []
+      attachments: attachments || [],
     };
 
     // Agregar mensaje del usuario a la sesión
@@ -90,7 +99,7 @@ export class FreeChatService {
       role: 'assistant',
       content: '',
       timestamp: new Date(),
-      isStreaming: true
+      isStreaming: true,
     };
 
     // Agregar mensaje de la IA a la sesión
@@ -107,13 +116,13 @@ export class FreeChatService {
         .slice(0, -1) // Excluir el mensaje actual de la IA
         .map(msg => ({
           role: msg.role,
-          content: msg.content
+          content: msg.content,
         }));
 
       // Obtener stream de respuesta
       const stream = await this.adapter.sendMessageStream(content, {
         history,
-        ...(session.courseName && { courseName: session.courseName })
+        ...(session.courseName && { courseName: session.courseName }),
       });
 
       // Procesar el stream
@@ -122,13 +131,13 @@ export class FreeChatService {
 
       while (true) {
         const { done, value } = await reader.read();
-        
+
         if (done) break;
-        
+
         fullResponse += value;
         aiMessage.content = fullResponse;
         aiMessage.isStreaming = true;
-        
+
         // Emitir actualización
         this.emitUpdate(sessionId, aiMessage);
       }
@@ -138,12 +147,12 @@ export class FreeChatService {
       session.updatedAt = new Date();
       this.saveToLocalStorage();
       this.emitUpdate(sessionId, aiMessage);
-
     } catch (error) {
       console.error('Error en sendMessage:', error);
-      
+
       // En caso de error, mostrar mensaje de error
-      aiMessage.content = 'Lo siento, tuve un problema procesando tu mensaje. ¿Podrías intentarlo de nuevo?';
+      aiMessage.content =
+        'Lo siento, tuve un problema procesando tu mensaje. ¿Podrías intentarlo de nuevo?';
       aiMessage.isStreaming = false;
       session.updatedAt = new Date();
       this.saveToLocalStorage();
@@ -161,13 +170,16 @@ export class FreeChatService {
   }
 
   // Suscribirse a actualizaciones de una sesión
-  subscribeToUpdates(sessionId: string, callback: (message: ChatMessage) => void): () => void {
+  subscribeToUpdates(
+    sessionId: string,
+    callback: (message: ChatMessage) => void
+  ): () => void {
     if (!this.updateCallbacks.has(sessionId)) {
       this.updateCallbacks.set(sessionId, new Set());
     }
-    
+
     this.updateCallbacks.get(sessionId)!.add(callback);
-    
+
     // Retornar función para desuscribirse
     return () => {
       this.updateCallbacks.get(sessionId)?.delete(callback);
@@ -192,7 +204,10 @@ export class FreeChatService {
   private saveToLocalStorage(): void {
     try {
       const sessionsData = Array.from(this.sessions.values());
-      localStorage.setItem('studysync_chat_sessions', JSON.stringify(sessionsData));
+      localStorage.setItem(
+        'studysync_chat_sessions',
+        JSON.stringify(sessionsData)
+      );
     } catch (error) {
       console.error('Error guardando sesiones en localStorage:', error);
     }
@@ -211,7 +226,7 @@ export class FreeChatService {
           session.messages.forEach((msg: any) => {
             msg.timestamp = new Date(msg.timestamp);
           });
-          
+
           this.sessions.set(session.id, session);
         });
       }

@@ -9,20 +9,20 @@ export function QuickNoteModal() {
     title: '',
     content: '',
     category: 'general' as const,
-    tags: ''
+    tags: '',
   });
   const [isSubmitting, setIsSubmitting] = React.useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!formData.title.trim() || !formData.content.trim()) {
       toast.error('El título y contenido son obligatorios');
       return;
     }
 
     setIsSubmitting(true);
-    
+
     try {
       const tags = formData.tags
         .split(',')
@@ -33,18 +33,18 @@ export function QuickNoteModal() {
         title: formData.title.trim(),
         content: formData.content.trim(),
         category: formData.category,
-        tags
+        tags,
       });
-      
+
       toast.success('Nota rápida guardada');
       toggleModal('quickNoteModal');
-      
+
       // Reset form
       setFormData({
         title: '',
         content: '',
         category: 'general',
-        tags: ''
+        tags: '',
       });
     } catch (error) {
       console.error('Error adding quick note:', error);
@@ -55,7 +55,10 @@ export function QuickNoteModal() {
   };
 
   return (
-    <div className="modal-backdrop" onClick={() => toggleModal('quickNoteModal')}>
+    <div
+      className="modal-backdrop"
+      onClick={() => toggleModal('quickNoteModal')}
+    >
       <div className="modal-content" onClick={e => e.stopPropagation()}>
         <div className="flex items-center justify-between p-6 border-b border-dark-border">
           <h2 className="text-xl font-display font-bold text-dark-text-primary">
@@ -71,14 +74,19 @@ export function QuickNoteModal() {
 
         <form onSubmit={handleSubmit} className="p-6 space-y-4">
           <div>
-            <label htmlFor="noteTitle" className="block text-sm font-medium text-dark-text-primary mb-2">
+            <label
+              htmlFor="noteTitle"
+              className="block text-sm font-medium text-dark-text-primary mb-2"
+            >
               Título *
             </label>
             <input
               id="noteTitle"
               type="text"
               value={formData.title}
-              onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
+              onChange={e =>
+                setFormData(prev => ({ ...prev, title: e.target.value }))
+              }
               placeholder="Ej: Recordatorio importante"
               className="input"
               required
@@ -87,13 +95,21 @@ export function QuickNoteModal() {
           </div>
 
           <div>
-            <label htmlFor="noteCategory" className="block text-sm font-medium text-dark-text-primary mb-2">
+            <label
+              htmlFor="noteCategory"
+              className="block text-sm font-medium text-dark-text-primary mb-2"
+            >
               Categoría
             </label>
             <select
               id="noteCategory"
               value={formData.category}
-              onChange={(e) => setFormData(prev => ({ ...prev, category: e.target.value as any }))}
+              onChange={e =>
+                setFormData(prev => ({
+                  ...prev,
+                  category: e.target.value as any,
+                }))
+              }
               className="input"
             >
               <option value="general">General</option>
@@ -104,13 +120,18 @@ export function QuickNoteModal() {
           </div>
 
           <div>
-            <label htmlFor="noteContent" className="block text-sm font-medium text-dark-text-primary mb-2">
+            <label
+              htmlFor="noteContent"
+              className="block text-sm font-medium text-dark-text-primary mb-2"
+            >
               Contenido *
             </label>
             <textarea
               id="noteContent"
               value={formData.content}
-              onChange={(e) => setFormData(prev => ({ ...prev, content: e.target.value }))}
+              onChange={e =>
+                setFormData(prev => ({ ...prev, content: e.target.value }))
+              }
               placeholder="Escribe tu nota aquí..."
               rows={6}
               className="input resize-none"
@@ -119,14 +140,19 @@ export function QuickNoteModal() {
           </div>
 
           <div>
-            <label htmlFor="noteTags" className="block text-sm font-medium text-dark-text-primary mb-2">
+            <label
+              htmlFor="noteTags"
+              className="block text-sm font-medium text-dark-text-primary mb-2"
+            >
               Etiquetas (separadas por comas)
             </label>
             <input
               id="noteTags"
               type="text"
               value={formData.tags}
-              onChange={(e) => setFormData(prev => ({ ...prev, tags: e.target.value }))}
+              onChange={e =>
+                setFormData(prev => ({ ...prev, tags: e.target.value }))
+              }
               placeholder="Ej: importante, examen, proyecto"
               className="input"
             />
@@ -144,7 +170,11 @@ export function QuickNoteModal() {
             <button
               type="submit"
               className="btn btn-primary"
-              disabled={isSubmitting || !formData.title.trim() || !formData.content.trim()}
+              disabled={
+                isSubmitting ||
+                !formData.title.trim() ||
+                !formData.content.trim()
+              }
             >
               {isSubmitting ? (
                 <>

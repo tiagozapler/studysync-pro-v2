@@ -1,16 +1,16 @@
 import React from 'react';
 import { useLocation, Link } from 'react-router-dom';
-import { 
-  Home, 
-  Calendar, 
-  FileText, 
-  Search, 
-  Settings, 
+import {
+  Home,
+  Calendar,
+  FileText,
+  Search,
+  Settings,
   HelpCircle,
   Focus,
   Menu,
   X,
-  MessageSquare
+  MessageSquare,
 } from 'lucide-react';
 import { useAppStore } from '../../lib/store';
 import { cn } from '../../lib/utils';
@@ -26,11 +26,7 @@ export function Layout({ children }: LayoutProps) {
 
   // No mostrar sidebar en modo focus
   if (focusMode.active) {
-    return (
-      <div className="min-h-screen bg-dark-bg-primary">
-        {children}
-      </div>
-    );
+    return <div className="min-h-screen bg-dark-bg-primary">{children}</div>;
   }
 
   const navigation = [
@@ -52,9 +48,12 @@ export function Layout({ children }: LayoutProps) {
       {/* Sidebar para móvil */}
       {sidebarOpen && (
         <div className="fixed inset-0 z-50 lg:hidden">
-          <div className="fixed inset-0 bg-black/50" onClick={() => setSidebarOpen(false)} />
+          <div
+            className="fixed inset-0 bg-black/50"
+            onClick={() => setSidebarOpen(false)}
+          />
           <div className="fixed inset-y-0 left-0 w-64 bg-dark-bg-secondary border-r border-dark-border">
-            <SidebarContent 
+            <SidebarContent
               navigation={navigation}
               secondaryNavigation={secondaryNavigation}
               currentPath={location.pathname}
@@ -67,7 +66,7 @@ export function Layout({ children }: LayoutProps) {
       {/* Sidebar para desktop */}
       <div className="hidden lg:flex lg:flex-shrink-0">
         <div className="w-64 bg-dark-bg-secondary border-r border-dark-border">
-          <SidebarContent 
+          <SidebarContent
             navigation={navigation}
             secondaryNavigation={secondaryNavigation}
             currentPath={location.pathname}
@@ -87,11 +86,11 @@ export function Layout({ children }: LayoutProps) {
             >
               <Menu size={20} />
             </button>
-            
+
             <h1 className="font-display font-bold text-lg text-dark-text-primary">
               StudySync Pro
             </h1>
-            
+
             <button
               onClick={() => toggleModal('commandPalette')}
               className="p-2 rounded-sm text-dark-text-secondary hover:bg-dark-bg-tertiary hover:text-dark-text-primary transition-colors"
@@ -112,13 +111,26 @@ export function Layout({ children }: LayoutProps) {
 }
 
 interface SidebarContentProps {
-  navigation: Array<{ name: string; href: string; icon: React.ComponentType<any> }>;
-  secondaryNavigation: Array<{ name: string; href: string; icon: React.ComponentType<any> }>;
+  navigation: Array<{
+    name: string;
+    href: string;
+    icon: React.ComponentType<any>;
+  }>;
+  secondaryNavigation: Array<{
+    name: string;
+    href: string;
+    icon: React.ComponentType<any>;
+  }>;
   currentPath: string;
   onItemClick?: () => void;
 }
 
-function SidebarContent({ navigation, secondaryNavigation, currentPath, onItemClick }: SidebarContentProps) {
+function SidebarContent({
+  navigation,
+  secondaryNavigation,
+  currentPath,
+  onItemClick,
+}: SidebarContentProps) {
   const { toggleModal } = useAppStore();
 
   return (
@@ -128,27 +140,23 @@ function SidebarContent({ navigation, secondaryNavigation, currentPath, onItemCl
         <h1 className="font-display font-bold text-xl text-dark-text-primary">
           StudySync Pro
         </h1>
-        <p className="text-sm text-dark-text-muted mt-1">
-          Asistente Académico
-        </p>
+        <p className="text-sm text-dark-text-muted mt-1">Asistente Académico</p>
       </div>
 
       {/* Navegación principal */}
       <nav className="flex-1 px-4 py-6 space-y-2">
-        {navigation.map((item) => {
+        {navigation.map(item => {
           const Icon = item.icon;
-          const isActive = currentPath === item.href || 
-                          (item.href === '/course' && currentPath.startsWith('/course'));
-          
+          const isActive =
+            currentPath === item.href ||
+            (item.href === '/course' && currentPath.startsWith('/course'));
+
           return (
             <Link
               key={item.name}
               to={item.href}
               onClick={onItemClick}
-              className={cn(
-                'nav-item',
-                isActive && 'active'
-              )}
+              className={cn('nav-item', isActive && 'active')}
               aria-current={isActive ? 'page' : undefined}
             >
               <Icon size={20} />
@@ -171,28 +179,23 @@ function SidebarContent({ navigation, secondaryNavigation, currentPath, onItemCl
           >
             <Search size={20} />
             Comando Rápido
-            <span className="ml-auto text-xs text-dark-text-muted">
-              ⌘K
-            </span>
+            <span className="ml-auto text-xs text-dark-text-muted">⌘K</span>
           </button>
         </div>
       </nav>
 
       {/* Navegación secundaria */}
       <nav className="px-4 py-4 border-t border-dark-border space-y-2">
-        {secondaryNavigation.map((item) => {
+        {secondaryNavigation.map(item => {
           const Icon = item.icon;
           const isActive = currentPath === item.href;
-          
+
           return (
             <Link
               key={item.name}
               to={item.href}
               onClick={onItemClick}
-              className={cn(
-                'nav-item',
-                isActive && 'active'
-              )}
+              className={cn('nav-item', isActive && 'active')}
               aria-current={isActive ? 'page' : undefined}
             >
               <Icon size={20} />

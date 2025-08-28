@@ -211,11 +211,11 @@
     .btn {
       @apply border-2;
     }
-    
+
     .card {
       @apply border-2;
     }
-    
+
     .input {
       @apply border-2;
     }
@@ -236,11 +236,11 @@
   .no-print {
     display: none !important;
   }
-  
+
   .card {
     @apply border border-gray-300 shadow-none;
   }
-  
+
   body {
     @apply bg-white text-black;
   }

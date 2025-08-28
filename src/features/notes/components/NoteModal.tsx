@@ -20,9 +20,11 @@ export function NoteModal() {
             <X size={20} />
           </button>
         </div>
-        
+
         <div className="p-6">
-          <p className="text-dark-text-muted">Placeholder - Implementar gestión de notas académicas</p>
+          <p className="text-dark-text-muted">
+            Placeholder - Implementar gestión de notas académicas
+          </p>
         </div>
       </div>
     </div>

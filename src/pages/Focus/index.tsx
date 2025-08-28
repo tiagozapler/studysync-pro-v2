@@ -4,7 +4,14 @@ import { Link } from 'react-router-dom';
 import { useAppStore } from '../../lib/store';
 
 export function Focus() {
-  const { focusMode, startFocusMode, exitFocusMode, startPomodoro, pausePomodoro, resetPomodoro } = useAppStore();
+  const {
+    focusMode,
+    startFocusMode,
+    exitFocusMode,
+    startPomodoro,
+    pausePomodoro,
+    resetPomodoro,
+  } = useAppStore();
 
   React.useEffect(() => {
     if (!focusMode.active) {
@@ -24,7 +31,11 @@ export function Focus() {
       <header className="p-4 border-b border-dark-border">
         <div className="flex items-center justify-between">
           <h1 className="font-display font-bold text-xl">Modo Focus</h1>
-          <Link to="/dashboard" onClick={exitFocusMode} className="btn btn-ghost">
+          <Link
+            to="/dashboard"
+            onClick={exitFocusMode}
+            className="btn btn-ghost"
+          >
             <X size={16} />
             Salir
           </Link>
@@ -39,9 +50,7 @@ export function Focus() {
             <div className="text-6xl font-bold font-display mb-4">
               {formatTime(focusMode.pomodoroTime)}
             </div>
-            <div className="text-dark-text-muted">
-              Sesión de concentración
-            </div>
+            <div className="text-dark-text-muted">Sesión de concentración</div>
           </div>
 
           {/* Controles */}
@@ -50,7 +59,11 @@ export function Focus() {
               onClick={focusMode.pomodoroActive ? pausePomodoro : startPomodoro}
               className="btn btn-primary w-16 h-16 rounded-full"
             >
-              {focusMode.pomodoroActive ? <Pause size={24} /> : <Play size={24} />}
+              {focusMode.pomodoroActive ? (
+                <Pause size={24} />
+              ) : (
+                <Play size={24} />
+              )}
             </button>
             <button
               onClick={resetPomodoro}
@@ -72,15 +85,28 @@ export function Focus() {
               <div className="text-2xl font-bold text-dark-text-primary">
                 25
               </div>
-              <div className="text-sm text-dark-text-muted">Minutos por sesión</div>
+              <div className="text-sm text-dark-text-muted">
+                Minutos por sesión
+              </div>
             </div>
           </div>
 
           {/* Instrucciones */}
           <div className="text-sm text-dark-text-muted space-y-2">
-            <p><kbd className="px-2 py-1 bg-dark-bg-tertiary rounded">Espacio</kbd> - Iniciar/Pausar</p>
-            <p><kbd className="px-2 py-1 bg-dark-bg-tertiary rounded">N</kbd> - Nueva nota rápida</p>
-            <p><kbd className="px-2 py-1 bg-dark-bg-tertiary rounded">Esc</kbd> - Salir del modo focus</p>
+            <p>
+              <kbd className="px-2 py-1 bg-dark-bg-tertiary rounded">
+                Espacio
+              </kbd>{' '}
+              - Iniciar/Pausar
+            </p>
+            <p>
+              <kbd className="px-2 py-1 bg-dark-bg-tertiary rounded">N</kbd> -
+              Nueva nota rápida
+            </p>
+            <p>
+              <kbd className="px-2 py-1 bg-dark-bg-tertiary rounded">Esc</kbd> -
+              Salir del modo focus
+            </p>
           </div>
         </div>
       </div>

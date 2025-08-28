@@ -27,19 +27,31 @@ export class FileContentExtractor {
       }
 
       // Documentos de Word
-      if (fileType.includes('word') || fileName.endsWith('.doc') || fileName.endsWith('.docx')) {
+      if (
+        fileType.includes('word') ||
+        fileName.endsWith('.doc') ||
+        fileName.endsWith('.docx')
+      ) {
         return await this.extractWordContent(file);
       }
 
       // Hojas de cálculo
-      if (fileType.includes('excel') || fileType.includes('spreadsheet') || 
-          fileName.endsWith('.xls') || fileName.endsWith('.xlsx')) {
+      if (
+        fileType.includes('excel') ||
+        fileType.includes('spreadsheet') ||
+        fileName.endsWith('.xls') ||
+        fileName.endsWith('.xlsx')
+      ) {
         return await this.extractExcelContent(file);
       }
 
       // Presentaciones
-      if (fileType.includes('powerpoint') || fileType.includes('presentation') ||
-          fileName.endsWith('.ppt') || fileName.endsWith('.pptx')) {
+      if (
+        fileType.includes('powerpoint') ||
+        fileType.includes('presentation') ||
+        fileName.endsWith('.ppt') ||
+        fileName.endsWith('.pptx')
+      ) {
         return await this.extractPowerPointContent(file);
       }
 
@@ -71,18 +83,19 @@ export class FileContentExtractor {
         const pdfjsLib = (window as any).pdfjsLib;
         const arrayBuffer = await file.arrayBuffer();
         const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
-        
+
         let content = '';
         for (let i = 1; i <= pdf.numPages; i++) {
           const page = await pdf.getPage(i);
           const textContent = await page.getTextContent();
-          content += textContent.items.map((item: any) => item.str).join(' ') + '\n';
+          content +=
+            textContent.items.map((item: any) => item.str).join(' ') + '\n';
         }
         return content;
       }
 
       // Fallback: usar la API de FileReader
-      return new Promise((resolve) => {
+      return new Promise(resolve => {
         const reader = new FileReader();
         reader.onload = () => {
           // Intentar extraer texto del PDF (limitado)
@@ -110,7 +123,7 @@ export class FileContentExtractor {
       }
 
       // Fallback: usar FileReader
-      return new Promise((resolve) => {
+      return new Promise(resolve => {
         const reader = new FileReader();
         reader.onload = () => {
           resolve('Contenido Word (análisis limitado sin mammoth.js)');
@@ -133,7 +146,7 @@ export class FileContentExtractor {
         const XLSX = (window as any).XLSX;
         const arrayBuffer = await file.arrayBuffer();
         const workbook = XLSX.read(arrayBuffer, { type: 'array' });
-        
+
         let content = '';
         workbook.SheetNames.forEach((sheetName: string) => {
           const worksheet = workbook.Sheets[sheetName];
@@ -148,7 +161,7 @@ export class FileContentExtractor {
       }
 
       // Fallback
-      return new Promise((resolve) => {
+      return new Promise(resolve => {
         const reader = new FileReader();
         reader.onload = () => {
           resolve('Contenido Excel (análisis limitado sin SheetJS)');
@@ -167,10 +180,12 @@ export class FileContentExtractor {
   private static async extractPowerPointContent(file: File): Promise<string> {
     try {
       // Fallback para PowerPoint (difícil de extraer sin librerías especializadas)
-      return new Promise((resolve) => {
+      return new Promise(resolve => {
         const reader = new FileReader();
         reader.onload = () => {
-          resolve('Contenido PowerPoint (análisis limitado - se recomienda convertir a PDF)');
+          resolve(
+            'Contenido PowerPoint (análisis limitado - se recomienda convertir a PDF)'
+          );
         };
         reader.readAsArrayBuffer(file);
       });
@@ -212,8 +227,10 @@ export class FileContentExtractor {
       }
 
       // Fallback para imágenes
-      return new Promise((resolve) => {
-        resolve('Imagen detectada (OCR no disponible - instala Tesseract.js para análisis de texto)');
+      return new Promise(resolve => {
+        resolve(
+          'Imagen detectada (OCR no disponible - instala Tesseract.js para análisis de texto)'
+        );
       });
     } catch (error) {
       console.error('Error extracting image content:', error);
@@ -224,9 +241,11 @@ export class FileContentExtractor {
   /**
    * Analiza el contenido extraído para encontrar fechas importantes
    */
-  static findImportantDates(content: string): Array<{ date: Date; type: string; context: string }> {
+  static findImportantDates(
+    content: string
+  ): Array<{ date: Date; type: string; context: string }> {
     const dates: Array<{ date: Date; type: string; context: string }> = [];
-    
+
     try {
       // Patrones de fechas comunes
       const datePatterns = [
@@ -245,7 +264,7 @@ export class FileContentExtractor {
         while ((match = pattern.exec(content)) !== null) {
           try {
             let date: Date;
-            
+
             if (pattern.source.includes('de')) {
               // Fecha en español
               const day = parseInt(match[1]);
@@ -255,20 +274,32 @@ export class FileContentExtractor {
             } else if (pattern.source.includes('-')) {
               // YYYY-MM-DD o DD-MM-YYYY
               if (pattern.source.startsWith('\\d{4}')) {
-                date = new Date(parseInt(match[1]), parseInt(match[2]) - 1, parseInt(match[3]));
+                date = new Date(
+                  parseInt(match[1]),
+                  parseInt(match[2]) - 1,
+                  parseInt(match[3])
+                );
               } else {
-                date = new Date(parseInt(match[3]), parseInt(match[2]) - 1, parseInt(match[1]));
+                date = new Date(
+                  parseInt(match[3]),
+                  parseInt(match[2]) - 1,
+                  parseInt(match[1])
+                );
               }
             } else {
               // DD/MM/YYYY o MM/DD/YYYY (asumir DD/MM/YYYY)
-              date = new Date(parseInt(match[3]), parseInt(match[2]) - 1, parseInt(match[1]));
+              date = new Date(
+                parseInt(match[3]),
+                parseInt(match[2]) - 1,
+                parseInt(match[1])
+              );
             }
 
             if (!isNaN(date.getTime())) {
               // Determinar tipo de fecha basado en contexto
               const context = this.getDateContext(content, match.index);
               const type = this.determineDateType(context);
-              
+
               dates.push({ date, type, context });
             }
           } catch (dateError) {
@@ -372,14 +403,22 @@ export class FileContentExtractor {
    */
   private static determineDateType(context: string): string {
     const lowerContext = context.toLowerCase();
-    
+
     if (lowerContext.includes('examen') || lowerContext.includes('exam')) {
       return 'examen';
     }
-    if (lowerContext.includes('trabajo') || lowerContext.includes('assignment') || lowerContext.includes('project')) {
+    if (
+      lowerContext.includes('trabajo') ||
+      lowerContext.includes('assignment') ||
+      lowerContext.includes('project')
+    ) {
       return 'trabajo';
     }
-    if (lowerContext.includes('entrega') || lowerContext.includes('due') || lowerContext.includes('deadline')) {
+    if (
+      lowerContext.includes('entrega') ||
+      lowerContext.includes('due') ||
+      lowerContext.includes('deadline')
+    ) {
       return 'entrega';
     }
     if (lowerContext.includes('clase') || lowerContext.includes('class')) {
@@ -388,7 +427,7 @@ export class FileContentExtractor {
     if (lowerContext.includes('revisión') || lowerContext.includes('review')) {
       return 'revisión';
     }
-    
+
     return 'fecha';
   }
 
@@ -398,23 +437,42 @@ export class FileContentExtractor {
   private static determineGradeType(name: string, content: string): string {
     const lowerName = name.toLowerCase();
     const lowerContent = content.toLowerCase();
-    
-    if (lowerName.includes('examen') || lowerName.includes('exam') || lowerContent.includes('examen')) {
+
+    if (
+      lowerName.includes('examen') ||
+      lowerName.includes('exam') ||
+      lowerContent.includes('examen')
+    ) {
       return 'examen';
     }
-    if (lowerName.includes('trabajo') || lowerName.includes('project') || lowerContent.includes('trabajo')) {
+    if (
+      lowerName.includes('trabajo') ||
+      lowerName.includes('project') ||
+      lowerContent.includes('trabajo')
+    ) {
       return 'trabajo';
     }
-    if (lowerName.includes('quiz') || lowerName.includes('test') || lowerContent.includes('quiz')) {
+    if (
+      lowerName.includes('quiz') ||
+      lowerName.includes('test') ||
+      lowerContent.includes('quiz')
+    ) {
       return 'quiz';
     }
-    if (lowerName.includes('participación') || lowerName.includes('participation')) {
+    if (
+      lowerName.includes('participación') ||
+      lowerName.includes('participation')
+    ) {
       return 'participación';
     }
-    if (lowerName.includes('tarea') || lowerName.includes('homework') || lowerContent.includes('tarea')) {
+    if (
+      lowerName.includes('tarea') ||
+      lowerName.includes('homework') ||
+      lowerContent.includes('tarea')
+    ) {
       return 'tarea';
     }
-    
+
     return 'evaluación';
   }
 
@@ -423,8 +481,18 @@ export class FileContentExtractor {
    */
   private static getMonthNumber(monthName: string): number {
     const months: { [key: string]: number } = {
-      'enero': 0, 'febrero': 1, 'marzo': 2, 'abril': 3, 'mayo': 4, 'junio': 5,
-      'julio': 6, 'agosto': 7, 'septiembre': 8, 'octubre': 9, 'noviembre': 10, 'diciembre': 11
+      enero: 0,
+      febrero: 1,
+      marzo: 2,
+      abril: 3,
+      mayo: 4,
+      junio: 5,
+      julio: 6,
+      agosto: 7,
+      septiembre: 8,
+      octubre: 9,
+      noviembre: 10,
+      diciembre: 11,
     };
     return months[monthName] || 0;
   }

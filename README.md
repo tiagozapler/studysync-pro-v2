@@ -7,12 +7,14 @@ Una aplicación web académica completamente **GRATUITA** y **offline-first** di
 ## ✨ Características Principales
 
 ### 🔒 **100% Privado y Offline**
+
 - **Sin backend**: Todos los datos permanecen en tu dispositivo
 - **Sin servicios de pago**: Funciona completamente gratis
 - **PWA**: Instalable como app nativa, funciona sin conexión
 - **IndexedDB**: Almacenamiento robusto para archivos y datos
 
 ### 📚 **Gestión Académica Completa**
+
 - **CRUD de cursos**: Agregar, editar, archivar cursos con colores personalizados
 - **Materiales**: Subida de PDFs, PPTs, documentos con organización por etiquetas
 - **Sistema de notas**: Cálculo automático de promedios y simulaciones
@@ -21,6 +23,7 @@ Una aplicación web académica completamente **GRATUITA** y **offline-first** di
 - **Notas rápidas**: Bloc de notas interno con categorías
 
 ### 🤖 **IA Gratuita (3 Adaptadores)**
+
 - **MOCK**: Simulación para testing (activo por defecto)
 - **WebLLM**: IA en navegador usando WebGPU (modelos cuantizados)
 - **Ollama**: Conexión a IA local (localhost:11434)
@@ -59,6 +62,7 @@ npm run build
 ## 🔧 Características Implementadas
 
 ✅ **Funcionalidades Core**
+
 - [x] Gestión de cursos (CRUD completo)
 - [x] Dashboard con estadísticas
 - [x] Sistema de notas rápidas
@@ -68,6 +72,7 @@ npm run build
 - [x] Almacenamiento local persistente
 
 ✅ **UI/UX**
+
 - [x] Tema oscuro profesional
 - [x] Diseño cuadrado/minimalista
 - [x] Responsive design
@@ -75,6 +80,7 @@ npm run build
 - [x] Loading states y error boundaries
 
 🚧 **En Desarrollo** (Placeholders implementados)
+
 - [ ] Gestión de archivos completa
 - [ ] Sistema de notas académicas
 - [ ] Calendario con eventos

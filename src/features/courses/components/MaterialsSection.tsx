@@ -1,5 +1,14 @@
 import React, { useState, useRef } from 'react';
-import { Upload, File, Folder, Trash2, Download, Eye, Brain, Settings } from 'lucide-react';
+import {
+  Upload,
+  File,
+  Folder,
+  Trash2,
+  Download,
+  Eye,
+  Brain,
+  Settings,
+} from 'lucide-react';
 import { useAppStore } from '../../../lib/store';
 import { FileContentExtractor } from '../../../lib/services/FileContentExtractor';
 import { AIService, AIAnalysisResult } from '../../../lib/services/AIService';
@@ -8,8 +17,11 @@ interface MaterialsSectionProps {
   courseId: string;
 }
 
-export const MaterialsSection: React.FC<MaterialsSectionProps> = ({ courseId }) => {
-  const { files, addFile, deleteFile, addCourseEvent, addCourseGrade } = useAppStore();
+export const MaterialsSection: React.FC<MaterialsSectionProps> = ({
+  courseId,
+}) => {
+  const { files, addFile, deleteFile, addCourseEvent, addCourseGrade } =
+    useAppStore();
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [aiAnalysis, setAiAnalysis] = useState<AIAnalysisResult | null>(null);
@@ -29,20 +41,20 @@ export const MaterialsSection: React.FC<MaterialsSectionProps> = ({ courseId }) 
     try {
       for (let i = 0; i < files.length; i++) {
         const file = files[i];
-        
+
         // Actualizar progreso
         setUploadProgress((i / files.length) * 100);
 
         // Extraer contenido del archivo
         const content = await FileContentExtractor.extractContent(file);
-        
+
         // Analizar contenido con IA
         const analysis = await aiService.analyzeFileContent(content, file.name);
         setAiAnalysis(analysis);
-        
+
         // Agregar archivo al store
         await addFile(courseId, file, []);
-        
+
         // Si se encontraron fechas, agregar eventos al calendario
         if (analysis.dates.length > 0) {
           for (const dateInfo of analysis.dates) {
@@ -53,11 +65,11 @@ export const MaterialsSection: React.FC<MaterialsSectionProps> = ({ courseId }) 
               type: 'assignment',
               priority: 'medium',
               source: 'auto-detected',
-              sourceFile: file.name
+              sourceFile: file.name,
             });
           }
         }
-        
+
         // Si se encontraron calificaciones, agregar notas
         if (analysis.grades.length > 0) {
           for (const gradeInfo of analysis.grades) {
@@ -66,12 +78,18 @@ export const MaterialsSection: React.FC<MaterialsSectionProps> = ({ courseId }) 
               score: gradeInfo.score,
               maxScore: gradeInfo.maxScore,
               weight: gradeInfo.weight,
-              type: gradeInfo.type as 'exam' | 'quiz' | 'project' | 'homework' | 'participation' | 'other',
+              type: gradeInfo.type as
+                | 'exam'
+                | 'quiz'
+                | 'project'
+                | 'homework'
+                | 'participation'
+                | 'other',
             });
           }
         }
       }
-      
+
       setUploadProgress(100);
       setTimeout(() => setUploadProgress(0), 1000);
     } catch (error) {
@@ -95,7 +113,7 @@ export const MaterialsSection: React.FC<MaterialsSectionProps> = ({ courseId }) 
     e.preventDefault();
     e.stopPropagation();
     setDragActive(false);
-    
+
     if (e.dataTransfer.files && e.dataTransfer.files[0]) {
       handleFileUpload(e.dataTransfer.files);
     }
@@ -143,7 +161,9 @@ export const MaterialsSection: React.FC<MaterialsSectionProps> = ({ courseId }) 
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h3 className="text-lg font-semibold text-gray-900">Materiales del Curso</h3>
+        <h3 className="text-lg font-semibold text-gray-900">
+          Materiales del Curso
+        </h3>
         <div className="flex space-x-2">
           <button
             onClick={() => setShowAISettings(true)}
@@ -167,23 +187,34 @@ export const MaterialsSection: React.FC<MaterialsSectionProps> = ({ courseId }) 
         <div className="flex items-center justify-between">
           <div className="flex items-center">
             <Brain className="h-5 w-5 text-purple-600 mr-2" />
-            <h4 className="text-sm font-medium text-gray-900">Estado de la IA</h4>
+            <h4 className="text-sm font-medium text-gray-900">
+              Estado de la IA
+            </h4>
           </div>
           <div className="flex space-x-2">
-            <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-              systemInfo.ollama ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
-            }`}>
+            <span
+              className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                systemInfo.ollama
+                  ? 'bg-green-100 text-green-800'
+                  : 'bg-gray-100 text-gray-800'
+              }`}
+            >
               Ollama: {systemInfo.ollama ? 'Disponible' : 'No disponible'}
             </span>
-            <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-              systemInfo.hasToken ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'
-            }`}>
+            <span
+              className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                systemInfo.hasToken
+                  ? 'bg-green-100 text-green-800'
+                  : 'bg-yellow-100 text-yellow-800'
+              }`}
+            >
               Hugging Face: {systemInfo.hasToken ? 'Configurado' : 'Sin token'}
             </span>
           </div>
         </div>
         <p className="text-xs text-gray-500 mt-2">
-          La IA analizará automáticamente el contenido de los archivos para extraer fechas, calificaciones y información importante.
+          La IA analizará automáticamente el contenido de los archivos para
+          extraer fechas, calificaciones y información importante.
         </p>
       </div>
 
@@ -232,9 +263,11 @@ export const MaterialsSection: React.FC<MaterialsSectionProps> = ({ courseId }) 
         <div className="bg-white p-4 rounded-lg shadow border">
           <div className="flex items-center mb-3">
             <Brain className="h-5 w-5 text-purple-600 mr-2" />
-            <h4 className="text-sm font-medium text-gray-900">Análisis de IA</h4>
+            <h4 className="text-sm font-medium text-gray-900">
+              Análisis de IA
+            </h4>
           </div>
-          
+
           {/* Resumen */}
           <div className="mb-4">
             <h5 className="text-xs font-medium text-gray-700 mb-1">Resumen</h5>
@@ -244,10 +277,15 @@ export const MaterialsSection: React.FC<MaterialsSectionProps> = ({ courseId }) 
           {/* Temas */}
           {aiAnalysis.topics.length > 0 && (
             <div className="mb-4">
-              <h5 className="text-xs font-medium text-gray-700 mb-1">Temas Identificados</h5>
+              <h5 className="text-xs font-medium text-gray-700 mb-1">
+                Temas Identificados
+              </h5>
               <div className="flex flex-wrap gap-2">
                 {aiAnalysis.topics.map((topic, index) => (
-                  <span key={index} className="inline-flex px-2 py-1 text-xs font-medium bg-blue-100 text-blue-800 rounded-full">
+                  <span
+                    key={index}
+                    className="inline-flex px-2 py-1 text-xs font-medium bg-blue-100 text-blue-800 rounded-full"
+                  >
                     {topic}
                   </span>
                 ))}
@@ -258,19 +296,27 @@ export const MaterialsSection: React.FC<MaterialsSectionProps> = ({ courseId }) 
           {/* Fechas */}
           {aiAnalysis.dates.length > 0 && (
             <div className="mb-4">
-              <h5 className="text-xs font-medium text-gray-700 mb-1">Fechas Importantes</h5>
+              <h5 className="text-xs font-medium text-gray-700 mb-1">
+                Fechas Importantes
+              </h5>
               <div className="space-y-2">
                 {aiAnalysis.dates.map((dateInfo, index) => (
-                  <div key={index} className="flex items-center justify-between p-2 bg-gray-50 rounded">
+                  <div
+                    key={index}
+                    className="flex items-center justify-between p-2 bg-gray-50 rounded"
+                  >
                     <div>
                       <span className="text-sm font-medium text-gray-900">
                         {dateInfo.date.toLocaleDateString()}
                       </span>
                       <span className="ml-2 text-xs text-gray-500">
-                        {dateInfo.type} • {Math.round(dateInfo.confidence * 100)}% confianza
+                        {dateInfo.type} •{' '}
+                        {Math.round(dateInfo.confidence * 100)}% confianza
                       </span>
                     </div>
-                    <span className="text-xs text-gray-600">{dateInfo.context}</span>
+                    <span className="text-xs text-gray-600">
+                      {dateInfo.context}
+                    </span>
                   </div>
                 ))}
               </div>
@@ -280,14 +326,22 @@ export const MaterialsSection: React.FC<MaterialsSectionProps> = ({ courseId }) 
           {/* Calificaciones */}
           {aiAnalysis.grades.length > 0 && (
             <div className="mb-4">
-              <h5 className="text-xs font-medium text-gray-700 mb-1">Calificaciones Detectadas</h5>
+              <h5 className="text-xs font-medium text-gray-700 mb-1">
+                Calificaciones Detectadas
+              </h5>
               <div className="space-y-2">
                 {aiAnalysis.grades.map((grade, index) => (
-                  <div key={index} className="flex items-center justify-between p-2 bg-gray-50 rounded">
+                  <div
+                    key={index}
+                    className="flex items-center justify-between p-2 bg-gray-50 rounded"
+                  >
                     <div>
-                      <span className="text-sm font-medium text-gray-900">{grade.name}</span>
+                      <span className="text-sm font-medium text-gray-900">
+                        {grade.name}
+                      </span>
                       <span className="ml-2 text-xs text-gray-500">
-                        {grade.score}/{grade.maxScore} • {grade.weight}% peso • {Math.round(grade.confidence * 100)}% confianza
+                        {grade.score}/{grade.maxScore} • {grade.weight}% peso •{' '}
+                        {Math.round(grade.confidence * 100)}% confianza
                       </span>
                     </div>
                     <span className="text-xs text-gray-600">{grade.type}</span>
@@ -300,10 +354,15 @@ export const MaterialsSection: React.FC<MaterialsSectionProps> = ({ courseId }) 
           {/* Información importante */}
           {aiAnalysis.importantInfo.length > 0 && (
             <div>
-              <h5 className="text-xs font-medium text-gray-700 mb-1">Información Importante</h5>
+              <h5 className="text-xs font-medium text-gray-700 mb-1">
+                Información Importante
+              </h5>
               <div className="space-y-2">
                 {aiAnalysis.importantInfo.map((info, index) => (
-                  <div key={index} className="p-2 bg-yellow-50 border-l-4 border-yellow-400">
+                  <div
+                    key={index}
+                    className="p-2 bg-yellow-50 border-l-4 border-yellow-400"
+                  >
                     <p className="text-sm text-gray-700">{info}</p>
                   </div>
                 ))}
@@ -322,15 +381,19 @@ export const MaterialsSection: React.FC<MaterialsSectionProps> = ({ courseId }) 
             </h4>
           </div>
           <ul className="divide-y divide-gray-200">
-            {courseFiles.map((file) => (
+            {courseFiles.map(file => (
               <li key={file.id} className="px-6 py-4">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center">
                     <File className="h-5 w-5 text-gray-400 mr-3" />
                     <div>
-                      <p className="text-sm font-medium text-gray-900">{file.name}</p>
+                      <p className="text-sm font-medium text-gray-900">
+                        {file.name}
+                      </p>
                       <p className="text-sm text-gray-500">
-                        {file.size ? `${(file.size / 1024 / 1024).toFixed(2)} MB` : 'Tamaño desconocido'}
+                        {file.size
+                          ? `${(file.size / 1024 / 1024).toFixed(2)} MB`
+                          : 'Tamaño desconocido'}
                       </p>
                     </div>
                   </div>
@@ -376,13 +439,16 @@ export const MaterialsSection: React.FC<MaterialsSectionProps> = ({ courseId }) 
                 <Brain className="h-5 w-5 text-purple-600 mr-2" />
                 Configurar IA
               </h3>
-              
+
               <div className="space-y-4">
                 {/* Ollama */}
                 <div className="p-3 bg-gray-50 rounded-lg">
-                  <h4 className="text-sm font-medium text-gray-900 mb-2">Ollama (Local - Gratuito)</h4>
+                  <h4 className="text-sm font-medium text-gray-900 mb-2">
+                    Ollama (Local - Gratuito)
+                  </h4>
                   <p className="text-xs text-gray-600 mb-2">
-                    Instala Ollama en tu computadora para usar IA local gratuita.
+                    Instala Ollama en tu computadora para usar IA local
+                    gratuita.
                   </p>
                   <a
                     href="https://ollama.ai"
@@ -396,16 +462,19 @@ export const MaterialsSection: React.FC<MaterialsSectionProps> = ({ courseId }) 
 
                 {/* Hugging Face */}
                 <div className="p-3 bg-blue-50 rounded-lg">
-                  <h4 className="text-sm font-medium text-gray-900 mb-2">Hugging Face (API Gratuita)</h4>
+                  <h4 className="text-sm font-medium text-gray-900 mb-2">
+                    Hugging Face (API Gratuita)
+                  </h4>
                   <p className="text-xs text-gray-600 mb-2">
-                    Obtén un token gratuito de Hugging Face para usar IA en la nube.
+                    Obtén un token gratuito de Hugging Face para usar IA en la
+                    nube.
                   </p>
                   <div className="space-y-2">
                     <input
                       type="text"
                       placeholder="Token de Hugging Face"
                       value={huggingFaceToken}
-                      onChange={(e) => setHuggingFaceToken(e.target.value)}
+                      onChange={e => setHuggingFaceToken(e.target.value)}
                       className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                     />
                     <a
