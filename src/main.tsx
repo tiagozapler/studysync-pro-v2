@@ -2,100 +2,9 @@ import React from 'react';
 import ReactDOM from 'react-dom/client';
 import { App } from './App';
 import './styles/globals.css';
-import { initDatabase } from './lib/db/database';
-import { storage } from './lib/storage/localStorage';
 import { validateEnv } from './lib/config/env';
 import { useAppStore } from './lib/store';
-import './lib/utils/globalExports'; // Importar utilidades de exportación global
-
-// EXPORTACIÓN INMEDIATA Y DIRECTA AL SCOPE GLOBAL
-if (typeof window !== 'undefined') {
-  // Exportar React inmediatamente
-  (window as any).React = React;
-  (window as any).ReactDOM = ReactDOM;
-
-  // Exportar hooks comunes de React
-  (window as any).ReactHooks = {
-    useState: React.useState,
-    useEffect: React.useEffect,
-    useContext: React.useContext,
-    useReducer: React.useReducer,
-    useCallback: React.useCallback,
-    useMemo: React.useMemo,
-    useRef: React.useRef,
-  };
-
-  console.log('✅ React exportado inmediatamente al scope global');
-  console.log('✅ ReactDOM exportado inmediatamente al scope global');
-  console.log('✅ ReactHooks exportados inmediatamente al scope global');
-
-  // Función para exportar el store cuando esté disponible
-  const exportStoreWhenReady = () => {
-    try {
-      if (typeof useAppStore === 'undefined') {
-        console.log('⏳ useAppStore no está disponible aún, reintentando...');
-        setTimeout(exportStoreWhenReady, 100);
-        return;
-      }
-
-      if (typeof useAppStore !== 'function') {
-        console.error('❌ useAppStore no es una función:', typeof useAppStore);
-        return;
-      }
-
-      // Exportar el store completo
-      (window as any).appStore = useAppStore;
-      (window as any).store = useAppStore;
-      (window as any).storeInstance = useAppStore.getState();
-
-      // Exportar acciones específicas
-      (window as any).appStoreActions = {
-        addCourse: (courseData: any) =>
-          useAppStore.getState().addCourse(courseData),
-        switchToSupabase: () => useAppStore.getState().switchToSupabase(),
-        switchToIndexedDB: () => useAppStore.getState().switchToIndexedDB(),
-        checkSupabaseConnection: () =>
-          useAppStore.getState().checkSupabaseConnection(),
-        getState: () => useAppStore.getState(),
-      };
-
-      console.log('✅ Store exportado inmediatamente al scope global');
-      console.log(
-        '✅ Acciones del store exportadas inmediatamente al scope global'
-      );
-
-      // Verificar que todo esté funcionando
-      if (window.appStore && window.appStoreActions) {
-        console.log('🎯 Sistema completo exportado exitosamente');
-
-        // Probar una acción para verificar que funcione
-        try {
-          const testState = window.appStoreActions.getState();
-          console.log('✅ Acciones del store funcionando correctamente');
-          console.log('📊 Estado inicial:', {
-            courses: testState.courses?.length || 0,
-            isInitialized: testState.isInitialized,
-            useSupabase: testState.settings?.useSupabase,
-            useIndexedDB: testState.settings?.useIndexedDB,
-          });
-        } catch (error) {
-          console.error('❌ Error verificando acciones del store:', error);
-        }
-      }
-    } catch (error) {
-      console.error('❌ Error exportando store:', error);
-      setTimeout(exportStoreWhenReady, 200);
-    }
-  };
-
-  // Iniciar exportación del store
-  exportStoreWhenReady();
-
-  // También exportar después de delays para asegurar que funcione
-  setTimeout(exportStoreWhenReady, 500);
-  setTimeout(exportStoreWhenReady, 1000);
-  setTimeout(exportStoreWhenReady, 2000);
-}
+import './lib/utils/globalExports'; // opcional
 
 // Persistencia aquí - Inicializar la aplicación
 async function initApp() {
@@ -108,34 +17,8 @@ async function initApp() {
     await useAppStore.getState().initialize();
     console.log('✅ Store global inicializado correctamente');
 
-    // Inicializar base de datos IndexedDB
-    const dbInitialized = await initDatabase();
-    if (!dbInitialized) {
-      console.error('❌ Error al inicializar la base de datos');
-      return;
-    }
-
-    // Verificar y migrar localStorage si es necesario
-    storage.migrate();
-
-    // Aplicar configuraciones iniciales
-    const settings = storage.getSettings();
-
     // Aplicar tema oscuro (siempre activo en esta app)
     document.documentElement.classList.add('dark');
-
-    // Aplicar configuraciones de accesibilidad
-    if (settings.highContrast) {
-      document.documentElement.style.setProperty('--contrast-mode', 'high');
-    }
-
-    if (settings.fontSize !== 'normal') {
-      document.documentElement.classList.add(`font-size-${settings.fontSize}`);
-    }
-
-    if (settings.density !== 'normal') {
-      document.documentElement.classList.add(`density-${settings.density}`);
-    }
 
     // Configurar service worker para PWA (si está soportado)
     if ('serviceWorker' in navigator && import.meta.env.PROD) {
@@ -147,16 +30,6 @@ async function initApp() {
       }
     }
 
-    // Configurar notificaciones si están habilitadas
-    if (settings.notifications && 'Notification' in window) {
-      if (Notification.permission === 'default') {
-        // No pedimos permisos automáticamente, lo haremos cuando el usuario lo active
-        console.log(
-          '📱 Notificaciones disponibles, esperando activación del usuario'
-        );
-      }
-    }
-
     console.log('🚀 StudySync Pro inicializado correctamente');
   } catch (error) {
     console.error('❌ Error crítico durante la inicialización:', error);
@@ -165,11 +38,49 @@ async function initApp() {
 
 // Inicializar y renderizar la aplicación
 initApp().then(() => {
-  ReactDOM.createRoot(document.getElementById('root')!).render(
+  const root = ReactDOM.createRoot(document.getElementById('root')!);
+  root.render(
     <React.StrictMode>
       <App />
     </React.StrictMode>
   );
+
+  // Exponer React y utilidades al window (DEV) - DESPUÉS del render
+  if (typeof window !== 'undefined') {
+    // React
+    (window as any).React = React;
+    (window as any).ReactDOM = ReactDOM;
+    (window as any).ReactHooks = {
+      useState: React.useState,
+      useEffect: React.useEffect,
+      useContext: React.useContext,
+      useReducer: React.useReducer,
+      useCallback: React.useCallback,
+      useMemo: React.useMemo,
+      useRef: React.useRef,
+    };
+
+    // Store (hook y acceso directo a estado/acciones)
+    (window as any).appStore = useAppStore;
+    (window as any).getAppState = () => useAppStore.getState();
+    (window as any).appStoreActions = {
+      addCourse: (courseData: any) =>
+        useAppStore.getState().addCourse(courseData),
+      initialize: () => useAppStore.getState().initialize(),
+      getState: () => useAppStore.getState(),
+    };
+
+    console.log('✅ React y appStore expuestos en window (post-render)');
+  }
+
+  // HMR re-exposición
+  if ((import.meta as any).hot) {
+    (import.meta as any).hot.accept(() => {
+      (window as any).appStore = useAppStore;
+      (window as any).getAppState = () => useAppStore.getState();
+      console.log('HMR: re-expuesto en main.tsx');
+    });
+  }
 });
 
 // Manejar errores globales
@@ -192,17 +103,12 @@ window.addEventListener('beforeinstallprompt', event => {
   (window as any).deferredPrompt = event;
 
   // Mostrar indicador de que la app se puede instalar
-  const settings = storage.getSettings();
-  if (!settings.installPromptShown) {
-    console.log('📱 PWA lista para instalar');
-    // Aquí podríamos mostrar una notificación discreta
-  }
+  console.log('📱 PWA lista para instalar');
 });
 
 // Detectar cuando la PWA se instala
 window.addEventListener('appinstalled', () => {
   console.log('✅ PWA instalada correctamente');
-  storage.saveSettings({ installPromptShown: true });
 });
 
 // Detectar cambios en la conectividad
@@ -261,15 +167,10 @@ if (import.meta.env.DEV) {
 
   // Herramientas de debug globales
   (window as any).studysyncDebug = {
-    storage,
     clearAllData: () => {
       localStorage.clear();
       indexedDB.deleteDatabase('StudySyncDB');
       location.reload();
-    },
-    exportData: async () => {
-      const { useAppStore } = await import('./lib/store');
-      return useAppStore.getState().exportData();
     },
   };
 }

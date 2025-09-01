@@ -4,13 +4,13 @@ import { persist } from 'zustand/middleware';
 import {
   db,
   initDatabase,
-  type Course,
   type FileRecord,
   type Note,
   type Event,
   type Todo,
   type QuickNote,
 } from '../db/database';
+import { type Course } from '../types';
 import {
   storage,
   type AppSettings,
@@ -19,6 +19,14 @@ import {
 import { idUtils } from '../utils';
 import { supabase } from '../supabase/config';
 import { env } from '../config/env';
+import {
+  getCoursesFromSupabase,
+  saveCourseToSupabase,
+} from '../supabase/database';
+import {
+  saveCourseToIndexedDB,
+  getCoursesFromIndexedDB,
+} from '../db/indexeddb';
 
 // Tipos para el estado global
 interface AppState {
@@ -84,7 +92,7 @@ interface AppActions {
 
   // Cursos
   addCourse: (
-    courseData: Omit<Course, 'id' | 'createdAt' | 'updatedAt'>
+    courseData: Omit<Course, 'id' | 'created_at' | 'updated_at' | 'user_id'>
   ) => Promise<void>;
   updateCourse: (id: string, updates: Partial<Course>) => Promise<void>;
   deleteCourse: (id: string) => Promise<void>;
@@ -261,6 +269,7 @@ interface AppActions {
 
   // Utilidades
   loadCourseData: (courseId: string) => Promise<void>;
+  loadCourses: () => Promise<void>;
   exportData: () => Promise<any>;
   importData: (data: any) => Promise<void>;
   clearAllData: () => Promise<void>;
@@ -357,23 +366,81 @@ export const useAppStore = create<AppState & AppActions>()(
               isLoading: false,
             };
 
-            // Intentar cargar datos de la base de datos
-            try {
-              const [courses, events, quickNotes] = await Promise.allSettled([
-                db.courses.where('archived').equals(0).toArray(),
-                db.events.toArray(),
-                db.quickNotes.toArray(),
-              ]);
+            // Cargar cursos usando la función loadCourses
+            await get().loadCourses();
 
-              // Procesar resultados exitosos
-              if (courses.status === 'fulfilled') {
-                initialState.courses = courses.value;
-              }
-              if (events.status === 'fulfilled') {
-                initialState.events = events.value;
-              }
-              if (quickNotes.status === 'fulfilled') {
-                initialState.quickNotes = quickNotes.value;
+            // Cargar otros datos (eventos y notas rápidas)
+            try {
+              if (get().settings.useSupabase) {
+                // Cargar desde Supabase
+                console.log(
+                  '🔄 Cargando eventos y notas rápidas desde Supabase...'
+                );
+                const [eventsResult, quickNotesResult] =
+                  await Promise.allSettled([
+                    supabase.from('events').select('*'),
+                    supabase.from('quick_notes').select('*'),
+                  ]);
+
+                // Procesar resultados de Supabase
+                if (
+                  eventsResult.status === 'fulfilled' &&
+                  !eventsResult.value.error
+                ) {
+                  initialState.events = eventsResult.value.data || [];
+                  console.log(
+                    '✅ Eventos cargados desde Supabase:',
+                    initialState.events.length
+                  );
+                } else {
+                  console.warn(
+                    '⚠️ Error cargando eventos desde Supabase, fallback a IndexedDB'
+                  );
+                  const localEvents = await db.events.toArray();
+                  initialState.events = localEvents;
+                }
+
+                if (
+                  quickNotesResult.status === 'fulfilled' &&
+                  !quickNotesResult.value.error
+                ) {
+                  initialState.quickNotes = quickNotesResult.value.data || [];
+                  console.log(
+                    '✅ Notas rápidas cargadas desde Supabase:',
+                    initialState.quickNotes.length
+                  );
+                } else {
+                  console.warn(
+                    '⚠️ Error cargando notas rápidas desde Supabase, fallback a IndexedDB'
+                  );
+                  const localQuickNotes = await db.quickNotes.toArray();
+                  initialState.quickNotes = localQuickNotes;
+                }
+              } else {
+                // Cargar desde IndexedDB
+                console.log(
+                  '🔄 Cargando eventos y notas rápidas desde IndexedDB...'
+                );
+                const [events, quickNotes] = await Promise.allSettled([
+                  db.events.toArray(),
+                  db.quickNotes.toArray(),
+                ]);
+
+                // Procesar resultados exitosos
+                if (events.status === 'fulfilled') {
+                  initialState.events = events.value;
+                  console.log(
+                    '✅ Eventos cargados desde IndexedDB:',
+                    initialState.events.length
+                  );
+                }
+                if (quickNotes.status === 'fulfilled') {
+                  initialState.quickNotes = quickNotes.value;
+                  console.log(
+                    '✅ Notas rápidas cargadas desde IndexedDB:',
+                    initialState.quickNotes.length
+                  );
+                }
               }
 
               // Cargar datos relacionados de cursos
@@ -445,22 +512,131 @@ export const useAppStore = create<AppState & AppActions>()(
 
         // Gestión de cursos
         addCourse: async courseData => {
-          const newCourse: Course = {
-            ...courseData,
-            id: idUtils.generate(),
-            archived: false,
-            createdAt: new Date(),
-            updatedAt: new Date(),
-          };
+          try {
+            // Verificar si hay usuario autenticado
+            const {
+              data: { user },
+            } = await supabase.auth.getUser();
 
-          await db.courses.add(newCourse);
+            if (user && get().settings.useSupabase) {
+              console.log('🔄 Guardando curso en Supabase...');
 
-          set(state => ({
-            courses: [...state.courses, newCourse],
-            files: { ...state.files, [newCourse.id]: [] },
-            notes: { ...state.notes, [newCourse.id]: [] },
-            todos: { ...state.todos, [newCourse.id]: [] },
-          }));
+              // Preparar datos para Supabase (sin archived)
+              const supabaseCourseData = {
+                name: courseData.name,
+                color: courseData.color,
+                teacher: courseData.teacher || 'Sin profesor',
+                credits: courseData.credits || 0,
+                semester: courseData.semester || 'Sin semestre',
+              };
+
+              const newCourse = await saveCourseToSupabase(
+                supabaseCourseData,
+                user.id
+              );
+
+              // Convertir el curso de Supabase al formato local
+              const localCourse: Course = {
+                id: newCourse.id,
+                name: newCourse.name,
+                color: newCourse.color,
+                teacher: newCourse.teacher,
+                credits: newCourse.credits,
+                semester: newCourse.semester,
+                archived: false, // Valor por defecto local
+                user_id: newCourse.user_id,
+                created_at: newCourse.created_at,
+                updated_at: newCourse.updated_at,
+              };
+
+              set(state => ({
+                courses: [...state.courses, localCourse],
+                files: { ...state.files, [localCourse.id]: [] },
+                notes: { ...state.notes, [localCourse.id]: [] },
+                todos: { ...state.todos, [localCourse.id]: [] },
+              }));
+              console.log('✅ Curso guardado en Supabase:', localCourse);
+            } else {
+              // No hay usuario autenticado o Supabase deshabilitado → usar IndexedDB
+              console.log(
+                '🔄 Guardando curso en IndexedDB (sin usuario autenticado)...'
+              );
+              const newCourse = await saveCourseToIndexedDB({
+                name: courseData.name,
+                color: courseData.color,
+                teacher: courseData.teacher || 'Sin profesor',
+                credits: courseData.credits || 0,
+                semester: courseData.semester || 'Sin semestre',
+                archived: false,
+              });
+
+              // Convertir el curso de IndexedDB al formato local
+              const localCourse: Course = {
+                id: newCourse.id,
+                name: newCourse.name,
+                color: newCourse.color,
+                teacher: newCourse.teacher,
+                credits: newCourse.credits,
+                semester: newCourse.semester,
+                archived: newCourse.archived,
+                user_id: newCourse.user_id,
+                created_at: newCourse.created_at,
+                updated_at: newCourse.updated_at,
+              };
+
+              set(state => ({
+                courses: [...state.courses, localCourse],
+                files: { ...state.files, [localCourse.id]: [] },
+                notes: { ...state.notes, [localCourse.id]: [] },
+                todos: { ...state.todos, [localCourse.id]: [] },
+              }));
+              console.log('✅ Curso guardado en IndexedDB:', localCourse);
+            }
+          } catch (err) {
+            console.error('❌ addCourse error:', err);
+            // Fallback a IndexedDB en caso de error
+            try {
+              console.log('🔄 Fallback a IndexedDB...');
+              const newCourse = await saveCourseToIndexedDB({
+                name: courseData.name,
+                color: courseData.color,
+                teacher: courseData.teacher || 'Sin profesor',
+                credits: courseData.credits || 0,
+                semester: courseData.semester || 'Sin semestre',
+                archived: false,
+              });
+
+              // Convertir el curso de IndexedDB al formato local
+              const localCourse: Course = {
+                id: newCourse.id,
+                name: newCourse.name,
+                color: newCourse.color,
+                teacher: newCourse.teacher,
+                credits: newCourse.credits,
+                semester: newCourse.semester,
+                archived: newCourse.archived,
+                user_id: newCourse.user_id,
+                created_at: newCourse.created_at,
+                updated_at: newCourse.updated_at,
+              };
+
+              set(state => ({
+                courses: [...state.courses, localCourse],
+                files: { ...state.files, [localCourse.id]: [] },
+                notes: { ...state.notes, [localCourse.id]: [] },
+                todos: { ...state.todos, [localCourse.id]: [] },
+              }));
+              console.log(
+                '✅ Curso guardado en IndexedDB (fallback):',
+                localCourse
+              );
+            } catch (fallbackError) {
+              console.error(
+                '❌ Error crítico en fallback a IndexedDB:',
+                fallbackError
+              );
+            }
+          }
         },
 
         updateCourse: async (id, updates) => {
@@ -1064,6 +1240,106 @@ export const useAppStore = create<AppState & AppActions>()(
           }
         },
 
+        // Cargar cursos desde la fuente de datos configurada
+        loadCourses: async () => {
+          try {
+            // Verificar si hay usuario autenticado
+            const {
+              data: { user },
+            } = await supabase.auth.getUser();
+
+            if (user && get().settings.useSupabase) {
+              console.log('🔄 Cargando cursos desde Supabase...');
+              const supabaseCourses = await getCoursesFromSupabase(user.id);
+
+              // Convertir cursos de Supabase al formato local
+              const localCourses: Course[] = supabaseCourses.map(
+                supabaseCourse => ({
+                  id: supabaseCourse.id,
+                  name: supabaseCourse.name,
+                  color: supabaseCourse.color,
+                  teacher: supabaseCourse.teacher,
+                  credits: supabaseCourse.credits,
+                  semester: supabaseCourse.semester,
+                  archived: false, // Valor por defecto local
+                  user_id: supabaseCourse.user_id,
+                  created_at: supabaseCourse.created_at,
+                  updated_at: supabaseCourse.updated_at,
+                })
+              );
+
+              set({ courses: localCourses });
+              console.log(
+                '✅ Cursos cargados desde Supabase:',
+                localCourses.length
+              );
+            } else {
+              // No hay usuario autenticado o Supabase deshabilitado → usar IndexedDB
+              console.log(
+                '🔄 Cargando cursos desde IndexedDB (sin usuario autenticado)...'
+              );
+              const indexedDBCourses = await getCoursesFromIndexedDB();
+
+              // Convertir cursos de IndexedDB al formato local
+              const localCourses: Course[] = indexedDBCourses.map(
+                indexedDBCourse => ({
+                  id: indexedDBCourse.id,
+                  name: indexedDBCourse.name,
+                  color: indexedDBCourse.color,
+                  teacher: indexedDBCourse.teacher,
+                  credits: indexedDBCourse.credits,
+                  semester: indexedDBCourse.semester,
+                  archived: indexedDBCourse.archived,
+                  user_id: indexedDBCourse.user_id,
+                  created_at: indexedDBCourse.created_at,
+                  updated_at: indexedDBCourse.updated_at,
+                })
+              );
+
+              set({ courses: localCourses });
+              console.log(
+                '✅ Cursos cargados desde IndexedDB:',
+                localCourses.length
+              );
+            }
+          } catch (err) {
+            console.error('❌ Error cargando cursos:', err);
+            // Fallback a IndexedDB
+            try {
+              console.log('🔄 Fallback a IndexedDB...');
+              const indexedDBCourses = await getCoursesFromIndexedDB();
+
+              // Convertir cursos de IndexedDB al formato local
+              const localCourses: Course[] = indexedDBCourses.map(
+                indexedDBCourse => ({
+                  id: indexedDBCourse.id,
+                  name: indexedDBCourse.name,
+                  color: indexedDBCourse.color,
+                  teacher: indexedDBCourse.teacher,
+                  credits: indexedDBCourse.credits,
+                  semester: indexedDBCourse.semester,
+                  archived: indexedDBCourse.archived,
+                  user_id: indexedDBCourse.user_id,
+                  created_at: indexedDBCourse.created_at,
+                  updated_at: indexedDBCourse.updated_at,
+                })
+              );
+
+              set({ courses: localCourses });
+              console.log(
+                '✅ Cursos cargados desde IndexedDB (fallback):',
+                localCourses.length
+              );
+            } catch (fallbackError) {
+              console.error(
+                '❌ Error crítico en fallback a IndexedDB:',
+                fallbackError
+              );
+              set({ courses: [] });
+            }
+          }
+        },
+
         exportData: async () => {
           // Conectar IA real aquí - exportar datos para backup
           const state = get();
@@ -1105,10 +1381,10 @@ export const useAppStore = create<AppState & AppActions>()(
               return false;
             }
 
-            // Verificar conexión a Supabase
+            // Verificar conexión a Supabase con una consulta simple
             const { data, error } = await supabase
               .from('courses')
-              .select('count')
+              .select('id')
               .limit(1);
 
             if (error) {
@@ -1132,6 +1408,32 @@ export const useAppStore = create<AppState & AppActions>()(
             const isConnected = await get().checkSupabaseConnection();
             if (!isConnected) {
               throw new Error('No se puede conectar a Supabase');
+            }
+
+            // Sincronizar datos existentes de IndexedDB a Supabase
+            const currentState = get();
+            if (currentState.courses.length > 0) {
+              console.log('🔄 Sincronizando cursos existentes a Supabase...');
+              for (const course of currentState.courses) {
+                try {
+                  const { error } = await supabase
+                    .from('courses')
+                    .upsert([course], { onConflict: 'id' });
+
+                  if (error) {
+                    console.warn(
+                      `⚠️ Error sincronizando curso ${course.id}:`,
+                      error
+                    );
+                  }
+                } catch (error) {
+                  console.warn(
+                    `⚠️ Error crítico sincronizando curso ${course.id}:`,
+                    error
+                  );
+                }
+              }
+              console.log('✅ Sincronización de cursos completada');
             }
 
             // Actualizar configuración
@@ -1224,125 +1526,28 @@ export const useSettings = () => useAppStore(state => state.settings);
 export const useModals = () => useAppStore(state => state.modals);
 export const useFocusMode = () => useAppStore(state => state.focusMode);
 
-// Exportar globalmente para debugging con verificación robusta
+// Exportar helpers no-hook (API utilitaria)
+export const appStoreAPI = {
+  getState: () => useAppStore.getState(),
+  setState: (patch: any) => useAppStore.setState(patch),
+  subscribe: (listener: any) => useAppStore.subscribe(listener),
+};
+
+// Exponer en window para DEV (seguros de usar import.meta.env.DEV)
 if (typeof window !== 'undefined') {
-  // Función para exportar el store de manera robusta
-  const exportStoreGlobally = () => {
-    try {
-      // Verificar que useAppStore esté disponible
-      if (typeof useAppStore === 'undefined') {
-        console.warn('⚠️ useAppStore no está disponible aún, reintentando...');
-        setTimeout(exportStoreGlobally, 100);
-        return;
-      }
+  (window as any).useAppStore = useAppStore; // el hook / función
+  (window as any).appStoreAPI = appStoreAPI; // API (getState, setState)
+  (window as any).appStore = useAppStore; // alias
+  (window as any).getAppState = () => useAppStore.getState();
+}
 
-      // Verificar que useAppStore sea una función
-      if (typeof useAppStore !== 'function') {
-        console.error('❌ useAppStore no es una función:', typeof useAppStore);
-        return;
-      }
-
-      // Verificar que getState esté disponible
-      if (typeof useAppStore.getState !== 'function') {
-        console.error(
-          '❌ useAppStore.getState no es una función:',
-          typeof useAppStore.getState
-        );
-        return;
-      }
-
-      // Exportar el store completo
-      (window as any).appStore = useAppStore;
-
-      // Exportar acciones específicas con verificación
-      (window as any).appStoreActions = {
-        addCourse: (courseData: any) => {
-          try {
-            return useAppStore.getState().addCourse(courseData);
-          } catch (error) {
-            console.error('❌ Error en addCourse:', error);
-            throw error;
-          }
-        },
-        switchToSupabase: () => {
-          try {
-            return useAppStore.getState().switchToSupabase();
-          } catch (error) {
-            console.error('❌ Error en switchToSupabase:', error);
-            throw error;
-          }
-        },
-        switchToIndexedDB: () => {
-          try {
-            return useAppStore.getState().switchToIndexedDB();
-          } catch (error) {
-            console.error('❌ Error en switchToIndexedDB:', error);
-            throw error;
-          }
-        },
-        checkSupabaseConnection: () => {
-          try {
-            return useAppStore.getState().checkSupabaseConnection();
-          } catch (error) {
-            console.error('❌ Error en checkSupabaseConnection:', error);
-            throw error;
-          }
-        },
-        getState: () => {
-          try {
-            return useAppStore.getState();
-          } catch (error) {
-            console.error('❌ Error en getState:', error);
-            throw error;
-          }
-        },
-      };
-
-      // Exportar también como store directo
-      (window as any).store = useAppStore;
-
-      // Exportar storeInstance para acceso directo
-      (window as any).storeInstance = useAppStore.getState();
-
-      console.log('✅ Store exportado globalmente de manera robusta:', {
-        appStore: !!window.appStore,
-        appStoreActions: !!window.appStoreActions,
-        store: !!window.store,
-        storeInstance: !!window.storeInstance,
-      });
-
-      // Verificar que la exportación sea exitosa
-      if (window.appStore && window.appStoreActions && window.store) {
-        console.log('🎯 Exportación del store completada exitosamente');
-
-        // Verificar que las acciones funcionen
-        try {
-          const testState = window.appStoreActions.getState();
-          console.log('✅ Acciones del store funcionando correctamente');
-          console.log('📊 Estado inicial del store:', {
-            courses: testState.courses?.length || 0,
-            isInitialized: testState.isInitialized,
-            useSupabase: testState.settings?.useSupabase,
-            useIndexedDB: testState.settings?.useIndexedDB,
-          });
-        } catch (error) {
-          console.error('❌ Error verificando acciones del store:', error);
-        }
-      } else {
-        console.error('❌ Exportación del store incompleta');
-      }
-    } catch (error) {
-      console.error('❌ Error crítico exportando store globalmente:', error);
-
-      // Reintentar después de un delay
-      setTimeout(exportStoreGlobally, 200);
-    }
-  };
-
-  // Iniciar exportación con retry automático
-  exportStoreGlobally();
-
-  // También exportar después de un delay para asegurar que funcione
-  setTimeout(exportStoreGlobally, 500);
-  setTimeout(exportStoreGlobally, 1000);
+// HMR: cuando Vite recargue, reasignar referencias
+if ((import.meta as any).hot) {
+  (import.meta as any).hot.accept(() => {
+    (window as any).useAppStore = useAppStore;
+    (window as any).appStoreAPI = appStoreAPI;
+    (window as any).appStore = useAppStore;
+    (window as any).getAppState = () => useAppStore.getState();
+    console.log('HMR: re-expuesto useAppStore en window');
+  });
 }

@@ -2,6 +2,7 @@
 // Este archivo se encarga de exportar React y el store al scope global
 
 import React from 'react';
+import ReactDOM from 'react-dom/client';
 import { useAppStore } from '../store';
 
 // Función para exportar React al scope global
