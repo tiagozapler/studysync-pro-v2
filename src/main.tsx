@@ -4,6 +4,7 @@ import { App } from './App';
 import './styles/globals.css';
 import { validateEnv } from './lib/config/env';
 import { useAppStore } from './lib/store';
+import { supabase } from './lib/supabase/client';
 import './lib/utils/globalExports'; // opcional
 
 // Persistencia aquí - Inicializar la aplicación
@@ -11,6 +12,18 @@ async function initApp() {
   try {
     // Validar variables de entorno
     validateEnv();
+
+    // 🔎 Debug: comprobar usuario al iniciar la app
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    console.log('🔎 Usuario al iniciar la app:', user);
+
+    if (user) {
+      console.log('✅ Usuario autenticado encontrado al iniciar la app');
+    } else {
+      console.log('❌ No hay usuario autenticado al iniciar la app');
+    }
 
     // Inicializar el store global
     console.log('🔄 Inicializando store global...');

@@ -6,6 +6,7 @@ import {
   type SignUpData,
 } from '../lib/supabase/auth';
 import { useNavigate } from 'react-router-dom';
+import { supabase } from '../lib/supabase/client';
 
 export default function Login() {
   const [isSignUp, setIsSignUp] = useState(false);
@@ -87,6 +88,16 @@ export default function Login() {
           // Successful sign in, redirect to dashboard
           navigate('/dashboard');
         }
+      }
+
+      // 🔎 Debug: comprobar sesión justo después de login/signup
+      const { data: { user: currentUser } } = await supabase.auth.getUser();
+      console.log("🔎 Usuario después de login/signup:", currentUser);
+      
+      if (currentUser) {
+        console.log("✅ Usuario autenticado correctamente, redirigiendo...");
+      } else {
+        console.log("❌ No hay usuario autenticado después de login/signup");
       }
     } catch (err) {
       setError('Error inesperado. Intenta de nuevo.');
