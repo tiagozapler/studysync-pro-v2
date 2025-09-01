@@ -16,6 +16,7 @@ import { LoadingScreen } from './components/LoadingScreen';
 import { ErrorBoundary } from './components/ErrorBoundary';
 
 // Páginas (lazy loading para mejor rendimiento)
+const Login = React.lazy(() => import('./pages/Login'));
 const Dashboard = React.lazy(() =>
   import('./pages/Dashboard').then(m => ({ default: m.Dashboard }))
 );
@@ -73,6 +74,31 @@ export function App() {
 
     return () => clearTimeout(initTimeout);
   }, [initialize]);
+
+  // Verificar autenticación y redirigir si es necesario
+  useEffect(() => {
+    const checkAuth = async () => {
+      try {
+        const { getCurrentUser } = await import('./lib/supabase/auth');
+        const { user } = await getCurrentUser();
+        
+        if (!user && window.location.pathname !== '/login') {
+          // Si no hay usuario autenticado y no está en login, redirigir
+          window.location.href = '/login';
+        }
+      } catch (error) {
+        console.error('Error verificando autenticación:', error);
+        // En caso de error, redirigir a login
+        if (window.location.pathname !== '/login') {
+          window.location.href = '/login';
+        }
+      }
+    };
+
+    if (isInitialized) {
+      checkAuth();
+    }
+  }, [isInitialized]);
 
   // Keyboard shortcuts globales
   useEffect(() => {
@@ -169,13 +195,16 @@ export function App() {
             <main id="main-content" tabIndex={-1}>
               <React.Suspense fallback={<LoadingScreen />}>
                 <Routes>
-                  {/* Ruta principal */}
+                  {/* Ruta de login (pública) */}
+                  <Route path="/login" element={<Login />} />
+
+                  {/* Ruta principal - redirigir a login si no está autenticado */}
                   <Route
                     path="/"
                     element={<Navigate to="/dashboard" replace />}
                   />
 
-                  {/* Dashboard */}
+                  {/* Rutas protegidas - requieren autenticación */}
                   <Route path="/dashboard" element={<Dashboard />} />
 
                   {/* Curso específico */}
