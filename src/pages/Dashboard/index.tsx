@@ -1,5 +1,5 @@
-import React, { useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import React, { useEffect, useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import {
   Plus,
   BookOpen,
@@ -10,13 +10,65 @@ import {
   Target,
   Users,
   Award,
+  LogOut,
 } from 'lucide-react';
 import { useAppStore } from '../../lib/store';
 import { cn, dateUtils } from '../../lib/utils';
+import { getCurrentUser, signOut, type User } from '../../lib/supabase/auth';
 
 export function Dashboard() {
   const { courses, files, notes, events, todos, toggleModal, settings } =
     useAppStore();
+  const [user, setUser] = useState<User | null>(null);
+  const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
+
+  // Verificar autenticación al cargar
+  useEffect(() => {
+    const checkAuth = async () => {
+      try {
+        const { user: currentUser, error } = await getCurrentUser();
+        if (error || !currentUser) {
+          navigate('/login');
+          return;
+        }
+        setUser(currentUser);
+      } catch (err) {
+        navigate('/login');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    checkAuth();
+  }, [navigate]);
+
+  // Manejar logout
+  const handleLogout = async () => {
+    try {
+      await signOut();
+      navigate('/login');
+    } catch (error) {
+      console.error('Error al cerrar sesión:', error);
+    }
+  };
+
+  // Mostrar loading mientras verifica auth
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Verificando autenticación...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Si no hay usuario, no mostrar nada (será redirigido)
+  if (!user) {
+    return null;
+  }
 
   // Calcular estadísticas
   const stats = React.useMemo(() => {
@@ -85,13 +137,26 @@ export function Dashboard() {
             </p>
           </div>
 
-          <button
-            onClick={() => toggleModal('courseModal')}
-            className="btn btn-primary"
-          >
-            <Plus size={20} />
-            Agregar Curso
-          </button>
+          <div className="flex items-center gap-4">
+            <div className="text-right">
+              <p className="text-sm text-gray-600">Bienvenido,</p>
+              <p className="font-medium text-gray-900">{user.email}</p>
+            </div>
+            <button
+              onClick={handleLogout}
+              className="btn btn-secondary flex items-center gap-2"
+            >
+              <LogOut size={16} />
+              Cerrar Sesión
+            </button>
+            <button
+              onClick={() => toggleModal('courseModal')}
+              className="btn btn-primary"
+            >
+              <Plus size={20} />
+              Agregar Curso
+            </button>
+          </div>
         </div>
       </div>
 
