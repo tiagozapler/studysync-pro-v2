@@ -11,7 +11,7 @@ export const env = {
   // AI Configuration
   HUGGING_FACE_TOKEN:
     import.meta.env.VITE_HUGGING_FACE_TOKEN ||
-    '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',
+    import.meta.env.VITE_HUGGING_FACE_TOKEN || '',
 
   // Environment
   NODE_ENV: import.meta.env.MODE || 'development',

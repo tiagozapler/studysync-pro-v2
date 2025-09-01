@@ -43,7 +43,7 @@ VITE_SUPABASE_URL=https://tu-proyecto.supabase.co
 VITE_SUPABASE_ANON_KEY=tu-anon-key
 
 # AI Configuration
-VITE_HUGGING_FACE_TOKEN=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
+VITE_HUGGING_FACE_TOKEN=your-hugging-face-token-here
 ```
 
 2. Reemplaza con tus credenciales reales

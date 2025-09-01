@@ -27,7 +27,7 @@ export class AIService {
     'https://api-inference.huggingface.co/models';
   private huggingFaceToken: string =
     import.meta.env.VITE_HUGGING_FACE_TOKEN ||
-    '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';
+    import.meta.env.VITE_HUGGING_FACE_TOKEN || '';
 
   private constructor() {
     // Intentar obtener token de Hugging Face desde localStorage
