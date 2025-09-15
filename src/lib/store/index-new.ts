@@ -9,7 +9,7 @@ import {
   saveCourseToIndexedDB,
   getCoursesFromIndexedDB,
 } from '../db/indexeddb';
-import { supabase } from '../supabase/config';
+import { supabase } from '../supabase/client';
 
 interface AppState {
   courses: Course[];

@@ -1,4 +1,4 @@
-import { supabase } from './config';
+import { supabase } from './client';
 import { Course } from '../types';
 
 // 🔹 Guardar un curso en Supabase

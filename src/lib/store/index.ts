@@ -17,8 +17,7 @@ import {
   type UserPreferences,
 } from '../storage/localStorage';
 import { idUtils } from '../utils';
-import { supabase } from '../supabase/config';
-import { env } from '../config/env';
+import { supabase } from '../supabase/client';
 import {
   getCoursesFromSupabase,
   saveCourseToSupabase,
@@ -1375,12 +1374,6 @@ export const useAppStore = create<AppState & AppActions>()(
 
         checkSupabaseConnection: async () => {
           try {
-            // Verificar si Supabase está configurado
-            if (!env.SUPABASE_URL || !env.SUPABASE_ANON_KEY) {
-              console.log('❌ Supabase no configurado');
-              return false;
-            }
-
             // Verificar conexión a Supabase con una consulta simple
             const { data, error } = await supabase
               .from('courses')
