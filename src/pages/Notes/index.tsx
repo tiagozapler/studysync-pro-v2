@@ -17,14 +17,23 @@ export function Notes() {
   ];
 
   const filteredNotes = React.useMemo(() => {
+    if (!Array.isArray(quickNotes)) return [];
+    
     return quickNotes.filter(note => {
+      // Verificaciones de seguridad
+      if (!note || typeof note !== 'object') return false;
+      
+      const title = note.title || '';
+      const content = note.content || '';
+      const category = note.category || 'general';
+      
       const matchesSearch =
         !searchQuery ||
-        note.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        note.content.toLowerCase().includes(searchQuery.toLowerCase());
+        title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        content.toLowerCase().includes(searchQuery.toLowerCase());
 
       const matchesCategory =
-        selectedCategory === 'all' || note.category === selectedCategory;
+        selectedCategory === 'all' || category === selectedCategory;
 
       return matchesSearch && matchesCategory;
     });

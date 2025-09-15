@@ -128,27 +128,31 @@ export function CommandPalette() {
     ];
 
     // Agregar comandos para cada curso
-    const courseCommands: Command[] = courses.map(course => ({
-      id: `course-${course.id}`,
-      title: `Ir a ${course.name}`,
-      subtitle: course.teacher,
-      icon: () => (
-        <div
-          className="w-4 h-4 rounded-sm"
-          style={{ backgroundColor: course.color }}
-        />
-      ),
-      action: () => {
-        navigate(`/course/${course.id}`);
-        toggleModal('commandPalette');
-      },
-      keywords: [
-        course.name.toLowerCase(),
-        course.teacher?.toLowerCase() || '',
-        'curso',
-        'course',
-      ],
-    }));
+    const courseCommands: Command[] = Array.isArray(courses) 
+      ? courses
+          .filter(course => course && typeof course === 'object' && course.id && course.name)
+          .map(course => ({
+            id: `course-${course.id}`,
+            title: `Ir a ${course.name}`,
+            subtitle: course.teacher || '',
+            icon: () => (
+              <div
+                className="w-4 h-4 rounded-sm"
+                style={{ backgroundColor: course.color || '#3B82F6' }}
+              />
+            ),
+            action: () => {
+              navigate(`/course/${course.id}`);
+              toggleModal('commandPalette');
+            },
+            keywords: [
+              (course.name || '').toLowerCase(),
+              (course.teacher || '').toLowerCase(),
+              'curso',
+              'course',
+            ],
+          }))
+      : [];
 
     return [...baseCommands, ...courseCommands];
   }, [navigate, toggleModal, courses]);
