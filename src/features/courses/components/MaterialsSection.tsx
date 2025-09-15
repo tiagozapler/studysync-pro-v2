@@ -30,7 +30,9 @@ export const MaterialsSection: React.FC<MaterialsSectionProps> = ({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [dragActive, setDragActive] = useState(false);
 
-  const courseFiles = files[courseId] || [];
+  // Verificación segura de files
+  const safeFiles = files && typeof files === 'object' ? files : {};
+  const courseFiles = Array.isArray(safeFiles[courseId]) ? safeFiles[courseId] : [];
   const aiService = AIService.getInstance();
 
   const handleFileUpload = async (files: FileList) => {

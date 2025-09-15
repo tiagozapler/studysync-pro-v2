@@ -29,7 +29,9 @@ export const CalendarSection: React.FC<CalendarSectionProps> = ({
     type: 'clase',
   });
 
-  const courseEventList = courseEvents[courseId] || [];
+  // Verificación segura de courseEvents  
+  const safeCourseEvents = courseEvents && typeof courseEvents === 'object' ? courseEvents : {};
+  const courseEventList = Array.isArray(safeCourseEvents[courseId]) ? safeCourseEvents[courseId] : [];
 
   // Obtener eventos del mes actual
   const getCurrentMonthEvents = () => {

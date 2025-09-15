@@ -91,10 +91,11 @@ export function ChatInterface() {
     if (!chatService) return;
 
     chatService.deleteSession(sessionId);
-    setSessions(prev => prev.filter(s => s.id !== sessionId));
+    setSessions(prev => Array.isArray(prev) ? prev.filter(s => s.id !== sessionId) : []);
 
     if (currentSession?.id === sessionId) {
-      const remainingSessions = sessions.filter(s => s.id !== sessionId);
+      const safeSessions = Array.isArray(sessions) ? sessions : [];
+      const remainingSessions = safeSessions.filter(s => s.id !== sessionId);
       setCurrentSession(remainingSessions[0] || null);
     }
   };

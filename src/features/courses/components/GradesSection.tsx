@@ -29,11 +29,13 @@ export const GradesSection: React.FC<GradesSectionProps> = ({ courseId }) => {
     type: 'tarea',
   });
 
-  const courseGrades = grades[courseId] || [];
+  // Verificación segura de grades
+  const safeGrades = grades && typeof grades === 'object' ? grades : {};
+  const courseGrades = Array.isArray(safeGrades[courseId]) ? safeGrades[courseId] : [];
 
   // Calcular estadísticas del curso
   const calculateStats = () => {
-    if (courseGrades.length === 0) {
+    if (!Array.isArray(courseGrades) || courseGrades.length === 0) {
       return {
         totalWeight: 0,
         currentWeight: 0,

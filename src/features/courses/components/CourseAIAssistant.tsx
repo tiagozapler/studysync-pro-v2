@@ -39,7 +39,9 @@ export const CourseAIAssistant: React.FC<CourseAIAssistantProps> = ({
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const courseFiles = files[courseId] || [];
+  // Verificación segura de files
+  const safeFiles = files && typeof files === 'object' ? files : {};
+  const courseFiles = Array.isArray(safeFiles[courseId]) ? safeFiles[courseId] : [];
   const aiService = AIService.getInstance();
 
   useEffect(() => {
