@@ -1,8 +1,7 @@
 -- Script SQL para configurar la base de datos completa de StudySync Pro
 -- Ejecutar en el SQL Editor de Supabase
 
--- Habilitar RLS (Row Level Security)
-ALTER TABLE auth.users ENABLE ROW LEVEL SECURITY;
+-- RLS ya está habilitado por defecto en auth.users
 
 -- Crear tabla de cursos
 CREATE TABLE IF NOT EXISTS public.courses (
@@ -121,93 +120,121 @@ ALTER TABLE public.todos ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.quick_notes ENABLE ROW LEVEL SECURITY;
 
 -- Políticas RLS para cursos
+DROP POLICY IF EXISTS "Users can view their own courses" ON public.courses;
 CREATE POLICY "Users can view their own courses" ON public.courses
     FOR SELECT USING (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Users can insert their own courses" ON public.courses;
 CREATE POLICY "Users can insert their own courses" ON public.courses
     FOR INSERT WITH CHECK (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Users can update their own courses" ON public.courses;
 CREATE POLICY "Users can update their own courses" ON public.courses
     FOR UPDATE USING (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Users can delete their own courses" ON public.courses;
 CREATE POLICY "Users can delete their own courses" ON public.courses
     FOR DELETE USING (auth.uid() = user_id);
 
 -- Políticas RLS para archivos
+DROP POLICY IF EXISTS "Users can view their own files" ON public.files;
 CREATE POLICY "Users can view their own files" ON public.files
     FOR SELECT USING (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Users can insert their own files" ON public.files;
 CREATE POLICY "Users can insert their own files" ON public.files
     FOR INSERT WITH CHECK (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Users can update their own files" ON public.files;
 CREATE POLICY "Users can update their own files" ON public.files
     FOR UPDATE USING (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Users can delete their own files" ON public.files;
 CREATE POLICY "Users can delete their own files" ON public.files
     FOR DELETE USING (auth.uid() = user_id);
 
 -- Políticas RLS para calificaciones
+DROP POLICY IF EXISTS "Users can view their own grades" ON public.grades;
 CREATE POLICY "Users can view their own grades" ON public.grades
     FOR SELECT USING (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Users can insert their own grades" ON public.grades;
 CREATE POLICY "Users can insert their own grades" ON public.grades
     FOR INSERT WITH CHECK (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Users can update their own grades" ON public.grades;
 CREATE POLICY "Users can update their own grades" ON public.grades
     FOR UPDATE USING (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Users can delete their own grades" ON public.grades;
 CREATE POLICY "Users can delete their own grades" ON public.grades
     FOR DELETE USING (auth.uid() = user_id);
 
 -- Políticas RLS para eventos
+DROP POLICY IF EXISTS "Users can view their own events" ON public.events;
 CREATE POLICY "Users can view their own events" ON public.events
     FOR SELECT USING (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Users can insert their own events" ON public.events;
 CREATE POLICY "Users can insert their own events" ON public.events
     FOR INSERT WITH CHECK (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Users can update their own events" ON public.events;
 CREATE POLICY "Users can update their own events" ON public.events
     FOR UPDATE USING (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Users can delete their own events" ON public.events;
 CREATE POLICY "Users can delete their own events" ON public.events
     FOR DELETE USING (auth.uid() = user_id);
 
 -- Políticas RLS para notas
+DROP POLICY IF EXISTS "Users can view their own notes" ON public.notes;
 CREATE POLICY "Users can view their own notes" ON public.notes
     FOR SELECT USING (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Users can insert their own notes" ON public.notes;
 CREATE POLICY "Users can insert their own notes" ON public.notes
     FOR INSERT WITH CHECK (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Users can update their own notes" ON public.notes;
 CREATE POLICY "Users can update their own notes" ON public.notes
     FOR UPDATE USING (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Users can delete their own notes" ON public.notes;
 CREATE POLICY "Users can delete their own notes" ON public.notes
     FOR DELETE USING (auth.uid() = user_id);
 
 -- Políticas RLS para todos
+DROP POLICY IF EXISTS "Users can view their own todos" ON public.todos;
 CREATE POLICY "Users can view their own todos" ON public.todos
     FOR SELECT USING (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Users can insert their own todos" ON public.todos;
 CREATE POLICY "Users can insert their own todos" ON public.todos
     FOR INSERT WITH CHECK (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Users can update their own todos" ON public.todos;
 CREATE POLICY "Users can update their own todos" ON public.todos
     FOR UPDATE USING (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Users can delete their own todos" ON public.todos;
 CREATE POLICY "Users can delete their own todos" ON public.todos
     FOR DELETE USING (auth.uid() = user_id);
 
 -- Políticas RLS para notas rápidas
+DROP POLICY IF EXISTS "Users can view their own quick notes" ON public.quick_notes;
 CREATE POLICY "Users can view their own quick notes" ON public.quick_notes
     FOR SELECT USING (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Users can insert their own quick notes" ON public.quick_notes;
 CREATE POLICY "Users can insert their own quick notes" ON public.quick_notes
     FOR INSERT WITH CHECK (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Users can update their own quick notes" ON public.quick_notes;
 CREATE POLICY "Users can update their own quick notes" ON public.quick_notes
     FOR UPDATE USING (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Users can delete their own quick notes" ON public.quick_notes;
 CREATE POLICY "Users can delete their own quick notes" ON public.quick_notes
     FOR DELETE USING (auth.uid() = user_id);
 
