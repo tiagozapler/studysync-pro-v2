@@ -72,23 +72,30 @@ export function Dashboard() {
 
   // Calcular estadísticas
   const stats = React.useMemo(() => {
-    const activeCourses = courses.filter(c => !c.archived);
-    const totalFiles = Object.values(files).reduce(
-      (acc, courseFiles) => acc + courseFiles.length,
+    // Verificaciones de seguridad extremas
+    const safeCourses = Array.isArray(courses) ? courses : [];
+    const safeFiles = files && typeof files === 'object' ? files : {};
+    const safeNotes = notes && typeof notes === 'object' ? notes : {};
+    const safeTodos = todos && typeof todos === 'object' ? todos : {};
+    
+    const activeCourses = safeCourses.filter(c => c && !c.archived);
+    const totalFiles = Object.values(safeFiles).reduce(
+      (acc, courseFiles) => acc + (Array.isArray(courseFiles) ? courseFiles.length : 0),
       0
     );
-    const allNotes = Object.values(notes).flat();
-    const pendingTodos = Object.values(todos)
+    const allNotes = Object.values(safeNotes).flat();
+    const pendingTodos = Object.values(safeTodos)
       .flat()
-      .filter(todo => !todo.done);
+      .filter(todo => todo && !todo.done);
 
     // Para promedio general, necesitaríamos las calificaciones (grades)
     // Por ahora, usaremos un promedio ficticio basado en cursos activos
     const overallAverage = activeCourses.length > 0 ? 15.5 : 0;
 
     // Próximos eventos
-    const upcomingEvents = events
-      .filter(event => new Date(event.date) > new Date())
+    const safeEvents = Array.isArray(events) ? events : [];
+    const upcomingEvents = safeEvents
+      .filter(event => event && event.date && new Date(event.date) > new Date())
       .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
       .slice(0, 5);
 
