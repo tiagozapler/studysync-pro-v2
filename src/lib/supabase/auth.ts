@@ -1,6 +1,9 @@
 import { supabase } from './client';
 import type { User, Session } from '@supabase/supabase-js';
 
+// Re-exportar tipos para compatibilidad
+export type { User, Session };
+
 export interface AuthError {
   message: string;
   status?: number;
@@ -171,3 +174,40 @@ export async function isAuthenticated(): Promise<boolean> {
   const { user } = await getCurrentUser();
   return user !== null;
 }
+
+/**
+ * Inicia sesión con Google
+ */
+export async function signInWithGoogle(): Promise<{
+  error: AuthError | null;
+}> {
+  try {
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+    });
+
+    if (error) {
+      return { error: { message: error.message, status: error.status } };
+    }
+
+    return { error: null };
+  } catch (err) {
+    return {
+      error: { message: 'Error inesperado con Google' },
+    };
+  }
+}
+
+/**
+ * Servicio de autenticación con todas las funciones
+ */
+export const authService = {
+  signUp,
+  signIn,
+  signOut,
+  signInWithGoogle,
+  getCurrentUser,
+  getCurrentSession,
+  onAuthStateChange,
+  isAuthenticated,
+};

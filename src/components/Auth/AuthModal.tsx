@@ -43,9 +43,9 @@ export const AuthModal: React.FC<AuthModalProps> = ({
       let result;
 
       if (isSignUp) {
-        result = await authService.signUp(email, password);
+        result = await authService.signUp({ email, password });
       } else {
-        result = await authService.signIn(email, password);
+        result = await authService.signIn({ email, password });
       }
 
       if (result.error) {
