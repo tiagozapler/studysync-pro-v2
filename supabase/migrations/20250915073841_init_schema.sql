@@ -248,24 +248,31 @@ END;
 $$ language 'plpgsql';
 
 -- Triggers para actualizar updated_at
+DROP TRIGGER IF EXISTS update_courses_updated_at ON public.courses;
 CREATE TRIGGER update_courses_updated_at BEFORE UPDATE ON public.courses
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
+DROP TRIGGER IF EXISTS update_files_updated_at ON public.files;
 CREATE TRIGGER update_files_updated_at BEFORE UPDATE ON public.files
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
+DROP TRIGGER IF EXISTS update_grades_updated_at ON public.grades;
 CREATE TRIGGER update_grades_updated_at BEFORE UPDATE ON public.grades
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
+DROP TRIGGER IF EXISTS update_events_updated_at ON public.events;
 CREATE TRIGGER update_events_updated_at BEFORE UPDATE ON public.events
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
+DROP TRIGGER IF EXISTS update_notes_updated_at ON public.notes;
 CREATE TRIGGER update_notes_updated_at BEFORE UPDATE ON public.notes
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
+DROP TRIGGER IF EXISTS update_todos_updated_at ON public.todos;
 CREATE TRIGGER update_todos_updated_at BEFORE UPDATE ON public.todos
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
+DROP TRIGGER IF EXISTS update_quick_notes_updated_at ON public.quick_notes;
 CREATE TRIGGER update_quick_notes_updated_at BEFORE UPDATE ON public.quick_notes
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
