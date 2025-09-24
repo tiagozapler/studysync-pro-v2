@@ -1,16 +1,16 @@
 {
-  "name": "studysync-pro",
+  "name": "studysync-pro-v2",
   "private": true,
   "version": "2.0.0",
   "type": "module",
-  "description": "Tu asistente académico personal completamente funcional y sincronizado en la nube",
+  "description": "StudySync Pro v2 - Tu asistente académico personal con IA y base de datos en tiempo real",
   "keywords": [
     "academic",
     "study",
     "education",
     "pwa",
     "react",
-    "supabase",
+    "convex",
     "ai",
     "productivity"
   ],
@@ -35,9 +35,9 @@
   "dependencies": {
     "@hookform/resolvers": "^3.3.2",
     "@mlc-ai/web-llm": "^0.2.34",
-    "@supabase/supabase-js": "^2.56.0",
     "axios": "^1.11.0",
     "clsx": "^2.0.0",
+    "convex": "^1.27.3",
     "date-fns": "^2.30.0",
     "dexie": "^4.2.0",
     "framer-motion": "^10.16.5",
@@ -69,7 +69,6 @@
     "eslint-plugin-react-refresh": "^0.4.4",
     "postcss": "^8.4.31",
     "prettier": "^3.6.2",
-    "supabase": "^2.39.2",
     "tailwindcss": "^3.3.5",
     "typescript": "^5.2.2",
     "vite": "^4.5.0",

@@ -17,11 +17,10 @@ import {
   type UserPreferences,
 } from '../storage/localStorage';
 import { idUtils } from '../utils';
-import { supabase } from '../supabase/client';
 import {
-  getCoursesFromSupabase,
-  saveCourseToSupabase,
-} from '../supabase/database';
+  getCoursesFromConvex,
+  saveCourseToConvex,
+} from '../convex/database';
 import {
   saveCourseToIndexedDB,
   getCoursesFromIndexedDB,

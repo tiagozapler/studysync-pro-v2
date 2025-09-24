@@ -79,7 +79,7 @@ export function App() {
   useEffect(() => {
     const checkAuth = async () => {
       try {
-        const { getCurrentUser } = await import('./lib/supabase/auth');
+        const { getCurrentUser } = await import('./lib/auth/simple');
         const { user } = await getCurrentUser();
         
         if (!user && window.location.pathname !== '/login') {

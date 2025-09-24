@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { X, Mail, Lock, User, Eye, EyeOff } from 'lucide-react';
-import { authService } from '../../lib/supabase/auth';
+import { authService } from '../../lib/auth/simple';
 import toast from 'react-hot-toast';
 
 interface AuthModalProps {

@@ -4,7 +4,8 @@ import { App } from './App';
 import './styles/globals.css';
 import { validateEnv } from './lib/config/env';
 import { useAppStore } from './lib/store';
-import { supabase } from './lib/supabase/client';
+import { ConvexProvider } from 'convex/react';
+import { convex } from './lib/convex/client';
 import './lib/utils/globalExports'; // opcional
 
 // Persistencia aquí - Inicializar la aplicación
@@ -13,17 +14,8 @@ async function initApp() {
     // Validar variables de entorno
     validateEnv();
 
-    // 🔎 Debug: comprobar usuario al iniciar la app
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-    console.log('🔎 Usuario al iniciar la app:', user);
-
-    if (user) {
-      console.log('✅ Usuario autenticado encontrado al iniciar la app');
-    } else {
-      console.log('❌ No hay usuario autenticado al iniciar la app');
-    }
+    // 🔎 Debug: Convex está listo
+    console.log('🔧 Convex cliente inicializado');
 
     // Inicializar el store global
     console.log('🔄 Inicializando store global...');
@@ -54,7 +46,9 @@ initApp().then(() => {
   const root = ReactDOM.createRoot(document.getElementById('root')!);
   root.render(
     <React.StrictMode>
-      <App />
+      <ConvexProvider client={convex}>
+        <App />
+      </ConvexProvider>
     </React.StrictMode>
   );
 

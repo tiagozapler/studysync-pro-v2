@@ -14,7 +14,7 @@ import {
 } from 'lucide-react';
 import { useAppStore } from '../../lib/store';
 import { cn, dateUtils } from '../../lib/utils';
-import { getCurrentUser, signOut, type User } from '../../lib/supabase/auth';
+import { getCurrentUser, signOut, type User } from '../../lib/auth/simple';
 
 export function Dashboard() {
   const { courses, files, notes, events, todos, toggleModal, settings } =

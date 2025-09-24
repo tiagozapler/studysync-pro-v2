@@ -1,17 +1,17 @@
-# StudySync Pro 2.0
+# StudySync Pro v2
 
 > 🎓 **Asistente académico profesional con IA local y almacenamiento offline**
 
-Una aplicación web académica completamente **GRATUITA** y **offline-first** diseñada para estudiantes universitarios. Sin servicios de pago, sin backend externo, todos los datos almacenados de forma segura en tu dispositivo.
+Una aplicación web académica completamente **GRATUITA** con **Convex** como backend en tiempo real, diseñada para estudiantes universitarios. Almacenamiento en la nube gratis con sincronización automática.
 
 ## ✨ Características Principales
 
-### 🔒 **100% Privado y Offline**
+### 🔒 **Privado y Sincronizado**
 
-- **Sin backend**: Todos los datos permanecen en tu dispositivo
+- **Convex Backend**: Base de datos en tiempo real gratuita
 - **Sin servicios de pago**: Funciona completamente gratis
 - **PWA**: Instalable como app nativa, funciona sin conexión
-- **IndexedDB**: Almacenamiento robusto para archivos y datos
+- **Sincronización**: Datos seguros en la nube con Convex
 
 ### 📚 **Gestión Académica Completa**
 
@@ -49,7 +49,7 @@ npm run build
 - **React 18** + **TypeScript** + **Vite**
 - **TailwindCSS** - Tema oscuro profesional
 - **Zustand** - Estado global
-- **Dexie.js** - Base de datos IndexedDB
+- **Convex** - Base de datos en tiempo real
 - **PWA** - Service Worker + Manifest
 
 ## ⌨️ Atajos de Teclado

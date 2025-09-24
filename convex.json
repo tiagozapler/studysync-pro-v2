@@ -1,0 +1,13 @@
+{
+  "functions": "convex/",
+  "generateCommonJSApi": false,
+  "node": {
+    "version": "18"
+  },
+  "authInfo": [
+    {
+      "domain": "https://kindly-sturgeon-182.convex.cloud",
+      "applicationID": "kindly-sturgeon-182"
+    }
+  ]
+}

@@ -1,12 +1,6 @@
 import React, { useState } from 'react';
-import {
-  signIn,
-  signUp,
-  type SignInData,
-  type SignUpData,
-} from '../lib/supabase/auth';
+import { authService } from '../lib/auth/simple';
 import { useNavigate } from 'react-router-dom';
-import { supabase } from '../lib/supabase/client';
 
 export default function Login() {
   const [isSignUp, setIsSignUp] = useState(false);

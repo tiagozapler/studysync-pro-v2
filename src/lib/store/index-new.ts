@@ -2,14 +2,13 @@ import { create } from 'zustand';
 import { persist, subscribeWithSelector } from 'zustand/middleware';
 import { Course } from '../types';
 import {
-  getCoursesFromSupabase,
-  saveCourseToSupabase,
-} from '../supabase/database';
+  getCoursesFromConvex,
+  saveCourseToConvex,
+} from '../convex/database';
 import {
   saveCourseToIndexedDB,
   getCoursesFromIndexedDB,
 } from '../db/indexeddb';
-import { supabase } from '../supabase/client';
 
 interface AppState {
   courses: Course[];
