@@ -35,7 +35,7 @@ async function initApp() {
       }
     }
 
-    console.log('🚀 StudySync Pro inicializado correctamente');
+    console.log('🚀 StudySync Pro v2 inicializado correctamente');
   } catch (error) {
     console.error('❌ Error crítico durante la inicialización:', error);
   }

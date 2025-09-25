@@ -1,5 +1,5 @@
 {
-  "name": "studysync-pro",
+  "name": "studysync-pro-v2",
   "private": true,
   "version": "2.0.0",
   "type": "module",
@@ -33,7 +33,6 @@
   },
   "dependencies": {
     "@hookform/resolvers": "^3.3.2",
-    "@supabase/supabase-js": "^2.38.4",
     "clsx": "^2.0.0",
     "date-fns": "^2.30.0",
     "dexie": "^4.2.0",

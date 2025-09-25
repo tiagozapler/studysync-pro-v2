@@ -8,7 +8,7 @@ export function OnboardingTour() {
 
   const steps = [
     {
-      title: 'Bienvenido a StudySync Pro',
+      title: 'Bienvenido a StudySync Pro v2',
       content:
         'Tu asistente académico profesional con IA local y almacenamiento offline.',
       icon: '🎓',
@@ -39,7 +39,7 @@ export function OnboardingTour() {
     {
       title: '¡Todo listo!',
       content:
-        'Comienza a usar StudySync Pro para organizar tu vida académica.',
+        'Comienza a usar StudySync Pro v2 para organizar tu vida académica.',
       icon: '✨',
     },
   ];

@@ -21,6 +21,7 @@ import {
   getCoursesFromConvex,
   saveCourseToConvex,
 } from '../convex/database';
+import { authService } from '../auth/simple';
 import {
   saveCourseToIndexedDB,
   getCoursesFromIndexedDB,
@@ -81,11 +82,11 @@ interface AppActions {
   initialize: () => Promise<void>;
   initializeRobust: () => Promise<void>;
 
-  // Verificar Supabase
-  checkSupabaseConnection: () => Promise<boolean>;
+  // Verificar Convex
+  checkConvexConnection: () => Promise<boolean>;
 
   // Cambiar base de datos
-  switchToSupabase: () => Promise<void>;
+  switchToConvex: () => Promise<void>;
   switchToIndexedDB: () => Promise<void>;
 
   // Cursos
@@ -369,76 +370,28 @@ export const useAppStore = create<AppState & AppActions>()(
 
             // Cargar otros datos (eventos y notas rápidas)
             try {
-              if (get().settings.useSupabase) {
-                // Cargar desde Supabase
+              console.log(
+                '🔄 Cargando eventos y notas rápidas desde IndexedDB...'
+              );
+              const [events, quickNotes] = await Promise.allSettled([
+                db.events.toArray(),
+                db.quickNotes.toArray(),
+              ]);
+
+              // Procesar resultados exitosos
+              if (events.status === 'fulfilled') {
+                initialState.events = events.value;
                 console.log(
-                  '🔄 Cargando eventos y notas rápidas desde Supabase...'
+                  '✅ Eventos cargados desde IndexedDB:',
+                  initialState.events.length
                 );
-                const [eventsResult, quickNotesResult] =
-                  await Promise.allSettled([
-                    supabase.from('events').select('*'),
-                    supabase.from('quick_notes').select('*'),
-                  ]);
-
-                // Procesar resultados de Supabase
-                if (
-                  eventsResult.status === 'fulfilled' &&
-                  !eventsResult.value.error
-                ) {
-                  initialState.events = eventsResult.value.data || [];
-                  console.log(
-                    '✅ Eventos cargados desde Supabase:',
-                    initialState.events.length
-                  );
-                } else {
-                  console.warn(
-                    '⚠️ Error cargando eventos desde Supabase, fallback a IndexedDB'
-                  );
-                  const localEvents = await db.events.toArray();
-                  initialState.events = localEvents;
-                }
-
-                if (
-                  quickNotesResult.status === 'fulfilled' &&
-                  !quickNotesResult.value.error
-                ) {
-                  initialState.quickNotes = quickNotesResult.value.data || [];
-                  console.log(
-                    '✅ Notas rápidas cargadas desde Supabase:',
-                    initialState.quickNotes.length
-                  );
-                } else {
-                  console.warn(
-                    '⚠️ Error cargando notas rápidas desde Supabase, fallback a IndexedDB'
-                  );
-                  const localQuickNotes = await db.quickNotes.toArray();
-                  initialState.quickNotes = localQuickNotes;
-                }
-              } else {
-                // Cargar desde IndexedDB
+              }
+              if (quickNotes.status === 'fulfilled') {
+                initialState.quickNotes = quickNotes.value;
                 console.log(
-                  '🔄 Cargando eventos y notas rápidas desde IndexedDB...'
+                  '✅ Notas rápidas cargadas desde IndexedDB:',
+                  initialState.quickNotes.length
                 );
-                const [events, quickNotes] = await Promise.allSettled([
-                  db.events.toArray(),
-                  db.quickNotes.toArray(),
-                ]);
-
-                // Procesar resultados exitosos
-                if (events.status === 'fulfilled') {
-                  initialState.events = events.value;
-                  console.log(
-                    '✅ Eventos cargados desde IndexedDB:',
-                    initialState.events.length
-                  );
-                }
-                if (quickNotes.status === 'fulfilled') {
-                  initialState.quickNotes = quickNotes.value;
-                  console.log(
-                    '✅ Notas rápidas cargadas desde IndexedDB:',
-                    initialState.quickNotes.length
-                  );
-                }
               }
 
               // Cargar datos relacionados de cursos
@@ -512,83 +465,41 @@ export const useAppStore = create<AppState & AppActions>()(
         addCourse: async courseData => {
           try {
             // Verificar si hay usuario autenticado
-            const {
-              data: { user },
-            } = await supabase.auth.getUser();
+            const { user } = await authService.getCurrentUser();
 
-            if (user && get().settings.useSupabase) {
-              console.log('🔄 Guardando curso en Supabase...');
+            if (user) {
+              console.log('🔄 Guardando curso en Convex...');
 
-              // Preparar datos para Supabase (sin archived)
-              const supabaseCourseData = {
-                name: courseData.name,
-                color: courseData.color,
-                teacher: courseData.teacher || 'Sin profesor',
-                credits: courseData.credits || 0,
-                semester: courseData.semester || 'Sin semestre',
-              };
-
-              const newCourse = await saveCourseToSupabase(
-                supabaseCourseData,
+              const newCourse = await saveCourseToConvex(
+                courseData,
                 user.id
               );
 
-              // Convertir el curso de Supabase al formato local
               const localCourse: Course = {
                 id: newCourse.id,
                 name: newCourse.name,
                 color: newCourse.color,
-                teacher: newCourse.teacher,
-                credits: newCourse.credits,
-                semester: newCourse.semester,
-                archived: false, // Valor por defecto local
-                user_id: newCourse.user_id,
-                created_at: newCourse.created_at,
-                updated_at: newCourse.updated_at,
+                teacher: newCourse.teacher || 'Sin profesor',
+                credits: newCourse.credits || 0,
+                semester: newCourse.semester || 'Sin semestre',
+                archived: newCourse.archived,
+                user_id: user.id,
+                created_at: newCourse.created_at || new Date().toISOString(),
+                updated_at: newCourse.updated_at || new Date().toISOString(),
               };
 
-              set(state => ({
-                courses: [...state.courses, localCourse],
-                files: { ...state.files, [localCourse.id]: [] },
-                notes: { ...state.notes, [localCourse.id]: [] },
-                todos: { ...state.todos, [localCourse.id]: [] },
-              }));
-              console.log('✅ Curso guardado en Supabase:', localCourse);
+              set({ courses: [...get().courses, localCourse] });
+              await saveCourseToIndexedDB(localCourse);
+
+              console.log('✅ Curso guardado en Convex:', localCourse);
             } else {
-              // No hay usuario autenticado o Supabase deshabilitado → usar IndexedDB
-              console.log(
-                '🔄 Guardando curso en IndexedDB (sin usuario autenticado)...'
-              );
-              const newCourse = await saveCourseToIndexedDB({
-                name: courseData.name,
-                color: courseData.color,
-                teacher: courseData.teacher || 'Sin profesor',
-                credits: courseData.credits || 0,
-                semester: courseData.semester || 'Sin semestre',
+              console.log('⚠️ No hay usuario autenticado, guardando localmente');
+              const localCourse = await saveCourseToIndexedDB({
+                ...courseData,
                 archived: false,
               });
 
-              // Convertir el curso de IndexedDB al formato local
-              const localCourse: Course = {
-                id: newCourse.id,
-                name: newCourse.name,
-                color: newCourse.color,
-                teacher: newCourse.teacher,
-                credits: newCourse.credits,
-                semester: newCourse.semester,
-                archived: newCourse.archived,
-                user_id: newCourse.user_id,
-                created_at: newCourse.created_at,
-                updated_at: newCourse.updated_at,
-              };
-
-              set(state => ({
-                courses: [...state.courses, localCourse],
-                files: { ...state.files, [localCourse.id]: [] },
-                notes: { ...state.notes, [localCourse.id]: [] },
-                todos: { ...state.todos, [localCourse.id]: [] },
-              }));
-              console.log('✅ Curso guardado en IndexedDB:', localCourse);
+              set({ courses: [...get().courses, localCourse] });
             }
           } catch (err) {
             console.error('❌ addCourse error:', err);
@@ -1242,33 +1153,17 @@ export const useAppStore = create<AppState & AppActions>()(
         loadCourses: async () => {
           try {
             // Verificar si hay usuario autenticado
-            const {
-              data: { user },
-            } = await supabase.auth.getUser();
+            const { user } = await authService.getCurrentUser();
 
-            if (user && get().settings.useSupabase) {
-              console.log('🔄 Cargando cursos desde Supabase...');
-              const supabaseCourses = await getCoursesFromSupabase(user.id);
+            if (user) {
+              console.log('🔄 Cargando cursos desde Convex...');
+              const convexCourses = await getCoursesFromConvex(user.id);
 
-              // Convertir cursos de Supabase al formato local
-              const localCourses: Course[] = supabaseCourses.map(
-                supabaseCourse => ({
-                  id: supabaseCourse.id,
-                  name: supabaseCourse.name,
-                  color: supabaseCourse.color,
-                  teacher: supabaseCourse.teacher,
-                  credits: supabaseCourse.credits,
-                  semester: supabaseCourse.semester,
-                  archived: false, // Valor por defecto local
-                  user_id: supabaseCourse.user_id,
-                  created_at: supabaseCourse.created_at,
-                  updated_at: supabaseCourse.updated_at,
-                })
-              );
+              const localCourses: Course[] = convexCourses;
 
               set({ courses: localCourses });
               console.log(
-                '✅ Cursos cargados desde Supabase:',
+                '✅ Cursos cargados desde Convex:',
                 localCourses.length
               );
             } else {
@@ -1371,53 +1266,34 @@ export const useAppStore = create<AppState & AppActions>()(
           }
         },
 
-        checkSupabaseConnection: async () => {
+        checkConvexConnection: async () => {
           try {
-            // Verificar conexión a Supabase con una consulta simple
-            const { data, error } = await supabase
-              .from('courses')
-              .select('id')
-              .limit(1);
+            const { user } = await authService.getCurrentUser();
+            if (!user) return false;
 
-            if (error) {
-              console.log('❌ Error conectando a Supabase:', error);
-              return false;
-            }
-
-            console.log('✅ Conexión a Supabase exitosa');
+            console.log('✅ Conexión a Convex exitosa');
             return true;
           } catch (error) {
-            console.log('❌ Error verificando Supabase:', error);
+            console.log('❌ Error verificando Convex:', error);
             return false;
           }
         },
 
-        switchToSupabase: async () => {
+        switchToConvex: async () => {
           try {
-            console.log('🔄 Cambiando a Supabase...');
+            console.log('🔄 Cambiando a Convex...');
 
-            // Verificar conexión a Supabase
-            const isConnected = await get().checkSupabaseConnection();
+            const isConnected = await get().checkConvexConnection();
             if (!isConnected) {
-              throw new Error('No se puede conectar a Supabase');
+              throw new Error('No se puede conectar a Convex');
             }
 
-            // Sincronizar datos existentes de IndexedDB a Supabase
             const currentState = get();
             if (currentState.courses.length > 0) {
-              console.log('🔄 Sincronizando cursos existentes a Supabase...');
+              console.log('🔄 Sincronizando cursos existentes a Convex...');
               for (const course of currentState.courses) {
                 try {
-                  const { error } = await supabase
-                    .from('courses')
-                    .upsert([course], { onConflict: 'id' });
-
-                  if (error) {
-                    console.warn(
-                      `⚠️ Error sincronizando curso ${course.id}:`,
-                      error
-                    );
-                  }
+                  await saveCourseToConvex(course, authService.getUserId());
                 } catch (error) {
                   console.warn(
                     `⚠️ Error crítico sincronizando curso ${course.id}:`,
@@ -1425,22 +1301,11 @@ export const useAppStore = create<AppState & AppActions>()(
                   );
                 }
               }
-              console.log('✅ Sincronización de cursos completada');
             }
 
-            // Actualizar configuración
-            const newSettings = {
-              ...get().settings,
-              useSupabase: true,
-              useIndexedDB: false,
-            };
-
-            storage.saveSettings(newSettings);
-            set({ settings: newSettings });
-
-            console.log('✅ Cambiado a Supabase exitosamente');
+            console.log('✅ Cambiado a Convex exitosamente');
           } catch (error) {
-            console.error('❌ Error cambiando a Supabase:', error);
+            console.error('❌ Error cambiando a Convex:', error);
             throw error;
           }
         },
@@ -1449,15 +1314,18 @@ export const useAppStore = create<AppState & AppActions>()(
           try {
             console.log('🔄 Cambiando a IndexedDB...');
 
-            // Actualizar configuración
-            const newSettings = {
-              ...get().settings,
-              useSupabase: false,
-              useIndexedDB: true,
-            };
-
-            storage.saveSettings(newSettings);
-            set({ settings: newSettings });
+            const currentState = get();
+            await storage.savePreferences({
+              ...currentState.preferences,
+            });
+            set({
+              preferences: {
+                ...currentState.preferences,
+              },
+              settings: {
+                ...currentState.settings,
+              },
+            });
 
             console.log('✅ Cambiado a IndexedDB exitosamente');
           } catch (error) {

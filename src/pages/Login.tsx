@@ -2,6 +2,17 @@ import React, { useState } from 'react';
 import { authService } from '../lib/auth/simple';
 import { useNavigate } from 'react-router-dom';
 
+interface SignUpData {
+  email: string;
+  password: string;
+  name?: string;
+}
+
+interface SignInData {
+  email: string;
+  password: string;
+}
+
 export default function Login() {
   const [isSignUp, setIsSignUp] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -57,13 +68,13 @@ export default function Login() {
         const signUpData: SignUpData = {
           email: formData.email,
           password: formData.password,
-          metadata: formData.name ? { name: formData.name } : undefined,
+          name: formData.name,
         };
 
-        const { user, error } = await signUp(signUpData);
+        const { user, error } = await authService.signUp(signUpData);
 
         if (error) {
-          setError(error.message);
+          setError('Error en el registro');
         } else if (user) {
           // For sign up, we might need email confirmation
           setError('Revisa tu email para confirmar tu cuenta');
@@ -74,25 +85,25 @@ export default function Login() {
           password: formData.password,
         };
 
-        const { user, error } = await signIn(signInData);
+        const { user, error } = await authService.signIn(signInData.email, signInData.password);
 
         if (error) {
-          setError(error.message);
+          setError('Error en el inicio de sesión');
         } else if (user) {
           // Successful sign in, redirect to dashboard
           navigate('/dashboard');
         }
       }
 
-      // 🔎 Debug: comprobar sesión justo después de login/signup
-      const { data: { user: currentUser } } = await supabase.auth.getUser();
-      console.log("🔎 Usuario después de login/signup:", currentUser);
-      
-      if (currentUser) {
-        console.log("✅ Usuario autenticado correctamente, redirigiendo...");
-      } else {
-        console.log("❌ No hay usuario autenticado después de login/signup");
-      }
+        // 🔎 Debug: comprobar sesión justo después de login/signup
+        const { user: currentUser } = await authService.getCurrentUser();
+        console.log('🔎 Usuario después de login/signup:', currentUser);
+
+        if (currentUser) {
+          console.log('✅ Usuario autenticado correctamente, redirigiendo...');
+        } else {
+          console.log('❌ No hay usuario autenticado después de login/signup');
+        }
     } catch (err) {
       setError('Error inesperado. Intenta de nuevo.');
     } finally {
@@ -116,7 +127,7 @@ export default function Login() {
       <div className="max-w-md w-full space-y-8">
         <div className="text-center">
           <h1 className="text-4xl font-bold text-gray-900 mb-2">
-            StudySync Pro
+            StudySync Pro v2
           </h1>
           <h2 className="text-2xl font-semibold text-gray-700">
             {isSignUp ? 'Crear cuenta' : 'Iniciar sesión'}

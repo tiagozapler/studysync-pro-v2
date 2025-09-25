@@ -71,43 +71,48 @@ export function Dashboard() {
   }
 
   // Calcular estadísticas
-  const stats = React.useMemo(() => {
-    // Verificaciones de seguridad extremas
-    const safeCourses = Array.isArray(courses) ? courses : [];
-    const safeFiles = files && typeof files === 'object' ? files : {};
-    const safeNotes = notes && typeof notes === 'object' ? notes : {};
-    const safeTodos = todos && typeof todos === 'object' ? todos : {};
-    
-    const activeCourses = safeCourses.filter(c => c && !c.archived);
-    const totalFiles = Object.values(safeFiles).reduce(
-      (acc, courseFiles) => acc + (Array.isArray(courseFiles) ? courseFiles.length : 0),
-      0
-    );
-    const allNotes = Object.values(safeNotes).flat();
-    const pendingTodos = Object.values(safeTodos)
-      .flat()
-      .filter(todo => todo && !todo.done);
+  const stats = (() => {
+  const safeCourses = Array.isArray(courses) ? courses : [];
+  const safeFiles = files && typeof files === 'object' ? files : {};
+  const safeNotes = notes && typeof notes === 'object' ? notes : {};
+  const safeTodos = todos && typeof todos === 'object' ? todos : {};
 
-    // Para promedio general, necesitaríamos las calificaciones (grades)
-    // Por ahora, usaremos un promedio ficticio basado en cursos activos
-    const overallAverage = activeCourses.length > 0 ? 15.5 : 0;
+  const activeCourses = safeCourses.filter(course => course && !course.archived);
+  const totalFiles = Object.values(safeFiles).reduce((acc, courseFiles) => {
+    return acc + (Array.isArray(courseFiles) ? courseFiles.length : 0);
+  }, 0);
 
-    // Próximos eventos
-    const safeEvents = Array.isArray(events) ? events : [];
-    const upcomingEvents = safeEvents
-      .filter(event => event && event.date && new Date(event.date) > new Date())
-      .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
-      .slice(0, 5);
+  const totalNotes = Object.values(safeNotes).reduce((acc, courseNotes) => {
+    return acc + (Array.isArray(courseNotes) ? courseNotes.length : 0);
+  }, 0);
 
-    return {
-      activeCourses: activeCourses.length,
-      totalFiles,
-      totalNotes: allNotes.length,
-      pendingTodos: pendingTodos.length,
-      overallAverage,
-      upcomingEvents,
-    };
-  }, [courses, files, notes, events, todos]);
+  const pendingTodos = Object.values(safeTodos).reduce((acc, courseTodos) => {
+    if (!Array.isArray(courseTodos)) return acc;
+    return acc + courseTodos.filter(todo => todo && !todo.done).length;
+  }, 0);
+
+  const overallAverage = activeCourses.length > 0 ? 15.5 : 0;
+
+  const safeEvents = Array.isArray(events) ? events : [];
+  const now = Date.now();
+  const upcomingEvents = safeEvents
+    .filter(event => {
+      if (!event || !event.id || !event.date) return false;
+      const eventTime = new Date(event.date).getTime();
+      return !Number.isNaN(eventTime) && eventTime > now;
+    })
+    .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+    .slice(0, 5);
+
+  return {
+    activeCourses: activeCourses.length,
+    totalFiles,
+    totalNotes,
+    pendingTodos,
+    overallAverage,
+    upcomingEvents,
+  };
+  })();
 
   return (
     <div className="container-app py-8">
@@ -201,7 +206,7 @@ export function Dashboard() {
             </Link>
           </div>
 
-          {courses.length === 0 ? (
+          {(!Array.isArray(courses) || courses.length === 0) ? (
             <EmptyState
               icon={BookOpen}
               title="No tienes cursos aún"
@@ -212,9 +217,9 @@ export function Dashboard() {
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {courses
-                .filter(c => !c.archived)
+                .filter(course => course && !course.archived)
                 .map(course => (
-                  <CourseCard key={course.id} course={course} />
+                  <CourseCard key={course.id} course={course as SafeCourse} />
                 ))}
             </div>
           )}
@@ -360,23 +365,34 @@ function StatCard({
   );
 }
 
+interface SafeCourse {
+  id: string;
+  name: string;
+  teacher?: string;
+  color?: string;
+}
+
 interface CourseCardProps {
-  course: any;
+  course: SafeCourse;
 }
 
 function CourseCard({ course }: CourseCardProps) {
   const { files, notes, todos } = useAppStore();
 
-  const courseFiles = files[course.id] || [];
-  const courseNotes = notes[course.id] || [];
-  const courseTodos = todos[course.id] || [];
+  const courseFiles = files && typeof files === 'object' && Array.isArray(files[course.id])
+    ? files[course.id]
+    : [];
+  const courseNotes = notes && typeof notes === 'object' && Array.isArray(notes[course.id])
+    ? notes[course.id]
+    : [];
+  const courseTodos = todos && typeof todos === 'object' && Array.isArray(todos[course.id])
+    ? todos[course.id]
+    : [];
 
-  // Calcular promedio del curso (temporal, hasta implementar grades)
-  const average = React.useMemo(() => {
-    // Por ahora retornamos un promedio ficticio basado en actividad
+  const average = (() => {
     const activity = courseFiles.length + courseNotes.length + courseTodos.length;
     return activity > 0 ? Math.min(activity * 2 + 10, 20) : 0;
-  }, [courseFiles.length, courseNotes.length, courseTodos.length]);
+  })();
 
   return (
     <Link

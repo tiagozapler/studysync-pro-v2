@@ -10,7 +10,7 @@ export function LoadingScreen() {
             <span className="text-2xl font-bold text-white">S</span>
           </div>
           <h1 className="font-display font-bold text-2xl text-dark-text-primary mb-2">
-            StudySync Pro
+            StudySync Pro v2
           </h1>
           <p className="text-dark-text-muted">
             Inicializando asistente académico...

@@ -45,11 +45,11 @@ export const AuthModal: React.FC<AuthModalProps> = ({
       if (isSignUp) {
         result = await authService.signUp({ email, password });
       } else {
-        result = await authService.signIn({ email, password });
+        result = await authService.signIn(email, password);
       }
 
       if (result.error) {
-        toast.error(result.error.message);
+        toast.error('Error en la autenticación');
       } else {
         toast.success(
           isSignUp ? 'Cuenta creada exitosamente' : 'Sesión iniciada'
@@ -73,7 +73,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
       const result = await authService.signInWithGoogle();
 
       if (result.error) {
-        toast.error(result.error.message);
+        toast.error('Error en la autenticación');
       } else {
         toast.success('Iniciando sesión con Google...');
         // El usuario será redirigido a Google

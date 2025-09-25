@@ -61,10 +61,10 @@ export const exportStoreGlobally = () => {
       (window as any).appStoreActions = {
         addCourse: (courseData: any) =>
           useAppStore.getState().addCourse(courseData),
-        switchToSupabase: () => useAppStore.getState().switchToSupabase(),
+        switchToConvex: () => useAppStore.getState().switchToConvex(),
         switchToIndexedDB: () => useAppStore.getState().switchToIndexedDB(),
-        checkSupabaseConnection: () =>
-          useAppStore.getState().checkSupabaseConnection(),
+        checkConvexConnection: () =>
+          useAppStore.getState().checkConvexConnection(),
         getState: () => useAppStore.getState(),
       };
 

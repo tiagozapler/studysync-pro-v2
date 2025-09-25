@@ -1,5 +1,8 @@
 // Configuración de variables de entorno
 export const env = {
+  // Convex Configuration
+  CONVEX_URL: import.meta.env.VITE_CONVEX_URL,
+
   // Supabase Configuration
   SUPABASE_URL: import.meta.env.VITE_SUPABASE_URL,
   SUPABASE_ANON_KEY: import.meta.env.VITE_SUPABASE_ANON_KEY,
@@ -15,7 +18,7 @@ export const env = {
 
 // Verificar configuración
 export const validateEnv = () => {
-  const required = ['SUPABASE_URL', 'SUPABASE_ANON_KEY'];
+  const required = ['CONVEX_URL'];
   const missing = required.filter(key => !env[key as keyof typeof env]);
 
   if (missing.length > 0) {

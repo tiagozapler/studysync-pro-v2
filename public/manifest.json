@@ -1,6 +1,6 @@
 {
-  "name": "StudySync Pro",
-  "short_name": "StudySync",
+  "name": "StudySync Pro v2",
+  "short_name": "StudySync v2",
   "description": "Asistente académico profesional con IA local",
   "theme_color": "#0B0F17",
   "background_color": "#0B0F17",
@@ -10,16 +10,16 @@
   "start_url": "/",
   "icons": [
     {
-      "src": "/icon-192.png",
-      "sizes": "192x192",
-      "type": "image/png",
+      "src": "/favicon.svg",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
       "purpose": "any maskable"
     },
     {
-      "src": "/icon-512.png",
-      "sizes": "512x512",
-      "type": "image/png",
-      "purpose": "any maskable"
+      "src": "/vite.svg",
+      "sizes": "192x192",
+      "type": "image/svg+xml",
+      "purpose": "any"
     }
   ],
   "categories": ["education", "productivity", "utilities"],
@@ -29,28 +29,28 @@
       "short_name": "Dashboard",
       "description": "Ir al dashboard principal",
       "url": "/dashboard",
-      "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }]
+      "icons": [{ "src": "/favicon.svg", "sizes": "512x512", "type": "image/svg+xml" }]
     },
     {
       "name": "Calendario",
       "short_name": "Calendario",
       "description": "Ver calendario académico",
       "url": "/calendar",
-      "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }]
+      "icons": [{ "src": "/favicon.svg", "sizes": "512x512", "type": "image/svg+xml" }]
     },
     {
       "name": "Notas Rápidas",
       "short_name": "Notas",
       "description": "Crear nota rápida",
       "url": "/notes",
-      "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }]
+      "icons": [{ "src": "/favicon.svg", "sizes": "512x512", "type": "image/svg+xml" }]
     },
     {
       "name": "Modo Focus",
       "short_name": "Focus",
       "description": "Iniciar sesión de concentración",
       "url": "/focus",
-      "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }]
+      "icons": [{ "src": "/favicon.svg", "sizes": "512x512", "type": "image/svg+xml" }]
     }
   ],
   "related_applications": [],

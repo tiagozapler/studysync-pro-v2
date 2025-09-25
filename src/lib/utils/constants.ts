@@ -1,7 +1,7 @@
 // Constantes de la aplicación
 
 export const APP_INFO = {
-  name: 'StudySync Pro',
+  name: 'StudySync Pro v2',
   version: '2.0.0',
   description: 'Asistente académico profesional con IA local',
   author: 'StudySync Team',
@@ -186,7 +186,7 @@ export const WEBLLM_MODELS = [
 export const ONBOARDING_STEPS = [
   {
     id: 'welcome',
-    title: 'Bienvenido a StudySync Pro',
+    title: 'Bienvenido a StudySync Pro v2',
     description: 'Tu asistente académico profesional con IA local',
   },
   {

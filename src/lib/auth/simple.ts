@@ -31,12 +31,12 @@ class SimpleAuthService {
   }
 
   // Obtener usuario actual
-  async getCurrentUser(): Promise<User | null> {
-    return this.currentUser;
+  async getCurrentUser(): Promise<{ user: User | null; error: null }> {
+    return { user: this.currentUser, error: null };
   }
 
   // Login simple (demo)
-  async signIn(email: string, password: string): Promise<User> {
+  async signIn(email: string, password: string): Promise<{ user: User; error: null }> {
     // Para demo, cualquier email/password funciona
     const user: User = {
       id: `user-${Date.now()}`,
@@ -47,7 +47,35 @@ class SimpleAuthService {
     this.currentUser = user;
     localStorage.setItem('studysync_current_user', JSON.stringify(user));
     
-    return user;
+    return { user, error: null };
+  }
+
+  // Signup simple (demo)
+  async signUp(data: { email: string; password: string; name?: string }): Promise<{ user: User; error: null }> {
+    const user: User = {
+      id: `user-${Date.now()}`,
+      email: data.email,
+      name: data.name || data.email.split('@')[0],
+    };
+
+    this.currentUser = user;
+    localStorage.setItem('studysync_current_user', JSON.stringify(user));
+    
+    return { user, error: null };
+  }
+
+  // Login con Google (demo)
+  async signInWithGoogle(): Promise<{ user: User; error: null }> {
+    const user: User = {
+      id: `google-user-${Date.now()}`,
+      email: 'google@studysync.com',
+      name: 'Usuario Google',
+    };
+
+    this.currentUser = user;
+    localStorage.setItem('studysync_current_user', JSON.stringify(user));
+    
+    return { user, error: null };
   }
 
   // Login automático con usuario demo
@@ -80,4 +108,3 @@ export const authService = new SimpleAuthService();
 // Funciones de conveniencia para compatibilidad
 export const getCurrentUser = () => authService.getCurrentUser();
 export const signOut = () => authService.signOut();
-export type { User };

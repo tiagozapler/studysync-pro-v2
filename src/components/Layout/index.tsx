@@ -88,7 +88,7 @@ export function Layout({ children }: LayoutProps) {
             </button>
 
             <h1 className="font-display font-bold text-lg text-dark-text-primary">
-              StudySync Pro
+              StudySync Pro v2
             </h1>
 
             <button

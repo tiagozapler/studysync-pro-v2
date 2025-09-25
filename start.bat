@@ -1,9 +1,9 @@
 @echo off
-title StudySync Pro - Servidor de Desarrollo
+title StudySync Pro v2 - Servidor de Desarrollo
 color 0A
 
 echo ========================================
-echo    StudySync Pro - Servidor de Desarrollo
+echo    StudySync Pro v2 - Servidor de Desarrollo
 echo ========================================
 echo.
 

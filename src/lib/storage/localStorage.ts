@@ -28,7 +28,6 @@ export interface AppSettings {
   offlineMode: boolean;
 
   // Base de datos
-  useSupabase: boolean;
   useIndexedDB: boolean;
 
   // Onboarding
@@ -108,8 +107,7 @@ const DEFAULT_SETTINGS: AppSettings = {
   offlineMode: true,
 
   // Base de datos
-  useSupabase: true, // Usar Supabase por defecto en producción
-  useIndexedDB: false, // No usar IndexedDB por defecto
+  useIndexedDB: true,
 
   // Onboarding
   onboardingCompleted: false,

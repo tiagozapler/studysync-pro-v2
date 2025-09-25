@@ -1,6 +1,16 @@
 import { convex } from './client';
-import api from '../../../convex/_generated/api';
+// import api from '../../../convex/_generated/api';
 import type { Course } from '../types';
+
+// Temporary fix for API types
+const api = {
+  courses: {
+    createCourse: 'courses:createCourse' as any,
+    getCoursesByUser: 'courses:getCoursesByUser' as any,
+    updateCourse: 'courses:updateCourse' as any,
+    deleteCourse: 'courses:deleteCourse' as any,
+  }
+};
 
 // 🔹 Guardar un curso en Convex
 export async function saveCourseToConvex(
@@ -8,7 +18,7 @@ export async function saveCourseToConvex(
   userId: string
 ) {
   try {
-    const courseId = await convex.mutation(api.courses.createCourse, {
+    const courseId = await convex.mutation(api.courses.createCourse as any, {
       name: course.name,
       teacher: course.teacher,
       credits: course.credits,
@@ -34,7 +44,7 @@ export async function saveCourseToConvex(
 // 🔹 Obtener cursos del usuario desde Convex
 export async function getCoursesFromConvex(userId: string): Promise<Course[]> {
   try {
-    const courses = await convex.query(api.courses.getCoursesByUser, {
+    const courses = await convex.query(api.courses.getCoursesByUser as any, {
       userId: userId,
       includeArchived: false,
     });
@@ -64,7 +74,7 @@ export async function updateCourseInConvex(
   updates: Partial<Course>
 ) {
   try {
-    await convex.mutation(api.courses.updateCourse, {
+    await convex.mutation(api.courses.updateCourse as any, {
       id: courseId as any,
       name: updates.name,
       teacher: updates.teacher,
@@ -82,7 +92,7 @@ export async function updateCourseInConvex(
 // 🔹 Eliminar curso de Convex
 export async function deleteCourseFromConvex(courseId: string) {
   try {
-    await convex.mutation(api.courses.deleteCourse, {
+    await convex.mutation(api.courses.deleteCourse as any, {
       id: courseId as any,
     });
   } catch (error) {
