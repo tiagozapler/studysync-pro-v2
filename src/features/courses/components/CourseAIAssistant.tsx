@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import {
   Send,
   Bot,
@@ -10,8 +10,11 @@ import {
   X,
 } from 'lucide-react';
 import { useAppStore } from '../../../lib/store';
-import { AIService } from '../../../lib/services/AIService';
+import Groq from 'groq-sdk';
 import toast from 'react-hot-toast';
+import env from '../../../lib/config/env';
+import { getCourseFileTexts } from '../../../lib/convex/database';
+import type { GroqMessage } from '../../../lib/ai/adapters/GroqAdapter';
 
 interface CourseAIAssistantProps {
   courseId: string;
@@ -33,7 +36,10 @@ export const CourseAIAssistant: React.FC<CourseAIAssistantProps> = ({
   const [inputValue, setInputValue] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
-  const [huggingFaceToken, setHuggingFaceToken] = useState('');
+  const [groqApiKey, setGroqApiKey] = useState(
+    localStorage.getItem('groqApiKey') || env.GROQ_API_KEY || ''
+  );
+  const groqKeyValid = Boolean(groqApiKey);
   const [selectedFiles, setSelectedFiles] = useState<string[]>([]);
   const [showFileSelector, setShowFileSelector] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -41,18 +47,44 @@ export const CourseAIAssistant: React.FC<CourseAIAssistantProps> = ({
 
   // Verificación segura de files
   const safeFiles = files && typeof files === 'object' ? files : {};
-  const courseFiles = Array.isArray(safeFiles[courseId]) ? safeFiles[courseId] : [];
-  const aiService = AIService.getInstance();
+  const courseFiles = Array.isArray(safeFiles[courseId])
+    ? safeFiles[courseId]
+    : [];
+  const [groqClient, setGroqClient] = useState<Groq | null>(null);
+  const [isGroqReady, setIsGroqReady] = useState(false);
 
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
+
+  useEffect(() => {
+    if (!groqApiKey) {
+      setGroqClient(null);
+      setIsGroqReady(false);
+      return;
+    }
+
+    try {
+      const client = new Groq({ apiKey: groqApiKey });
+      setGroqClient(client);
+      setIsGroqReady(true);
+    } catch (error) {
+      console.error('Error configurando Groq:', error);
+      setGroqClient(null);
+      setIsGroqReady(false);
+    }
+  }, [groqApiKey]);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
   const handleSendMessage = async () => {
+    if (!groqKeyValid || !groqClient) {
+      toast.error('Configura y guarda tu clave de Groq para usar la IA.');
+      return;
+    }
+
     if (!inputValue.trim() && selectedFiles.length === 0) return;
 
     const userMessage: Message = {
@@ -68,29 +100,14 @@ export const CourseAIAssistant: React.FC<CourseAIAssistantProps> = ({
     setIsLoading(true);
 
     try {
-      // Preparar contexto del curso
-      const courseContext = buildCourseContext();
+      const context = await buildCourseContext();
 
-      // Preparar contenido de archivos si hay archivos seleccionados
-      let fileContent = '';
-      if (selectedFiles.length > 0) {
-        const selectedFileObjects = courseFiles.filter(f =>
-          selectedFiles.includes(f.id)
-        );
-        for (const file of selectedFileObjects) {
-          // Usar el contenido extraído del archivo si está disponible
-          const fileContentText = await extractFileContent(file);
-          if (fileContentText) {
-            fileContent += `\n\n--- CONTENIDO DE ${file.name} ---\n${fileContentText}`;
-          }
-        }
-      }
+      const history = buildChatHistory();
 
-      // Construir prompt para la IA
-      const prompt = buildPrompt(inputValue, courseContext, fileContent);
-
-      // Obtener respuesta de la IA
-      const response = await getAIResponse(prompt);
+      const response = await getGroqResponse(inputValue, {
+        context,
+        history,
+      });
 
       const assistantMessage: Message = {
         id: (Date.now() + 1).toString(),
@@ -118,31 +135,28 @@ export const CourseAIAssistant: React.FC<CourseAIAssistantProps> = ({
     }
   };
 
-  const extractFileContent = async (file: any): Promise<string> => {
+  const buildCourseContext = useCallback(async (): Promise<string> => {
     try {
-      // Si el archivo tiene contenido extraído, usarlo
-      if (file.content) {
-        return file.content;
-      }
+      const [convexTexts, courseContext] = await Promise.all([
+        getCourseFileTexts(courseId, { numItems: 100 }),
+        Promise.resolve(buildMetadataContext()),
+      ]);
 
-      // Si no, intentar extraer el contenido del blob
-      if (file.blob) {
-        // Aquí podrías implementar la extracción de contenido del blob
-        // Por ahora, retornamos un mensaje informativo
-        return `[Archivo ${file.name} - Contenido no extraído]`;
-      }
+      const fileContext = convexTexts
+        .map(text => text.content)
+        .filter(Boolean)
+        .join('\n\n');
 
-      return `[Archivo ${file.name} - Sin contenido disponible]`;
+      return [courseContext, fileContext].filter(Boolean).join('\n\n').trim();
     } catch (error) {
-      console.error('Error extracting file content:', error);
-      return `[Error al extraer contenido de ${file.name}]`;
+      console.error('Error obteniendo contexto del curso:', error);
+      return buildMetadataContext();
     }
-  };
+  }, [courseId, courseEvents, courseFiles, grades]);
 
-  const buildCourseContext = (): string => {
+  const buildMetadataContext = (): string => {
     let context = '';
 
-    // Agregar información de calificaciones
     const courseGrades = grades[courseId] || [];
     if (courseGrades.length > 0) {
       context += '\n\nCALIFICACIONES DEL CURSO:\n';
@@ -151,7 +165,6 @@ export const CourseAIAssistant: React.FC<CourseAIAssistantProps> = ({
       });
     }
 
-    // Agregar información de eventos
     const courseEventsList = courseEvents[courseId] || [];
     if (courseEventsList.length > 0) {
       context += '\n\nEVENTOS DEL CURSO:\n';
@@ -160,7 +173,6 @@ export const CourseAIAssistant: React.FC<CourseAIAssistantProps> = ({
       });
     }
 
-    // Agregar información de archivos
     if (courseFiles.length > 0) {
       context += '\n\nARCHIVOS DISPONIBLES:\n';
       courseFiles.forEach(file => {
@@ -168,66 +180,60 @@ export const CourseAIAssistant: React.FC<CourseAIAssistantProps> = ({
       });
     }
 
-    return context;
+    return context.trim();
   };
 
-  const buildPrompt = (
-    userQuestion: string,
-    courseContext: string,
-    fileContent: string
-  ): string => {
-    let prompt = `Eres un asistente de IA especializado en ayudar con cursos académicos. 
-    
-CONTEXTO DEL CURSO:
-${courseContext}
-
-${fileContent ? `CONTENIDO DE ARCHIVOS SELECCIONADOS:${fileContent}` : ''}
-
-PREGUNTA DEL USUARIO: ${userQuestion}
-
-Por favor, proporciona una respuesta útil y detallada basada en el contexto del curso y el contenido de los archivos si están disponibles. 
-Si la pregunta es sobre calificaciones, cálculos o proyecciones, incluye los cálculos matemáticos.
-Si la pregunta es sobre fechas o eventos, menciona las fechas específicas del curso.
-Si la pregunta es sobre archivos, analiza el contenido proporcionado.`;
-
-    return prompt;
+  const buildChatHistory = (): GroqMessage[] => {
+    return messages.map(message => ({
+      role: message.role,
+      content: message.content,
+    }));
   };
 
-  const getAIResponse = async (prompt: string): Promise<string> => {
-    try {
-      // Usar el método público analyzeFileContent
-      const analysis = await aiService.analyzeFileContent(prompt, 'prompt.txt');
-
-      // Convertir el análisis en una respuesta de texto
-      let response = '';
-
-      if (analysis.summary) {
-        response += analysis.summary + '\n\n';
-      }
-
-      if (analysis.topics.length > 0) {
-        response +=
-          '**Temas identificados:** ' + analysis.topics.join(', ') + '\n\n';
-      }
-
-      if (analysis.importantInfo.length > 0) {
-        response += '**Información importante:**\n';
-        analysis.importantInfo.forEach(info => {
-          response += `• ${info}\n`;
-        });
-        response += '\n';
-      }
-
-      if (response.trim() === '') {
-        response =
-          'He analizado tu pregunta y el contexto del curso. ¿Hay algo específico sobre lo que te gustaría que profundice?';
-      }
-
-      return response;
-    } catch (error) {
-      console.error('Error in AI response:', error);
-      return 'Lo siento, los servicios de IA no están disponibles en este momento. Por favor, verifica la configuración de Ollama o Hugging Face.';
+  const getGroqResponse = async (
+    userMessage: string,
+    options: {
+      context: string;
+      history: GroqMessage[];
     }
+  ): Promise<string> => {
+    if (!groqClient) {
+      throw new Error('Groq no está configurado');
+    }
+
+    const { context, history } = options;
+
+    const completion = await groqClient.chat.completions.create({
+      model: 'llama-3.1-70b-versatile',
+      messages: [
+        {
+          role: 'system',
+          content:
+            'Eres un asistente académico que utiliza el contexto del curso para responder preguntas de estudiantes. Si la información no está en el contexto, dilo claramente.',
+        },
+        ...(context
+          ? [
+              {
+                role: 'system' as const,
+                content: `Contexto del curso:
+${context}`,
+              },
+            ]
+          : []),
+        ...history,
+        {
+          role: 'user',
+          content: userMessage,
+        },
+      ],
+      temperature: 0.4,
+      max_tokens: 800,
+    });
+
+    return (
+      completion.choices[0]?.message?.content?.trim() ||
+      'No pude generar una respuesta en este momento.'
+    );
   };
 
   const handleFileSelection = (fileId: string) => {
@@ -246,18 +252,20 @@ Si la pregunta es sobre archivos, analiza el contenido proporcionado.`;
     }
   };
 
-  const handleSaveHuggingFaceToken = () => {
-    aiService.setHuggingFaceToken(huggingFaceToken);
+  const handleSaveGroqKey = () => {
+    if (!groqApiKey) {
+      toast.error('Ingresa una clave válida de Groq.');
+      return;
+    }
+
+    localStorage.setItem('groqApiKey', groqApiKey);
     setShowSettings(false);
-    setHuggingFaceToken('');
-    toast.success('Token de Hugging Face guardado');
+    toast.success('Clave de Groq guardada');
   };
 
-  const getSystemInfo = () => {
-    return aiService.getSystemInfo();
+  const systemInfo = {
+    groq: isGroqReady,
   };
-
-  const systemInfo = getSystemInfo();
 
   return (
     <div className="flex flex-col h-full bg-white rounded-lg shadow">
@@ -285,21 +293,12 @@ Si la pregunta es sobre archivos, analiza el contenido proporcionado.`;
           <div className="flex space-x-2">
             <span
               className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                systemInfo.ollama
+                systemInfo.groq
                   ? 'bg-green-100 text-green-800'
-                  : 'bg-gray-100 text-gray-800'
+                  : 'bg-red-100 text-red-800'
               }`}
             >
-              Ollama: {systemInfo.ollama ? '✓' : '✗'}
-            </span>
-            <span
-              className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                systemInfo.hasToken
-                  ? 'bg-green-100 text-green-800'
-                  : 'bg-yellow-100 text-yellow-800'
-              }`}
-            >
-              HF: {systemInfo.hasToken ? '✓' : '✗'}
+              Groq: {systemInfo.groq ? 'Activo' : 'Sin clave'}
             </span>
           </div>
         </div>
@@ -462,77 +461,61 @@ Si la pregunta es sobre archivos, analiza el contenido proporcionado.`;
 
       {/* Modal de configuración */}
       {showSettings && (
-        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
-          <div className="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
-            <div className="mt-3">
-              <h3 className="text-lg font-medium text-gray-900 mb-4 flex items-center">
-                <Brain className="h-5 w-5 text-purple-600 mr-2" />
-                Configurar IA
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg shadow-lg w-full max-w-md p-6 space-y-4 border border-purple-100">
+            <div className="flex items-center justify-between">
+              <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+                <Brain className="h-5 w-5 text-purple-600" /> Configuración de
+                Groq
               </h3>
+              <button
+                onClick={() => setShowSettings(false)}
+                className="text-gray-400 hover:text-gray-600"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
 
-              <div className="space-y-4">
-                {/* Ollama */}
-                <div className="p-3 bg-gray-50 rounded-lg">
-                  <h4 className="text-sm font-medium text-gray-900 mb-2">
-                    Ollama (Local - Gratuito)
-                  </h4>
-                  <p className="text-xs text-gray-600 mb-2">
-                    Instala Ollama en tu computadora para usar IA local
-                    gratuita.
-                  </p>
-                  <a
-                    href="https://ollama.ai"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-xs text-blue-600 hover:text-blue-500"
-                  >
-                    Descargar Ollama →
-                  </a>
-                </div>
-
-                {/* Hugging Face */}
-                <div className="p-3 bg-blue-50 rounded-lg">
-                  <h4 className="text-sm font-medium text-gray-900 mb-2">
-                    Hugging Face (API Gratuita)
-                  </h4>
-                  <p className="text-xs text-gray-600 mb-2">
-                    Obtén un token gratuito de Hugging Face para usar IA en la
-                    nube.
-                  </p>
-                  <div className="space-y-2">
-                    <input
-                      type="text"
-                      placeholder="Token de Hugging Face"
-                      value={huggingFaceToken}
-                      onChange={e => setHuggingFaceToken(e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    />
-                    <a
-                      href="https://huggingface.co/settings/tokens"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-xs text-blue-600 hover:text-blue-500 block"
-                    >
-                      Obtener Token →
-                    </a>
-                  </div>
-                </div>
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700">
+                  API Key de Groq
+                </label>
+                <input
+                  type="password"
+                  value={groqApiKey}
+                  onChange={e => setGroqApiKey(e.target.value)}
+                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-purple-500 focus:ring-purple-500 sm:text-sm"
+                  placeholder="gsk_..."
+                />
               </div>
 
-              <div className="flex space-x-3 pt-4">
-                <button
-                  onClick={handleSaveHuggingFaceToken}
-                  disabled={!huggingFaceToken.trim()}
-                  className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  Guardar Token
-                </button>
-                <button
-                  onClick={() => setShowSettings(false)}
-                  className="flex-1 bg-gray-600 hover:bg-gray-700 text-white font-medium py-2 px-4 rounded-md transition-colors"
-                >
-                  Cancelar
-                </button>
+              <div className="bg-purple-50 border border-purple-100 rounded-lg p-4 text-sm text-purple-900">
+                <h4 className="font-semibold mb-2">¿Dónde obtengo la clave?</h4>
+                <p>
+                  Consigue tu API key gratuita en
+                  <a
+                    href="https://console.groq.com/keys"
+                    target="_blank"
+                    rel="noreferrer"
+                    className="text-purple-600 hover:text-purple-800 ml-1"
+                  >
+                    console.groq.com
+                  </a>
+                </p>
+              </div>
+
+              <button
+                onClick={handleSaveGroqKey}
+                disabled={!groqApiKey.trim()}
+                className="w-full inline-flex justify-center items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-purple-600 hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Guardar clave
+              </button>
+
+              <div className="text-xs text-gray-500">
+                La clave se guarda localmente en tu navegador y puedes cambiarla
+                o borrarla cuando quieras.
               </div>
             </div>
           </div>
