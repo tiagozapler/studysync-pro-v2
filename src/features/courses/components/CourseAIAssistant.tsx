@@ -74,7 +74,10 @@ export const CourseAIAssistant: React.FC<CourseAIAssistantProps> = ({
     }
 
     try {
-      const client = new Groq({ apiKey: groqApiKey });
+      const client = new Groq({
+        apiKey: groqApiKey,
+        dangerouslyAllowBrowser: true, // Necesario para entorno browser
+      });
       setGroqClient(client);
       setIsGroqReady(true);
       console.log('✅ Groq client initialized successfully');
