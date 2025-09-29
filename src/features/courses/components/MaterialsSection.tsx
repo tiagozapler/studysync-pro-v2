@@ -8,11 +8,13 @@ import {
   Eye,
   Brain,
   Settings,
+  X,
 } from 'lucide-react';
 import { useAppStore } from '../../../lib/store';
 import { FileContentExtractor } from '../../../lib/services/FileContentExtractor';
 import { AIAnalysisResult } from '../../../lib/services/AIService';
 import env from '../../../lib/config/env';
+import toast from 'react-hot-toast';
 
 interface MaterialsSectionProps {
   courseId: string;
@@ -36,7 +38,6 @@ export const MaterialsSection: React.FC<MaterialsSectionProps> = ({
   // Verificación segura de files
   const safeFiles = files && typeof files === 'object' ? files : {};
   const courseFiles = Array.isArray(safeFiles[courseId]) ? safeFiles[courseId] : [];
-  const aiService = AIService.getInstance();
 
   const handleFileUpload = async (files: FileList) => {
     setIsUploading(true);
