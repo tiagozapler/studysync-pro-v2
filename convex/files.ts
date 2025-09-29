@@ -67,7 +67,7 @@ export const getFileTextByFile = query({
   handler: async (ctx, args) => {
     return await ctx.db
       .query("fileTexts")
-      .withIndex("by_file", q => q.eq("fileId", args.fileId))
+      .withIndex("by_file", (q) => q.eq("fileId", args.fileId))
       .unique();
   },
 });
@@ -80,7 +80,7 @@ export const getFileTextsByCourse = query({
   handler: async (ctx, args) => {
     return await ctx.db
       .query("fileTexts")
-      .withIndex("by_course", q => q.eq("courseId", args.courseId))
+      .withIndex("by_course", (q) => q.eq("courseId", args.courseId))
       .paginate(args.paginationOpts);
   },
 });
@@ -90,12 +90,12 @@ export const deleteFile = mutation({
   handler: async (ctx, args) => {
     const fileTexts = await ctx.db
       .query("fileTexts")
-      .withIndex("by_file", q => q.eq("fileId", args.id))
+      .withIndex("by_file", (q) => q.eq("fileId", args.id))
       .collect();
 
     const ragChunks = await ctx.db
       .query("ragChunks")
-      .withIndex("by_file", q => q.eq("fileId", args.id))
+      .withIndex("by_file", (q) => q.eq("fileId", args.id))
       .collect();
 
     await Promise.all([
