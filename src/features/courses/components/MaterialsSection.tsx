@@ -11,7 +11,8 @@ import {
 } from 'lucide-react';
 import { useAppStore } from '../../../lib/store';
 import { FileContentExtractor } from '../../../lib/services/FileContentExtractor';
-import { AIService, AIAnalysisResult } from '../../../lib/services/AIService';
+import { AIAnalysisResult } from '../../../lib/services/AIService';
+import env from '../../../lib/config/env';
 
 interface MaterialsSectionProps {
   courseId: string;
@@ -26,7 +27,9 @@ export const MaterialsSection: React.FC<MaterialsSectionProps> = ({
   const [uploadProgress, setUploadProgress] = useState(0);
   const [aiAnalysis, setAiAnalysis] = useState<AIAnalysisResult | null>(null);
   const [showAISettings, setShowAISettings] = useState(false);
-  const [huggingFaceToken, setHuggingFaceToken] = useState('');
+  const [groqApiKey, setGroqApiKey] = useState(
+    localStorage.getItem('groqApiKey') || env.GROQ_API_KEY || ''
+  );
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [dragActive, setDragActive] = useState(false);
 
@@ -50,8 +53,8 @@ export const MaterialsSection: React.FC<MaterialsSectionProps> = ({
         // Extraer contenido del archivo
         const content = await FileContentExtractor.extractContent(file);
 
-        // Analizar contenido con IA
-        const analysis = await aiService.analyzeFileContent(content, file.name);
+        // Analizar contenido con análisis básico (no requiere IA)
+        const analysis = await basicFileAnalysis(content, file.name);
         setAiAnalysis(analysis);
 
         // Agregar archivo al store
@@ -148,17 +151,32 @@ export const MaterialsSection: React.FC<MaterialsSectionProps> = ({
     }
   };
 
-  const handleSaveHuggingFaceToken = () => {
-    aiService.setHuggingFaceToken(huggingFaceToken);
+  const handleSaveGroqKey = () => {
+    if (!groqApiKey) {
+      toast.error('Ingresa una clave válida de Groq.');
+      return;
+    }
+
+    localStorage.setItem('groqApiKey', groqApiKey);
     setShowAISettings(false);
-    setHuggingFaceToken('');
+    toast.success('Clave de Groq guardada');
   };
 
-  const getSystemInfo = () => {
-    return aiService.getSystemInfo();
+
+  const systemInfo = {
+    groq: Boolean(groqApiKey),
   };
 
-  const systemInfo = getSystemInfo();
+  const basicFileAnalysis = async (content: string, fileName: string): Promise<AIAnalysisResult> => {
+    // Análisis básico sin IA
+    return {
+      dates: [],
+      grades: [],
+      summary: `Archivo ${fileName} subido correctamente`,
+      topics: [],
+      importantInfo: []
+    };
+  };
 
   return (
     <div className="space-y-6">
@@ -190,33 +208,23 @@ export const MaterialsSection: React.FC<MaterialsSectionProps> = ({
           <div className="flex items-center">
             <Brain className="h-5 w-5 text-purple-600 mr-2" />
             <h4 className="text-sm font-medium text-gray-900">
-              Estado de la IA
+              Estado de Groq
             </h4>
           </div>
           <div className="flex space-x-2">
             <span
               className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                systemInfo.ollama
+                systemInfo.groq
                   ? 'bg-green-100 text-green-800'
-                  : 'bg-gray-100 text-gray-800'
+                  : 'bg-red-100 text-red-800'
               }`}
             >
-              Ollama: {systemInfo.ollama ? 'Disponible' : 'No disponible'}
-            </span>
-            <span
-              className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                systemInfo.hasToken
-                  ? 'bg-green-100 text-green-800'
-                  : 'bg-yellow-100 text-yellow-800'
-              }`}
-            >
-              Hugging Face: {systemInfo.hasToken ? 'Configurado' : 'Sin token'}
+              Groq: {systemInfo.groq ? 'Activo' : 'Sin clave'}
             </span>
           </div>
         </div>
         <p className="text-xs text-gray-500 mt-2">
-          La IA analizará automáticamente el contenido de los archivos para
-          extraer fechas, calificaciones y información importante.
+          Configura tu clave de Groq en el asistente de cada curso para obtener respuestas rápidas y precisas.
         </p>
       </div>
 
@@ -434,77 +442,59 @@ export const MaterialsSection: React.FC<MaterialsSectionProps> = ({
 
       {/* Modal de configuración de IA */}
       {showAISettings && (
-        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
-          <div className="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
-            <div className="mt-3">
-              <h3 className="text-lg font-medium text-gray-900 mb-4 flex items-center">
-                <Brain className="h-5 w-5 text-purple-600 mr-2" />
-                Configurar IA
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg shadow-lg w-full max-w-md p-6 space-y-4 border border-purple-100">
+            <div className="flex items-center justify-between">
+              <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+                <Brain className="h-5 w-5 text-purple-600" /> Configuración de Groq
               </h3>
+              <button
+                onClick={() => setShowAISettings(false)}
+                className="text-gray-400 hover:text-gray-600"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
 
-              <div className="space-y-4">
-                {/* Ollama */}
-                <div className="p-3 bg-gray-50 rounded-lg">
-                  <h4 className="text-sm font-medium text-gray-900 mb-2">
-                    Ollama (Local - Gratuito)
-                  </h4>
-                  <p className="text-xs text-gray-600 mb-2">
-                    Instala Ollama en tu computadora para usar IA local
-                    gratuita.
-                  </p>
-                  <a
-                    href="https://ollama.ai"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-xs text-blue-600 hover:text-blue-500"
-                  >
-                    Descargar Ollama →
-                  </a>
-                </div>
-
-                {/* Hugging Face */}
-                <div className="p-3 bg-blue-50 rounded-lg">
-                  <h4 className="text-sm font-medium text-gray-900 mb-2">
-                    Hugging Face (API Gratuita)
-                  </h4>
-                  <p className="text-xs text-gray-600 mb-2">
-                    Obtén un token gratuito de Hugging Face para usar IA en la
-                    nube.
-                  </p>
-                  <div className="space-y-2">
-                    <input
-                      type="text"
-                      placeholder="Token de Hugging Face"
-                      value={huggingFaceToken}
-                      onChange={e => setHuggingFaceToken(e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    />
-                    <a
-                      href="https://huggingface.co/settings/tokens"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-xs text-blue-600 hover:text-blue-500 block"
-                    >
-                      Obtener Token →
-                    </a>
-                  </div>
-                </div>
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700">
+                  API Key de Groq
+                </label>
+                <input
+                  type="password"
+                  value={groqApiKey}
+                  onChange={e => setGroqApiKey(e.target.value)}
+                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-purple-500 focus:ring-purple-500 sm:text-sm"
+                  placeholder="gsk_..."
+                />
               </div>
 
-              <div className="flex space-x-3 pt-4">
-                <button
-                  onClick={handleSaveHuggingFaceToken}
-                  disabled={!huggingFaceToken.trim()}
-                  className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  Guardar Token
-                </button>
-                <button
-                  onClick={() => setShowAISettings(false)}
-                  className="flex-1 bg-gray-600 hover:bg-gray-700 text-white font-medium py-2 px-4 rounded-md transition-colors"
-                >
-                  Cancelar
-                </button>
+              <div className="bg-purple-50 border border-purple-100 rounded-lg p-4 text-sm text-purple-900">
+                <h4 className="font-semibold mb-2">¿Dónde obtengo la clave?</h4>
+                <p>
+                  Consigue tu API key gratuita en
+                  <a
+                    href="https://console.groq.com/keys"
+                    target="_blank"
+                    rel="noreferrer"
+                    className="text-purple-600 hover:text-purple-800 ml-1"
+                  >
+                    console.groq.com
+                  </a>
+                </p>
+              </div>
+
+              <button
+                onClick={handleSaveGroqKey}
+                disabled={!groqApiKey.trim()}
+                className="w-full inline-flex justify-center items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-purple-600 hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Guardar clave
+              </button>
+
+              <div className="text-xs text-gray-500">
+                La clave se guarda localmente en tu navegador y puedes cambiarla o borrarla cuando quieras.
               </div>
             </div>
           </div>

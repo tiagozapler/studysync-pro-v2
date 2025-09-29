@@ -58,18 +58,16 @@ export function Settings() {
             <div className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-dark-text-primary mb-2">
-                  Adaptador de IA
+                  Configuración de Groq
                 </label>
-                <select className="input">
-                  <option value="mock" selected>
-                    Mock (Simulado)
-                  </option>
-                  <option value="webllm">WebLLM (En navegador)</option>
-                  <option value="ollama">Ollama (Local)</option>
-                </select>
-                <p className="text-xs text-dark-text-muted mt-1">
-                  Mock está seleccionado por defecto para testing
+                <p className="text-sm text-dark-text-muted mb-3">
+                  El asistente utiliza Groq para proporcionar respuestas rápidas y precisas.
                 </p>
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                  <p className="text-xs text-blue-800">
+                    Configura tu clave de Groq en la sección del asistente de cada curso para comenzar a usar la IA.
+                  </p>
+                </div>
               </div>
             </div>
           </div>
