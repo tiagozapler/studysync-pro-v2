@@ -1,0 +1,170 @@
+warning: in the working copy of 'src/pages/Dashboard/index.tsx', LF will be replaced by CRLF the next time Git touches it
+[1mdiff --git a/src/lib/convex/api.ts b/src/lib/convex/api.ts[m
+[1mindex 982458e..7ecc1f0 100644[m
+[1m--- a/src/lib/convex/api.ts[m
+[1m+++ b/src/lib/convex/api.ts[m
+[36m@@ -1,5 +1,5 @@[m
+[31m-import { api as generatedApi } from '../../convex/_generated/api';[m
+[31m-import type { Doc } from '../../convex/_generated/dataModel';[m
+[32m+[m[32mimport { api as generatedApi } from '../../../convex/_generated/api';[m
+[32m+[m[32mimport type { Doc } from '../../../convex/_generated/dataModel';[m
+ [m
+ export const api = generatedApi;[m
+ export type { Doc };[m
+[1mdiff --git a/src/pages/Dashboard/index.tsx b/src/pages/Dashboard/index.tsx[m
+[1mindex 8aa618d..0a337a6 100644[m
+[1m--- a/src/pages/Dashboard/index.tsx[m
+[1m+++ b/src/pages/Dashboard/index.tsx[m
+[36m@@ -72,46 +72,52 @@[m [mexport function Dashboard() {[m
+ [m
+   // Calcular estadísticas[m
+   const stats = (() => {[m
+[31m-  const safeCourses = Array.isArray(courses) ? courses : [];[m
+[31m-  const safeFiles = files && typeof files === 'object' ? files : {};[m
+[31m-  const safeNotes = notes && typeof notes === 'object' ? notes : {};[m
+[31m-  const safeTodos = todos && typeof todos === 'object' ? todos : {};[m
+[31m-[m
+[31m-  const activeCourses = safeCourses.filter(course => course && !course.archived);[m
+[31m-  const totalFiles = Object.values(safeFiles).reduce((acc, courseFiles) => {[m
+[31m-    return acc + (Array.isArray(courseFiles) ? courseFiles.length : 0);[m
+[31m-  }, 0);[m
+[31m-[m
+[31m-  const totalNotes = Object.values(safeNotes).reduce((acc, courseNotes) => {[m
+[31m-    return acc + (Array.isArray(courseNotes) ? courseNotes.length : 0);[m
+[31m-  }, 0);[m
+[31m-[m
+[31m-  const pendingTodos = Object.values(safeTodos).reduce((acc, courseTodos) => {[m
+[31m-    if (!Array.isArray(courseTodos)) return acc;[m
+[31m-    return acc + courseTodos.filter(todo => todo && !todo.done).length;[m
+[31m-  }, 0);[m
+[31m-[m
+[31m-  const overallAverage = activeCourses.length > 0 ? 15.5 : 0;[m
+[31m-[m
+[31m-  const safeEvents = Array.isArray(events) ? events : [];[m
+[31m-  const now = Date.now();[m
+[31m-  const upcomingEvents = safeEvents[m
+[31m-    .filter(event => {[m
+[31m-      if (!event || !event.id || !event.date) return false;[m
+[31m-      const eventTime = new Date(event.date).getTime();[m
+[31m-      return !Number.isNaN(eventTime) && eventTime > now;[m
+[31m-    })[m
+[31m-    .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())[m
+[31m-    .slice(0, 5);[m
+[31m-[m
+[31m-  return {[m
+[31m-    activeCourses: activeCourses.length,[m
+[31m-    totalFiles,[m
+[31m-    totalNotes,[m
+[31m-    pendingTodos,[m
+[31m-    overallAverage,[m
+[31m-    upcomingEvents,[m
+[31m-  };[m
+[32m+[m[32m    const safeCourses = Array.isArray(courses) ? courses : [];[m
+[32m+[m[32m    const userCourses = safeCourses.filter([m
+[32m+[m[32m      course => course && course.user_id === user?.id && !course.archived[m
+[32m+[m[32m    );[m
+[32m+[m
+[32m+[m[32m    const safeFiles = files && typeof files === 'object' ? files : {};[m
+[32m+[m[32m    const safeNotes = notes && typeof notes === 'object' ? notes : {};[m
+[32m+[m[32m    const safeTodos = todos && typeof todos === 'object' ? todos : {};[m
+[32m+[m
+[32m+[m[32m    const totalFiles = userCourses.reduce((acc, course) => {[m
+[32m+[m[32m      const courseFiles = safeFiles[course.id];[m
+[32m+[m[32m      return acc + (Array.isArray(courseFiles) ? courseFiles.length : 0);[m
+[32m+[m[32m    }, 0);[m
+[32m+[m
+[32m+[m[32m    const totalNotes = userCourses.reduce((acc, course) => {[m
+[32m+[m[32m      const courseNotes = safeNotes[course.id];[m
+[32m+[m[32m      return acc + (Array.isArray(courseNotes) ? courseNotes.length : 0);[m
+[32m+[m[32m    }, 0);[m
+[32m+[m
+[32m+[m[32m    const pendingTodos = userCourses.reduce((acc, course) => {[m
+[32m+[m[32m      const courseTodos = safeTodos[course.id];[m
+[32m+[m[32m      if (!Array.isArray(courseTodos)) return acc;[m
+[32m+[m[32m      return acc + courseTodos.filter(todo => todo && !todo.done).length;[m
+[32m+[m[32m    }, 0);[m
+[32m+[m
+[32m+[m[32m    const overallAverage = userCourses.length > 0 ? 15.5 : 0;[m
+[32m+[m
+[32m+[m[32m    const safeEvents = Array.isArray(events) ? events : [];[m
+[32m+[m[32m    const now = Date.now();[m
+[32m+[m[32m    const upcomingEvents = safeEvents[m
+[32m+[m[32m      .filter(event => {[m
+[32m+[m[32m        if (!event || !event.id || !event.date) return false;[m
+[32m+[m[32m        const eventTime = new Date(event.date).getTime();[m
+[32m+[m[32m        return !Number.isNaN(eventTime) && eventTime > now;[m
+[32m+[m[32m      })[m
+[32m+[m[32m      .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())[m
+[32m+[m[32m      .slice(0, 5);[m
+[32m+[m
+[32m+[m[32m    return {[m
+[32m+[m[32m      activeCourses: userCourses.length,[m
+[32m+[m[32m      totalFiles,[m
+[32m+[m[32m      totalNotes,[m
+[32m+[m[32m      pendingTodos,[m
+[32m+[m[32m      overallAverage,[m
+[32m+[m[32m      upcomingEvents,[m
+[32m+[m[32m    };[m
+   })();[m
+ [m
+   return ([m
+[36m@@ -206,7 +212,13 @@[m [mexport function Dashboard() {[m
+             </Link>[m
+           </div>[m
+ [m
+[31m-          {(!Array.isArray(courses) || courses.length === 0) ? ([m
+[32m+[m[32m          {!([m
+[32m+[m[32m            Array.isArray(courses) &&[m
+[32m+[m[32m            courses.some([m
+[32m+[m[32m              course =>[m
+[32m+[m[32m                course && course.user_id === user?.id && !course.archived[m
+[32m+[m[32m            )[m
+[32m+[m[32m          ) ? ([m
+             <EmptyState[m
+               icon={BookOpen}[m
+               title="No tienes cursos aún"[m
+[36m@@ -217,7 +229,10 @@[m [mexport function Dashboard() {[m
+           ) : ([m
+             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">[m
+               {courses[m
+[31m-                .filter(course => course && !course.archived)[m
+[32m+[m[32m                .filter([m
+[32m+[m[32m                  course =>[m
+[32m+[m[32m                    course && course.user_id === user?.id && !course.archived[m
+[32m+[m[32m                )[m
+                 .map(course => ([m
+                   <CourseCard key={course.id} course={course as SafeCourse} />[m
+                 ))}[m
+[36m@@ -379,18 +394,22 @@[m [minterface CourseCardProps {[m
+ function CourseCard({ course }: CourseCardProps) {[m
+   const { files, notes, todos } = useAppStore();[m
+ [m
+[31m-  const courseFiles = files && typeof files === 'object' && Array.isArray(files[course.id])[m
+[31m-    ? files[course.id][m
+[31m-    : [];[m
+[31m-  const courseNotes = notes && typeof notes === 'object' && Array.isArray(notes[course.id])[m
+[31m-    ? notes[course.id][m
+[31m-    : [];[m
+[31m-  const courseTodos = todos && typeof todos === 'object' && Array.isArray(todos[course.id])[m
+[31m-    ? todos[course.id][m
+[31m-    : [];[m
+[32m+[m[32m  const courseFiles =[m
+[32m+[m[32m    files && typeof files === 'object' && Array.isArray(files[course.id])[m
+[32m+[m[32m      ? files[course.id][m
+[32m+[m[32m      : [];[m
+[32m+[m[32m  const courseNotes =[m
+[32m+[m[32m    notes && typeof notes === 'object' && Array.isArray(notes[course.id])[m
+[32m+[m[32m      ? notes[course.id][m
+[32m+[m[32m      : [];[m
+[32m+[m[32m  const courseTodos =[m
+[32m+[m[32m    todos && typeof todos === 'object' && Array.isArray(todos[course.id])[m
+[32m+[m[32m      ? todos[course.id][m
+[32m+[m[32m      : [];[m
+ [m
+   const average = (() => {[m
+[31m-    const activity = courseFiles.length + courseNotes.length + courseTodos.length;[m
+[32m+[m[32m    const activity =[m
+[32m+[m[32m      courseFiles.length + courseNotes.length + courseTodos.length;[m
+     return activity > 0 ? Math.min(activity * 2 + 10, 20) : 0;[m
+   })();[m
+ [m

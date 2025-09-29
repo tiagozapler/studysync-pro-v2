@@ -72,46 +72,52 @@ export function Dashboard() {
 
   // Calcular estadísticas
   const stats = (() => {
-  const safeCourses = Array.isArray(courses) ? courses : [];
-  const safeFiles = files && typeof files === 'object' ? files : {};
-  const safeNotes = notes && typeof notes === 'object' ? notes : {};
-  const safeTodos = todos && typeof todos === 'object' ? todos : {};
+    const safeCourses = Array.isArray(courses) ? courses : [];
+    const userCourses = safeCourses.filter(
+      course => course && course.user_id === user?.id && !course.archived
+    );
 
-  const activeCourses = safeCourses.filter(course => course && !course.archived);
-  const totalFiles = Object.values(safeFiles).reduce((acc, courseFiles) => {
-    return acc + (Array.isArray(courseFiles) ? courseFiles.length : 0);
-  }, 0);
+    const safeFiles = files && typeof files === 'object' ? files : {};
+    const safeNotes = notes && typeof notes === 'object' ? notes : {};
+    const safeTodos = todos && typeof todos === 'object' ? todos : {};
 
-  const totalNotes = Object.values(safeNotes).reduce((acc, courseNotes) => {
-    return acc + (Array.isArray(courseNotes) ? courseNotes.length : 0);
-  }, 0);
+    const totalFiles = userCourses.reduce((acc, course) => {
+      const courseFiles = safeFiles[course.id];
+      return acc + (Array.isArray(courseFiles) ? courseFiles.length : 0);
+    }, 0);
 
-  const pendingTodos = Object.values(safeTodos).reduce((acc, courseTodos) => {
-    if (!Array.isArray(courseTodos)) return acc;
-    return acc + courseTodos.filter(todo => todo && !todo.done).length;
-  }, 0);
+    const totalNotes = userCourses.reduce((acc, course) => {
+      const courseNotes = safeNotes[course.id];
+      return acc + (Array.isArray(courseNotes) ? courseNotes.length : 0);
+    }, 0);
 
-  const overallAverage = activeCourses.length > 0 ? 15.5 : 0;
+    const pendingTodos = userCourses.reduce((acc, course) => {
+      const courseTodos = safeTodos[course.id];
+      if (!Array.isArray(courseTodos)) return acc;
+      return acc + courseTodos.filter(todo => todo && !todo.done).length;
+    }, 0);
 
-  const safeEvents = Array.isArray(events) ? events : [];
-  const now = Date.now();
-  const upcomingEvents = safeEvents
-    .filter(event => {
-      if (!event || !event.id || !event.date) return false;
-      const eventTime = new Date(event.date).getTime();
-      return !Number.isNaN(eventTime) && eventTime > now;
-    })
-    .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
-    .slice(0, 5);
+    const overallAverage = userCourses.length > 0 ? 15.5 : 0;
 
-  return {
-    activeCourses: activeCourses.length,
-    totalFiles,
-    totalNotes,
-    pendingTodos,
-    overallAverage,
-    upcomingEvents,
-  };
+    const safeEvents = Array.isArray(events) ? events : [];
+    const now = Date.now();
+    const upcomingEvents = safeEvents
+      .filter(event => {
+        if (!event || !event.id || !event.date) return false;
+        const eventTime = new Date(event.date).getTime();
+        return !Number.isNaN(eventTime) && eventTime > now;
+      })
+      .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+      .slice(0, 5);
+
+    return {
+      activeCourses: userCourses.length,
+      totalFiles,
+      totalNotes,
+      pendingTodos,
+      overallAverage,
+      upcomingEvents,
+    };
   })();
 
   return (
@@ -206,7 +212,13 @@ export function Dashboard() {
             </Link>
           </div>
 
-          {(!Array.isArray(courses) || courses.length === 0) ? (
+          {!(
+            Array.isArray(courses) &&
+            courses.some(
+              course =>
+                course && course.user_id === user?.id && !course.archived
+            )
+          ) ? (
             <EmptyState
               icon={BookOpen}
               title="No tienes cursos aún"
@@ -217,7 +229,10 @@ export function Dashboard() {
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {courses
-                .filter(course => course && !course.archived)
+                .filter(
+                  course =>
+                    course && course.user_id === user?.id && !course.archived
+                )
                 .map(course => (
                   <CourseCard key={course.id} course={course as SafeCourse} />
                 ))}
@@ -379,18 +394,22 @@ interface CourseCardProps {
 function CourseCard({ course }: CourseCardProps) {
   const { files, notes, todos } = useAppStore();
 
-  const courseFiles = files && typeof files === 'object' && Array.isArray(files[course.id])
-    ? files[course.id]
-    : [];
-  const courseNotes = notes && typeof notes === 'object' && Array.isArray(notes[course.id])
-    ? notes[course.id]
-    : [];
-  const courseTodos = todos && typeof todos === 'object' && Array.isArray(todos[course.id])
-    ? todos[course.id]
-    : [];
+  const courseFiles =
+    files && typeof files === 'object' && Array.isArray(files[course.id])
+      ? files[course.id]
+      : [];
+  const courseNotes =
+    notes && typeof notes === 'object' && Array.isArray(notes[course.id])
+      ? notes[course.id]
+      : [];
+  const courseTodos =
+    todos && typeof todos === 'object' && Array.isArray(todos[course.id])
+      ? todos[course.id]
+      : [];
 
   const average = (() => {
-    const activity = courseFiles.length + courseNotes.length + courseTodos.length;
+    const activity =
+      courseFiles.length + courseNotes.length + courseTodos.length;
     return activity > 0 ? Math.min(activity * 2 + 10, 20) : 0;
   })();
 
