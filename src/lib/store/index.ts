@@ -17,15 +17,10 @@ import {
   type UserPreferences,
 } from '../storage/localStorage';
 import { idUtils } from '../utils';
-import {
-  getCoursesFromConvex,
-  saveCourseToConvex,
-} from '../convex/database';
 import { authService } from '../auth/simple';
-import {
-  saveCourseToIndexedDB,
-  getCoursesFromIndexedDB,
-} from '../db/indexeddb';
+import { saveCourseToIndexedDB, getCoursesFromIndexedDB } from '../db/indexeddb';
+import { parseFile } from '../files/parser';
+import { convex, fileTextsApi, getCoursesFromConvex, saveCourseToConvex } from '../convex/database';
 
 // Tipos para el estado global
 interface AppState {
@@ -617,7 +612,7 @@ export const useAppStore = create<AppState & AppActions>()(
             id: idUtils.generate(),
             courseId,
             name: file.name,
-            type: file.type as 'file' | 'folder',
+            type: 'file',
             size: file.size,
             tags,
             blob: file,
@@ -633,6 +628,27 @@ export const useAppStore = create<AppState & AppActions>()(
               [courseId]: [...(state.files[courseId] || []), fileRecord],
             },
           }));
+
+          try {
+            const parsed = await parseFile(file);
+
+            if (!parsed.text) {
+              return;
+            }
+
+            const { user } = await authService.getCurrentUser();
+            const userId = user?.id || 'anonymous';
+
+            await convex.mutation(fileTextsApi.upsert, {
+              fileId: fileRecord.id,
+              courseId,
+              content: parsed.text,
+              userId,
+              extractedAt: parsed.extractedAt,
+            });
+          } catch (error) {
+            console.error('Error processing file text:', error);
+          }
         },
 
         deleteFile: async (courseId, fileId) => {

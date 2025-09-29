@@ -29,8 +29,8 @@ export default defineSchema({
 
   // Texto extraído de archivos
   fileTexts: defineTable({
-    fileId: v.id("files"),
-    courseId: v.id("courses"),
+    fileId: v.string(),
+    courseId: v.string(),
     content: v.string(),
     userId: v.string(),
     extractedAt: v.number(),

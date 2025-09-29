@@ -1,16 +1,51 @@
-import { convex } from './client';
-// import api from '../../../convex/_generated/api';
+import { convex, convexHttp } from './client';
+import { api, type Doc } from './api';
 import type { Course } from '../types';
 
-// Temporary fix for API types
-const api = {
-  courses: {
-    createCourse: 'courses:createCourse' as any,
-    getCoursesByUser: 'courses:getCoursesByUser' as any,
-    updateCourse: 'courses:updateCourse' as any,
-    deleteCourse: 'courses:deleteCourse' as any,
-  }
+export const fileTextsApi = {
+  upsert: api.files.upsertFileText,
+  byFile: api.files.getFileTextByFile,
+  byCourse: api.files.getFileTextsByCourse,
 };
+
+export { convex, convexHttp, api };
+
+export type FileTextDoc = Doc<'fileTexts'>;
+
+export async function getCourseFileTexts(
+  courseId: string,
+  { numItems = 50 }: { numItems?: number } = {}
+): Promise<FileTextDoc[]> {
+  const results: FileTextDoc[] = [];
+  let cursor: string | null = null;
+
+  try {
+    while (true) {
+      const { page, isDone, continueCursor } = await convexHttp.query(
+        fileTextsApi.byCourse,
+        {
+          courseId,
+          paginationOpts: {
+            numItems,
+            cursor,
+          },
+        }
+      );
+
+      results.push(...page);
+
+      if (isDone) {
+        break;
+      }
+
+      cursor = continueCursor ?? null;
+    }
+  } catch (error) {
+    console.error('Error fetching course file texts from Convex:', error);
+  }
+
+  return results;
+}
 
 // 🔹 Guardar un curso en Convex
 export async function saveCourseToConvex(

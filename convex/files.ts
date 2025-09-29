@@ -38,8 +38,8 @@ export const getFilesByUser = query({
 
 export const upsertFileText = mutation({
   args: {
-    fileId: v.id("files"),
-    courseId: v.id("courses"),
+    fileId: v.string(),
+    courseId: v.string(),
     content: v.string(),
     userId: v.string(),
     extractedAt: v.number(),
@@ -63,7 +63,7 @@ export const upsertFileText = mutation({
 });
 
 export const getFileTextByFile = query({
-  args: { fileId: v.id("files") },
+  args: { fileId: v.string() },
   handler: async (ctx, args) => {
     return await ctx.db
       .query("fileTexts")
@@ -74,7 +74,7 @@ export const getFileTextByFile = query({
 
 export const getFileTextsByCourse = query({
   args: {
-    courseId: v.id("courses"),
+    courseId: v.string(),
     paginationOpts: paginationOptsValidator,
   },
   handler: async (ctx, args) => {

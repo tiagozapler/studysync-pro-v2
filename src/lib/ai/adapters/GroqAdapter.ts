@@ -18,6 +18,7 @@ export class GroqAdapter {
       history?: GroqMessage[];
       systemPrompt?: string;
       courseName?: string;
+      extraContext?: string;
     }
   ): Promise<ReadableStream<string>> {
     try {
@@ -36,6 +37,14 @@ export class GroqAdapter {
       // Agregar historial de conversación
       if (context?.history) {
         messages.push(...context.history);
+      }
+
+      if (context?.extraContext) {
+        messages.push({
+          role: 'system',
+          content: `Contexto adicional proporcionado:
+${context.extraContext}`,
+        });
       }
 
       // Agregar el mensaje actual del usuario

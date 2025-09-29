@@ -1,4 +1,5 @@
 import { GroqAdapter, GroqMessage } from '../adapters/GroqAdapter';
+import { getCourseFileTexts } from '../../convex/database';
 
 export interface ChatMessage {
   id: string;
@@ -118,10 +119,13 @@ export class GroqChatService {
           content: msg.content,
         }));
 
+      const extraContext = await this.buildCourseContext(session.courseId);
+
       // Obtener stream de respuesta de la IA
       const stream = await this.adapter.sendMessageStream(content, {
         history,
         ...(session.courseName && { courseName: session.courseName }),
+        ...(extraContext && { extraContext }),
       });
 
       // Leer el stream y actualizar el mensaje en tiempo real
@@ -162,6 +166,35 @@ export class GroqChatService {
       this.emitUpdate(sessionId, aiMessage);
 
       throw error;
+    }
+  }
+
+  private async buildCourseContext(courseId?: string): Promise<string | null> {
+    if (!courseId) {
+      return null;
+    }
+
+    try {
+      const fileTexts = await getCourseFileTexts(courseId, { numItems: 50 });
+
+      if (fileTexts.length === 0) {
+        return null;
+      }
+
+      const joined = fileTexts
+        .map(text => text.content)
+        .filter(Boolean)
+        .join('\n\n');
+
+      if (!joined) {
+        return null;
+      }
+
+      const maxLength = 6000;
+      return joined.length > maxLength ? joined.slice(0, maxLength) : joined;
+    } catch (error) {
+      console.error('Error building course context:', error);
+      return null;
     }
   }
 

@@ -1,13 +1,10 @@
 import { GlobalWorkerOptions, getDocument } from 'pdfjs-dist';
 import type { PDFDocumentProxy, PDFPageProxy } from 'pdfjs-dist/types/src/display/api';
-import workerSrc from 'pdfjs-dist/build/pdf.worker.min.js?url';
 import { convertToHtml } from 'mammoth/mammoth.browser';
 
 export type SupportedFileType = 'pdf' | 'docx' | 'txt' | 'unknown';
 
 export interface ParsedFile {
-  fileId?: string;
-  courseId?: string;
   fileName: string;
   fileType: SupportedFileType;
   text: string;
@@ -16,6 +13,7 @@ export interface ParsedFile {
   extractedAt: number;
 }
 
+const workerSrc = `${typeof window !== 'undefined' ? window.location.origin : ''}/pdf.worker.min.js`;
 GlobalWorkerOptions.workerSrc = workerSrc;
 
 function detectFileType(file: File): SupportedFileType {
