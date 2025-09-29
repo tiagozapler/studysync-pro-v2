@@ -9,6 +9,7 @@ export const env = {
 
   // AI Configuration
   HUGGING_FACE_TOKEN: import.meta.env.VITE_HUGGING_FACE_TOKEN || '',
+  GROQ_API_KEY: import.meta.env.VITE_GROQ_API_KEY || '',
 
   // Environment
   NODE_ENV: import.meta.env.MODE || 'development',

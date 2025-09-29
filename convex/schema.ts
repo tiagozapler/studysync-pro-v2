@@ -33,6 +33,7 @@ export default defineSchema({
     courseId: v.id("courses"),
     content: v.string(),
     userId: v.string(),
+    extractedAt: v.number(),
   })
   .index("by_file", ["fileId"])
   .index("by_course", ["courseId"]),
