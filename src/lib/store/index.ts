@@ -368,6 +368,9 @@ export const useAppStore = create<AppState & AppActions>()(
             // Cargar cursos usando la función loadCourses
             await get().loadCourses();
 
+            // Mantener los cursos cargados en el estado inicial final
+            initialState.courses = get().courses;
+
             // Cargar otros datos (eventos y notas rápidas)
             try {
               console.log(
