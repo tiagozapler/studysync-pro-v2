@@ -39,6 +39,15 @@ export const CourseAIAssistant: React.FC<CourseAIAssistantProps> = ({
   const [groqApiKey, setGroqApiKey] = useState(
     localStorage.getItem('groqApiKey') || env.GROQ_API_KEY || ''
   );
+
+  // Efecto para sincronizar con localStorage en caso de cambios externos
+  useEffect(() => {
+    const storedKey =
+      localStorage.getItem('groqApiKey') || env.GROQ_API_KEY || '';
+    if (storedKey !== groqApiKey) {
+      setGroqApiKey(storedKey);
+    }
+  }, []);
   const groqKeyValid = Boolean(groqApiKey);
   const [selectedFiles, setSelectedFiles] = useState<string[]>([]);
   const [showFileSelector, setShowFileSelector] = useState(false);
@@ -68,8 +77,9 @@ export const CourseAIAssistant: React.FC<CourseAIAssistantProps> = ({
       const client = new Groq({ apiKey: groqApiKey });
       setGroqClient(client);
       setIsGroqReady(true);
+      console.log('✅ Groq client initialized successfully');
     } catch (error) {
-      console.error('Error configurando Groq:', error);
+      console.error('❌ Error configurando Groq:', error);
       setGroqClient(null);
       setIsGroqReady(false);
     }
@@ -80,7 +90,7 @@ export const CourseAIAssistant: React.FC<CourseAIAssistantProps> = ({
   };
 
   const handleSendMessage = async () => {
-    if (!groqKeyValid || !groqClient) {
+    if (!groqKeyValid) {
       toast.error('Configura y guarda tu clave de Groq para usar la IA.');
       return;
     }
@@ -260,11 +270,14 @@ ${context}`,
 
     localStorage.setItem('groqApiKey', groqApiKey);
     setShowSettings(false);
-    toast.success('Clave de Groq guardada');
+    toast.success('Clave de Groq guardada y activada');
+
+    // Forzar actualización del estado para reflejar el cambio inmediatamente
+    setGroqApiKey(groqApiKey); // Esto fuerza que el useEffect se ejecute
   };
 
   const systemInfo = {
-    groq: isGroqReady,
+    groq: groqKeyValid && isGroqReady,
   };
 
   return (
