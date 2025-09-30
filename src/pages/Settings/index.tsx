@@ -1,7 +1,15 @@
 import React from 'react';
 import { Save } from 'lucide-react';
+import { useAppStore } from '../../lib/store';
 
 export function Settings() {
+  const { settings, updateSettings } = useAppStore();
+  const setAccent = (accent: 'cyan' | 'purple' | 'lime') => {
+    updateSettings({ accentColor: accent });
+    try {
+      document.documentElement.setAttribute('data-accent', accent);
+    } catch {}
+  };
   return (
     <div className="container-app py-8">
       <div className="page-header">
@@ -22,6 +30,30 @@ export function Settings() {
               Apariencia
             </h2>
             <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-dark-text-primary mb-2">
+                  Color de acento (Tron)
+                </label>
+                <div className="flex gap-3">
+                  {([
+                    { id: 'cyan', className: 'bg-neon-cyan' },
+                    { id: 'purple', className: 'bg-neon-purple' },
+                    { id: 'lime', className: 'bg-neon-lime' },
+                  ] as const).map(opt => (
+                    <button
+                      key={opt.id}
+                      onClick={() => setAccent(opt.id)}
+                      className={`w-9 h-9 rounded-full border ${opt.className} ${
+                        settings.accentColor === opt.id
+                          ? 'ring-2 ring-white/80 ring-offset-2 ring-offset-dark-bg-secondary'
+                          : 'opacity-80 hover:opacity-100'
+                      }`}
+                      title={opt.id}
+                    />
+                  ))}
+                </div>
+              </div>
+
               <div>
                 <label className="block text-sm font-medium text-dark-text-primary mb-2">
                   Densidad de la interfaz
@@ -118,9 +150,7 @@ export function Settings() {
                 <Save size={16} />
                 Exportar Datos
               </button>
-              <button className="btn w-full justify-start">
-                Importar Datos
-              </button>
+              <button className="btn w-full justify-start">Importar Datos</button>
               <button className="btn btn-danger w-full justify-start">
                 Limpiar Todos los Datos
               </button>

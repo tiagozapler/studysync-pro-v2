@@ -5,6 +5,7 @@ export interface AppSettings {
   density: 'compact' | 'normal' | 'comfortable';
   highContrast: boolean;
   fontSize: 'small' | 'normal' | 'large';
+  accentColor?: 'cyan' | 'purple' | 'lime';
 
   // IA
   aiAdapter: 'mock' | 'webllm' | 'ollama';
@@ -84,6 +85,7 @@ const DEFAULT_SETTINGS: AppSettings = {
   density: 'normal',
   highContrast: false,
   fontSize: 'normal',
+  accentColor: 'cyan',
 
   // IA
   aiAdapter: 'webllm',

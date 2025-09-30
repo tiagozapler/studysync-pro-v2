@@ -24,6 +24,12 @@ async function initApp() {
 
     // Aplicar tema oscuro (siempre activo en esta app)
     document.documentElement.classList.add('dark');
+    // Aplicar color de acento desde settings
+    try {
+      const stored = localStorage.getItem('studysync_settings');
+      const accent = stored ? (JSON.parse(stored).accentColor || 'cyan') : 'cyan';
+      document.documentElement.setAttribute('data-accent', accent);
+    } catch {}
 
     // Configurar service worker para PWA (si está soportado)
     if ('serviceWorker' in navigator && import.meta.env.PROD) {

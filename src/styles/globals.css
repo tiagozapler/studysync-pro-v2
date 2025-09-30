@@ -7,6 +7,18 @@
 
 /* Base styles */
 @layer base {
+  :root {
+    --accent: #00E5FF; /* cyan default */
+  }
+  [data-accent='cyan'] {
+    --accent: #00E5FF;
+  }
+  [data-accent='purple'] {
+    --accent: #B367FF;
+  }
+  [data-accent='lime'] {
+    --accent: #B8FF2C;
+  }
   * {
     @apply box-border;
   }
@@ -56,8 +68,15 @@
   }
 
   .btn-primary {
-    @apply bg-neon-cyan/20 border-neon-cyan text-neon-cyan;
-    @apply hover:bg-neon-cyan/30 hover:text-white;
+    @apply bg-transparent border text-white;
+    border-color: var(--accent);
+    color: var(--accent);
+  }
+  .btn-primary:hover {
+    background: color-mix(in oklab, var(--accent) 20%, transparent);
+    border-color: var(--accent);
+    color: white;
+    box-shadow: 0 0 18px color-mix(in oklab, var(--accent) 25%, transparent);
   }
 
   .btn-danger {
@@ -206,9 +225,11 @@
   /* Neon link */
   .link-neon {
     @apply text-neon-cyan transition-colors;
+    color: var(--accent);
   }
   .link-neon:hover {
-    color: #B367FF; /* neon-purple */
+    color: #ffffff;
+    text-shadow: 0 0 8px color-mix(in oklab, var(--accent) 40%, transparent);
   }
 
   .scrollbar-hide {
