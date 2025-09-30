@@ -195,10 +195,10 @@ export const GradesSection: React.FC<GradesSectionProps> = ({ courseId }) => {
     <div className="space-y-6">
       {/* Header y estadísticas */}
       <div className="flex items-center justify-between">
-        <h3 className="text-lg font-semibold text-gray-900">Notas del Curso</h3>
+        <h3 className="text-lg font-semibold">Notas del Curso</h3>
         <button
           onClick={() => setShowAddModal(true)}
-          className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+          className="btn btn-primary"
         >
           <Plus className="w-4 h-4 mr-2" />
           Agregar Nota
@@ -207,38 +207,38 @@ export const GradesSection: React.FC<GradesSectionProps> = ({ courseId }) => {
 
       {/* Tarjetas de estadísticas */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="bg-white p-4 rounded-lg shadow border">
+        <div className="card p-4">
           <div className="flex items-center">
-            <div className="p-2 bg-blue-100 rounded-lg">
-              <TrendingUp className="h-6 w-6 text-blue-600" />
+            <div className="p-2 rounded-full border border-neon-cyan/40 bg-neon-cyan/10">
+              <TrendingUp className="h-6 w-6 text-neon-cyan" />
             </div>
             <div className="ml-3">
-              <p className="text-sm font-medium text-gray-500">
+              <p className="text-sm font-medium text-dark-text-secondary">
                 Promedio Actual
               </p>
-              <p className={`text-2xl font-bold ${stats.average >= 11 ? 'text-green-600' : 'text-red-600'}`}>
+              <p className={`text-2xl font-bold ${stats.average >= 11 ? 'text-green-400' : 'text-red-400'}`}>
                 {stats.average}/20
               </p>
             </div>
           </div>
         </div>
 
-        <div className="bg-white p-4 rounded-lg shadow border">
+        <div className="card p-4">
           <div className="flex items-center">
-            <div className={`p-2 rounded-lg ${
-              stats.status === 'passing' ? 'bg-green-100' :
-              stats.status === 'failing' ? 'bg-red-100' : 'bg-yellow-100'
+            <div className={`p-2 rounded-full border ${
+              stats.status === 'passing' ? 'border-green-500/40 bg-green-500/10' :
+              stats.status === 'failing' ? 'border-red-500/40 bg-red-500/10' : 'border-yellow-500/40 bg-yellow-500/10'
             }`}>
               <Award className={`h-6 w-6 ${
-                stats.status === 'passing' ? 'text-green-600' :
-                stats.status === 'failing' ? 'text-red-600' : 'text-yellow-600'
+                stats.status === 'passing' ? 'text-green-400' :
+                stats.status === 'failing' ? 'text-red-400' : 'text-yellow-400'
               }`} />
             </div>
             <div className="ml-3">
-              <p className="text-sm font-medium text-gray-500">Estado</p>
+              <p className="text-sm font-medium text-dark-text-secondary">Estado</p>
               <p className={`text-lg font-bold ${
-                stats.status === 'passing' ? 'text-green-600' :
-                stats.status === 'failing' ? 'text-red-600' : 'text-yellow-600'
+                stats.status === 'passing' ? 'text-green-400' :
+                stats.status === 'failing' ? 'text-red-400' : 'text-yellow-400'
               }`}>
                 {stats.status === 'passing' ? 'Aprobando' :
                  stats.status === 'failing' ? 'Desaprobado' : 'En curso'}
@@ -247,30 +247,30 @@ export const GradesSection: React.FC<GradesSectionProps> = ({ courseId }) => {
           </div>
         </div>
 
-        <div className="bg-white p-4 rounded-lg shadow border">
+        <div className="card p-4">
           <div className="flex items-center">
-            <div className="p-2 bg-yellow-100 rounded-lg">
-              <Target className="h-6 w-6 text-yellow-600" />
+            <div className="p-2 rounded-full border border-yellow-500/40 bg-yellow-500/10">
+              <Target className="h-6 w-6 text-yellow-400" />
             </div>
             <div className="ml-3">
-              <p className="text-sm font-medium text-gray-500">Peso Evaluado</p>
-              <p className="text-2xl font-bold text-gray-900">
+              <p className="text-sm font-medium text-dark-text-secondary">Peso Evaluado</p>
+              <p className="text-2xl font-bold">
                 {stats.totalWeight}%
               </p>
             </div>
           </div>
         </div>
 
-        <div className="bg-white p-4 rounded-lg shadow border">
+        <div className="card p-4">
           <div className="flex items-center">
-            <div className="p-2 bg-purple-100 rounded-lg">
-              <Target className="h-6 w-6 text-purple-600" />
+            <div className="p-2 rounded-full border border-neon-purple/40 bg-neon-purple/10">
+              <Target className="h-6 w-6 text-neon-purple" />
             </div>
             <div className="ml-3">
-              <p className="text-sm font-medium text-gray-500">
+              <p className="text-sm font-medium text-dark-text-secondary">
                 {stats.needToPass !== null && stats.remainingWeight > 0 ? 'Necesitas para aprobar' : 'Peso Restante'}
               </p>
-              <p className="text-2xl font-bold text-gray-900">
+              <p className="text-2xl font-bold">
                 {stats.needToPass !== null && stats.remainingWeight > 0 
                   ? `${stats.needToPass}/20`
                   : `${stats.remainingWeight}%`
@@ -282,22 +282,22 @@ export const GradesSection: React.FC<GradesSectionProps> = ({ courseId }) => {
       </div>
 
       {/* Barra de progreso del peso */}
-      <div className="bg-white p-4 rounded-lg shadow border">
+      <div className="card p-4">
         <div className="flex items-center justify-between mb-2">
-          <h4 className="text-sm font-medium text-gray-900">
+          <h4 className="text-sm font-medium">
             Progreso del Curso
           </h4>
-          <span className="text-sm text-gray-500">
+          <span className="text-sm text-dark-text-muted">
             {stats.totalWeight}% de 100% evaluado
           </span>
         </div>
-        <div className="w-full bg-gray-200 rounded-full h-2">
+        <div className="w-full bg-dark-bg-tertiary rounded-full h-2">
           <div
-            className="bg-blue-600 h-2 rounded-full transition-all duration-300"
+            className="bg-neon-cyan h-2 rounded-full transition-all duration-300"
             style={{ width: `${stats.totalWeight}%` }}
           />
         </div>
-        <p className="text-xs text-gray-500 mt-1">
+        <p className="text-xs text-dark-text-muted mt-1">
           {stats.remainingWeight > 0
             ? `Faltan ${stats.remainingWeight}% de evaluaciones para completar el curso`
             : 'Curso completamente evaluado'}
@@ -306,84 +306,84 @@ export const GradesSection: React.FC<GradesSectionProps> = ({ courseId }) => {
 
       {/* Lista de notas */}
       {courseGrades.length > 0 ? (
-        <div className="bg-white shadow rounded-lg">
-          <div className="px-6 py-4 border-b border-gray-200">
-            <h4 className="text-sm font-medium text-gray-900">
+        <div className="card">
+          <div className="px-6 py-4 border-b border-dark-border">
+            <h4 className="text-sm font-medium">
               Evaluaciones ({courseGrades.length})
             </h4>
           </div>
           <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
+            <table className="min-w-full divide-y divide-dark-border/60">
+              <thead className="bg-dark-bg-secondary/50">
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-dark-text-secondary uppercase tracking-wider">
                     Evaluación
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-dark-text-secondary uppercase tracking-wider">
                     Nota
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-dark-text-secondary uppercase tracking-wider">
                     Peso
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-dark-text-secondary uppercase tracking-wider">
                     Tipo
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-dark-text-secondary uppercase tracking-wider">
                     Fecha
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-dark-text-secondary uppercase tracking-wider">
                     Acciones
                   </th>
                 </tr>
               </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
+              <tbody className="divide-y divide-dark-border/60">
                 {courseGrades.map(grade => {
                   const percentage = (grade.score / grade.maxScore) * 100;
                   return (
-                    <tr key={grade.id} className="hover:bg-gray-50">
+                    <tr key={grade.id} className="hover:bg-dark-bg-secondary/40">
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm font-medium text-gray-900">
+                        <div className="text-sm font-medium">
                           {grade.name}
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex items-center">
                           <span
-                            className={`text-sm font-semibold ${getGradeColor(percentage)}`}
+                            className={`text-sm font-semibold`}
                           >
                             {grade.score}/{grade.maxScore}
                           </span>
                           <span
-                            className={`ml-2 text-xs ${getGradeColor(percentage)}`}
+                            className={`ml-2 text-xs`}
                           >
                             ({percentage.toFixed(1)}%)
                           </span>
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <span className="text-sm text-gray-900">
+                        <span className="text-sm">
                           {grade.weight}%
                         </span>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">
+                        <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-neon-cyan/20 text-neon-cyan border border-neon-cyan/40">
                           {grade.type}
                         </span>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-dark-text-muted">
                         {new Date(grade.date).toLocaleDateString()}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                         <div className="flex space-x-2">
                           <button
                             onClick={() => handleEdit(grade)}
-                            className="text-blue-600 hover:text-blue-900"
+                            className="btn btn-ghost px-2"
                           >
                             <Edit3 className="h-4 w-4" />
                           </button>
                           <button
                             onClick={() => handleDelete(grade.id)}
-                            className="text-red-600 hover:text-red-900"
+                            className="btn btn-ghost px-2"
                           >
                             <Trash2 className="h-4 w-4" />
                           </button>
@@ -398,17 +398,17 @@ export const GradesSection: React.FC<GradesSectionProps> = ({ courseId }) => {
         </div>
       ) : (
         <div className="text-center py-8">
-          <Award className="mx-auto h-12 w-12 text-gray-400" />
-          <h3 className="mt-2 text-sm font-medium text-gray-900">
+          <Award className="mx-auto h-12 w-12 text-dark-text-secondary" />
+          <h3 className="mt-2 text-sm font-medium">
             No hay notas
           </h3>
-          <p className="mt-1 text-sm text-gray-500">
+          <p className="mt-1 text-sm text-dark-text-muted">
             Comienza agregando la primera evaluación del curso.
           </p>
           <div className="mt-6">
             <button
               onClick={() => setShowAddModal(true)}
-              className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+              className="btn btn-primary"
             >
               <Plus className="w-4 h-4 mr-2" />
               Agregar Primera Nota
@@ -419,15 +419,15 @@ export const GradesSection: React.FC<GradesSectionProps> = ({ courseId }) => {
 
       {/* Modal para agregar/editar nota */}
       {showAddModal && (
-        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
-          <div className="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm overflow-y-auto h-full w-full z-50">
+          <div className="relative top-20 mx-auto p-5 w-96 card">
             <div className="mt-3">
-              <h3 className="text-lg font-medium text-gray-900 mb-4">
+              <h3 className="text-lg font-medium mb-4">
                 {editingGrade ? 'Editar Nota' : 'Agregar Nueva Nota'}
               </h3>
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700">
+                  <label className="block text-sm font-medium">
                     Nombre de la Evaluación
                   </label>
                   <input
@@ -436,7 +436,7 @@ export const GradesSection: React.FC<GradesSectionProps> = ({ courseId }) => {
                     onChange={e =>
                       setFormData({ ...formData, name: e.target.value })
                     }
-                    className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                    className="mt-1 block w-full input"
                     placeholder="Examen Parcial 1"
                     required
                   />
@@ -444,7 +444,7 @@ export const GradesSection: React.FC<GradesSectionProps> = ({ courseId }) => {
 
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700">
+                    <label className="block text-sm font-medium">
                       Nota Obtenida
                     </label>
                     <input
@@ -455,13 +455,13 @@ export const GradesSection: React.FC<GradesSectionProps> = ({ courseId }) => {
                       onChange={e =>
                         setFormData({ ...formData, score: e.target.value })
                       }
-                      className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                      className="mt-1 block w-full input"
                       placeholder="85"
                       required
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700">
+                    <label className="block text-sm font-medium">
                       Nota Máxima
                     </label>
                     <input
@@ -472,7 +472,7 @@ export const GradesSection: React.FC<GradesSectionProps> = ({ courseId }) => {
                       onChange={e =>
                         setFormData({ ...formData, maxScore: e.target.value })
                       }
-                      className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                      className="mt-1 block w-full input"
                       placeholder="100"
                       required
                     />
@@ -481,7 +481,7 @@ export const GradesSection: React.FC<GradesSectionProps> = ({ courseId }) => {
 
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700">
+                    <label className="block text-sm font-medium">
                       Peso (%)
                     </label>
                     <input
@@ -493,12 +493,12 @@ export const GradesSection: React.FC<GradesSectionProps> = ({ courseId }) => {
                       onChange={e =>
                         setFormData({ ...formData, weight: e.target.value })
                       }
-                      className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                      className="mt-1 block w-full input"
                       placeholder="25"
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700">
+                    <label className="block text-sm font-medium">
                       Tipo
                     </label>
                     <select
@@ -506,7 +506,7 @@ export const GradesSection: React.FC<GradesSectionProps> = ({ courseId }) => {
                       onChange={e =>
                         setFormData({ ...formData, type: e.target.value })
                       }
-                      className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                      className="mt-1 block w-full input"
                     >
                       <option value="tarea">Tarea</option>
                       <option value="examen">Examen</option>
@@ -521,7 +521,7 @@ export const GradesSection: React.FC<GradesSectionProps> = ({ courseId }) => {
                 <div className="flex space-x-3 pt-4">
                   <button
                     type="submit"
-                    className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-md transition-colors"
+                    className="flex-1 btn btn-primary"
                   >
                     {editingGrade ? 'Actualizar' : 'Agregar'}
                   </button>
@@ -538,7 +538,7 @@ export const GradesSection: React.FC<GradesSectionProps> = ({ courseId }) => {
                         type: 'tarea',
                       });
                     }}
-                    className="flex-1 bg-gray-600 hover:bg-gray-700 text-white font-medium py-2 px-4 rounded-md transition-colors"
+                    className="flex-1 btn btn-ghost"
                   >
                     Cancelar
                   </button>

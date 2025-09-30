@@ -243,20 +243,20 @@ export const MaterialsSection: React.FC<MaterialsSectionProps> = ({
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h3 className="text-lg font-semibold text-gray-900">
+        <h3 className="text-lg font-semibold">
           Materiales del Curso
         </h3>
         <div className="flex space-x-2">
           <button
             onClick={() => setShowAISettings(true)}
-            className="inline-flex items-center px-3 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+            className="btn btn-ghost"
           >
             <Brain className="w-4 h-4 mr-2" />
             Configurar IA
           </button>
           <button
             onClick={() => fileInputRef.current?.click()}
-            className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+            className="btn btn-primary"
           >
             <Upload className="w-4 h-4 mr-2" />
             Subir Archivos
@@ -265,11 +265,11 @@ export const MaterialsSection: React.FC<MaterialsSectionProps> = ({
       </div>
 
       {/* Estado de IA */}
-      <div className="bg-white p-4 rounded-lg shadow border">
+      <div className="card p-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center">
-            <Brain className="h-5 w-5 text-purple-600 mr-2" />
-            <h4 className="text-sm font-medium text-gray-900">
+            <Brain className="h-5 w-5 text-neon-purple mr-2" />
+            <h4 className="text-sm font-medium">
               Estado de Groq
             </h4>
           </div>
@@ -277,44 +277,44 @@ export const MaterialsSection: React.FC<MaterialsSectionProps> = ({
             <span
               className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
                 systemInfo.groq
-                  ? 'bg-green-100 text-green-800'
-                  : 'bg-red-100 text-red-800'
+                  ? 'bg-green-500/20 text-green-300 border border-green-500/40'
+                  : 'bg-red-500/20 text-red-300 border border-red-500/40'
               }`}
             >
               Groq: {systemInfo.groq ? 'Activo' : 'Sin clave'}
             </span>
           </div>
         </div>
-        <p className="text-xs text-gray-500 mt-2">
+        <p className="text-xs text-dark-text-muted mt-2">
           Configura tu clave de Groq en el asistente de cada curso para obtener respuestas rápidas y precisas.
         </p>
       </div>
 
       {/* Área de drag & drop */}
       <div
-        className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors ${
+        className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors backdrop-blur-sm ${
           dragActive
-            ? 'border-blue-400 bg-blue-50'
-            : 'border-gray-300 hover:border-gray-400'
+            ? 'border-neon-cyan bg-neon-cyan/10'
+            : 'border-dark-border hover:border-neon-cyan/40 bg-dark-bg-secondary/40'
         }`}
         onDragEnter={handleDrag}
         onDragLeave={handleDrag}
         onDragOver={handleDrag}
         onDrop={handleDrop}
       >
-        <Upload className="mx-auto h-12 w-12 text-gray-400" />
+        <Upload className="mx-auto h-12 w-12 text-neon-cyan" />
         <div className="mt-4">
-          <p className="text-sm text-gray-600">
+          <p className="text-sm text-dark-text-secondary">
             Arrastra archivos aquí o{' '}
             <button
               type="button"
               onClick={() => fileInputRef.current?.click()}
-              className="text-blue-600 hover:text-blue-500 font-medium"
+              className="text-neon-cyan hover:text-neon-purple font-medium"
             >
               selecciona archivos
             </button>
           </p>
-          <p className="text-xs text-gray-500 mt-1">
+          <p className="text-xs text-dark-text-muted mt-1">
             PDF, Word, Excel, PowerPoint, imágenes y más
           </p>
         </div>
@@ -322,9 +322,9 @@ export const MaterialsSection: React.FC<MaterialsSectionProps> = ({
 
       {/* Barra de progreso */}
       {isUploading && (
-        <div className="w-full bg-gray-200 rounded-full h-2">
+        <div className="w-full bg-dark-bg-tertiary rounded-full h-2">
           <div
-            className="bg-blue-600 h-2 rounded-full transition-all duration-300"
+            className="bg-neon-cyan h-2 rounded-full transition-all duration-300"
             style={{ width: `${uploadProgress}%` }}
           />
         </div>
