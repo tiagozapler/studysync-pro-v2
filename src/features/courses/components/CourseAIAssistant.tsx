@@ -8,6 +8,7 @@ import {
   Brain,
   Upload,
   X,
+  Trash2,
 } from 'lucide-react';
 import { useAppStore } from '../../../lib/store';
 import Groq from 'groq-sdk';
@@ -15,6 +16,8 @@ import toast from 'react-hot-toast';
 import env from '../../../lib/config/env';
 import { getCourseFileTexts } from '../../../lib/convex/database';
 import type { GroqMessage } from '../../../lib/ai/adapters/GroqAdapter';
+import { db } from '../../../lib/db/database';
+import { idUtils } from '../../../lib/utils';
 
 interface CourseAIAssistantProps {
   courseId: string;
@@ -62,6 +65,33 @@ export const CourseAIAssistant: React.FC<CourseAIAssistantProps> = ({
   const [groqClient, setGroqClient] = useState<Groq | null>(null);
   const [isGroqReady, setIsGroqReady] = useState(false);
 
+  // Cargar mensajes desde IndexedDB cuando se monta el componente
+  useEffect(() => {
+    const loadMessages = async () => {
+      try {
+        const savedMessages = await db.chatMessages
+          .where('courseId')
+          .equals(courseId)
+          .sortBy('createdAt');
+        
+        if (savedMessages.length > 0) {
+          const formattedMessages: Message[] = savedMessages.map(msg => ({
+            id: msg.id,
+            role: msg.role,
+            content: msg.content,
+            timestamp: msg.createdAt,
+            files: msg.attachedFiles,
+          }));
+          setMessages(formattedMessages);
+        }
+      } catch (error) {
+        console.error('Error loading chat messages:', error);
+      }
+    };
+
+    loadMessages();
+  }, [courseId]);
+
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
@@ -101,12 +131,26 @@ export const CourseAIAssistant: React.FC<CourseAIAssistantProps> = ({
     if (!inputValue.trim() && selectedFiles.length === 0) return;
 
     const userMessage: Message = {
-      id: Date.now().toString(),
+      id: idUtils.generate(),
       role: 'user',
       content: inputValue,
       timestamp: new Date(),
       files: selectedFiles,
     };
+
+    // Guardar mensaje del usuario en IndexedDB
+    try {
+      await db.chatMessages.add({
+        id: userMessage.id,
+        courseId,
+        content: userMessage.content,
+        role: 'user',
+        attachedFiles: selectedFiles,
+        createdAt: userMessage.timestamp,
+      });
+    } catch (error) {
+      console.error('Error saving user message:', error);
+    }
 
     setMessages(prev => [...prev, userMessage]);
     setInputValue('');
@@ -123,11 +167,29 @@ export const CourseAIAssistant: React.FC<CourseAIAssistantProps> = ({
       });
 
       const assistantMessage: Message = {
-        id: (Date.now() + 1).toString(),
+        id: idUtils.generate(),
         role: 'assistant',
         content: response,
         timestamp: new Date(),
       };
+
+      // Guardar mensaje del asistente en IndexedDB
+      try {
+        await db.chatMessages.add({
+          id: assistantMessage.id,
+          courseId,
+          content: assistantMessage.content,
+          role: 'assistant',
+          attachedFiles: [],
+          metadata: {
+            model: 'llama-3.1-8b-instant',
+            timestamp: assistantMessage.timestamp,
+          },
+          createdAt: assistantMessage.timestamp,
+        });
+      } catch (error) {
+        console.error('Error saving assistant message:', error);
+      }
 
       setMessages(prev => [...prev, assistantMessage]);
       setSelectedFiles([]);
@@ -136,12 +198,27 @@ export const CourseAIAssistant: React.FC<CourseAIAssistantProps> = ({
       toast.error('Error al obtener respuesta de la IA');
 
       const errorMessage: Message = {
-        id: (Date.now() + 1).toString(),
+        id: idUtils.generate(),
         role: 'assistant',
         content:
           'Lo siento, hubo un error al procesar tu solicitud. Por favor, intenta de nuevo.',
         timestamp: new Date(),
       };
+
+      // Guardar mensaje de error en IndexedDB
+      try {
+        await db.chatMessages.add({
+          id: errorMessage.id,
+          courseId,
+          content: errorMessage.content,
+          role: 'assistant',
+          attachedFiles: [],
+          createdAt: errorMessage.timestamp,
+        });
+      } catch (err) {
+        console.error('Error saving error message:', err);
+      }
+
       setMessages(prev => [...prev, errorMessage]);
     } finally {
       setIsLoading(false);
@@ -279,6 +356,18 @@ ${context}`,
     setGroqApiKey(groqApiKey); // Esto fuerza que el useEffect se ejecute
   };
 
+  const handleClearChat = async () => {
+    try {
+      // Eliminar todos los mensajes del chat de este curso de IndexedDB
+      await db.chatMessages.where('courseId').equals(courseId).delete();
+      setMessages([]);
+      toast.success('Historial del chat eliminado');
+    } catch (error) {
+      console.error('Error clearing chat:', error);
+      toast.error('Error al limpiar el chat');
+    }
+  };
+
   const systemInfo = {
     groq: groqKeyValid && isGroqReady,
   };
@@ -291,12 +380,23 @@ ${context}`,
           <Bot className="h-6 w-6 text-purple-600 mr-2" />
           <h3 className="text-lg font-semibold text-gray-900">Asistente IA</h3>
         </div>
-        <button
-          onClick={() => setShowSettings(true)}
-          className="p-2 text-gray-400 hover:text-gray-600 rounded-md hover:bg-gray-100"
-        >
-          <Settings className="h-5 w-5" />
-        </button>
+        <div className="flex items-center space-x-2">
+          {messages.length > 0 && (
+            <button
+              onClick={handleClearChat}
+              className="p-2 text-gray-400 hover:text-red-600 rounded-md hover:bg-gray-100"
+              title="Limpiar historial del chat"
+            >
+              <Trash2 className="h-5 w-5" />
+            </button>
+          )}
+          <button
+            onClick={() => setShowSettings(true)}
+            className="p-2 text-gray-400 hover:text-gray-600 rounded-md hover:bg-gray-100"
+          >
+            <Settings className="h-5 w-5" />
+          </button>
+        </div>
       </div>
 
       {/* Estado de IA */}
