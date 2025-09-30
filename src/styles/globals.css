@@ -48,44 +48,44 @@
   /* Botones base */
   .btn {
     @apply inline-flex items-center justify-center gap-2 px-4 py-2 text-sm font-semibold;
-    @apply border border-dark-border bg-dark-bg-secondary text-dark-text-primary;
-    @apply rounded-sm transition-all duration-fast;
-    @apply hover:border-course-blue hover:bg-course-blue hover:text-white;
-    @apply focus-visible:ring-2 focus-visible:ring-course-blue focus-visible:ring-offset-2;
+    @apply border border-dark-border bg-dark-bg-secondary/70 text-dark-text-primary backdrop-blur-md;
+    @apply rounded-sm transition-all duration-fast shadow-glow;
+    @apply hover:border-neon-cyan hover:bg-neon-cyan/10 hover:shadow-[0_0_24px_rgba(0,229,255,0.15)];
+    @apply focus-visible:ring-2 focus-visible:ring-neon-cyan focus-visible:ring-offset-2;
     @apply disabled:opacity-50 disabled:cursor-not-allowed;
   }
 
   .btn-primary {
-    @apply bg-course-blue border-course-blue text-white;
-    @apply hover:bg-blue-600 hover:border-blue-600;
+    @apply bg-neon-cyan/20 border-neon-cyan text-neon-cyan;
+    @apply hover:bg-neon-cyan/30 hover:text-white;
   }
 
   .btn-danger {
-    @apply bg-danger border-danger text-white;
-    @apply hover:bg-red-600 hover:border-red-600;
+    @apply bg-neon-red/20 border-neon-red text-neon-red;
+    @apply hover:bg-neon-red/30 hover:text-white;
   }
 
   .btn-ghost {
-    @apply bg-transparent border-transparent;
-    @apply hover:bg-dark-bg-tertiary hover:border-dark-border;
+    @apply bg-transparent border-transparent text-dark-text-secondary;
+    @apply hover:bg-neon-purple/10 hover:border-neon-purple hover:text-neon-purple;
   }
 
   /* Cards */
   .card {
-    @apply bg-dark-bg-secondary border border-dark-border rounded-sm;
-    @apply shadow-hard transition-all duration-fast;
+    @apply bg-dark-bg-secondary/60 border border-dark-border rounded-sm backdrop-blur-md;
+    @apply shadow-card shadow-glow transition-all duration-fast;
   }
 
   .card-hover {
-    @apply hover:border-course-blue hover:shadow-card hover:-translate-y-1;
+    @apply hover:border-neon-lime hover:shadow-[0_8px_30px_-5px_rgba(184,255,44,0.15),0_4px_12px_-2px_rgba(184,255,44,0.12)] hover:-translate-y-1;
   }
 
   /* Inputs */
   .input {
-    @apply w-full bg-dark-bg-tertiary border border-dark-border text-dark-text-primary;
-    @apply rounded-sm px-3 py-2 text-sm transition-colors duration-fast;
+    @apply w-full bg-dark-bg-tertiary/70 border border-dark-border text-dark-text-primary backdrop-blur-sm;
+    @apply rounded-sm px-3 py-2 text-sm transition-colors duration-fast shadow-inner;
     @apply placeholder:text-dark-text-muted;
-    @apply focus:border-course-blue focus:ring-1 focus:ring-course-blue;
+    @apply focus:border-neon-cyan focus:ring-1 focus:ring-neon-cyan;
   }
 
   /* Modal */
@@ -103,11 +103,11 @@
   .nav-item {
     @apply flex items-center gap-3 px-3 py-2 text-sm font-medium;
     @apply text-dark-text-secondary rounded-sm transition-colors duration-fast;
-    @apply hover:bg-dark-bg-tertiary hover:text-dark-text-primary;
+    @apply hover:bg-neon-purple/10 hover:text-neon-purple hover:border hover:border-neon-purple/50;
   }
 
   .nav-item.active {
-    @apply bg-course-blue text-white;
+    @apply bg-neon-cyan/20 text-neon-cyan border border-neon-cyan;
   }
 
   /* Utilidades para layout */
