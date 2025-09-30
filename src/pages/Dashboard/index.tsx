@@ -122,37 +122,37 @@ export function Dashboard() {
 
   return (
     <div className="container-app py-8">
-      {/* Header */}
-      <div className="page-header">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-display font-bold text-dark-text-primary">
-              Dashboard Académico
-            </h1>
-            <p className="text-dark-text-muted mt-2">
-              Gestiona tus cursos y mantén el control de tu progreso académico
-            </p>
-          </div>
-
-          <div className="flex items-center gap-4">
-            <div className="text-right">
-              <p className="text-sm text-gray-600">Bienvenido,</p>
-              <p className="font-medium text-gray-900">{user.email}</p>
+      {/* Hero moderno */}
+      <div className="relative mb-10 overflow-hidden rounded-lg border border-dark-border bg-dark-bg-secondary/60 shadow-card">
+        <div className="absolute inset-0 opacity-40">
+          <div className="absolute -top-20 -left-16 h-64 w-64 rounded-full bg-course-blue/30 blur-3xl" />
+          <div className="absolute -bottom-20 -right-16 h-64 w-64 rounded-full bg-course-violet/30 blur-3xl" />
+        </div>
+        <div className="relative z-10 p-6 md:p-8">
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
+            <div>
+              <div className="text-sm text-dark-text-muted">Hola,</div>
+              <h1 className="mt-1 text-3xl md:text-4xl font-space-grotesk font-bold">
+                {user.email?.split('@')[0]}
+              </h1>
+              <p className="mt-2 text-dark-text-secondary max-w-xl">
+                Organiza tus cursos, archivos y metas de estudio en un solo lugar.
+              </p>
             </div>
-            <button
-              onClick={handleLogout}
-              className="btn btn-secondary flex items-center gap-2"
-            >
-              <LogOut size={16} />
-              Cerrar Sesión
-            </button>
-            <button
-              onClick={() => toggleModal('courseModal')}
-              className="btn btn-primary"
-            >
-              <Plus size={20} />
-              Agregar Curso
-            </button>
+            <div className="flex flex-wrap items-center gap-3">
+              <button
+                onClick={() => toggleModal('courseModal')}
+                className="btn btn-primary"
+              >
+                <Plus size={18} /> Nuevo curso
+              </button>
+              <Link to="/focus" className="btn btn-ghost">
+                <Target size={18} /> Modo Focus
+              </Link>
+              <button onClick={handleLogout} className="btn btn-secondary">
+                <LogOut size={16} /> Salir
+              </button>
+            </div>
           </div>
         </div>
       </div>

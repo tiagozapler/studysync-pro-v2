@@ -44,7 +44,13 @@ export function Layout({ children }: LayoutProps) {
   ];
 
   return (
-    <div className="flex h-screen bg-dark-bg-primary">
+    <div className="relative flex h-screen bg-dark-bg-primary">
+      {/* Fondo decorativo con degradados suaves */}
+      <div aria-hidden className="pointer-events-none absolute inset-0 -z-10 overflow-hidden">
+        <div className="absolute -top-24 -left-24 h-96 w-96 rounded-full bg-course-blue/20 blur-3xl" />
+        <div className="absolute top-1/3 -right-24 h-96 w-96 rounded-full bg-course-violet/20 blur-3xl" />
+        <div className="absolute bottom-0 left-1/2 h-64 w-64 -translate-x-1/2 rounded-full bg-course-pink/10 blur-2xl" />
+      </div>
       {/* Sidebar para móvil */}
       {sidebarOpen && (
         <div className="fixed inset-0 z-50 lg:hidden">
