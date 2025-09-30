@@ -46,7 +46,7 @@ export function Layout({ children }: LayoutProps) {
   return (
     <div className="relative flex h-screen bg-dark-bg-primary">
       {/* Fondo decorativo con degradados suaves */}
-      <div aria-hidden className="pointer-events-none absolute inset-0 -z-10 overflow-hidden">
+      <div aria-hidden className="pointer-events-none absolute inset-0 -z-10 overflow-hidden tron-lines">
         {/* Gradiente animado neon */}
         <div className="absolute inset-0 opacity-[0.35] bg-[length:200%_200%] animate-gradient-x" style={{
           backgroundImage:

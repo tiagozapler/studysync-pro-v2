@@ -363,9 +363,9 @@ function StatCard({
   suffix,
 }: StatCardProps) {
   return (
-    <div className="card p-6">
+    <div className="card p-6 transition-transform duration-300 hover:-translate-y-1 hover:shadow-[0_8px_30px_-5px_rgba(0,229,255,0.15)]">
       <div className="flex items-center">
-        <div className={cn('p-3 rounded-sm', bgColor)}>
+        <div className={cn('p-3 rounded-full border border-neon-cyan/40 bg-neon-cyan/10 backdrop-blur-sm', bgColor)}>
           <Icon size={24} className={color} />
         </div>
         <div className="ml-4">
@@ -416,7 +416,7 @@ function CourseCard({ course }: CourseCardProps) {
   return (
     <Link
       to={`/course/${course.id}`}
-      className="card card-hover p-6 block"
+      className="card p-6 block transition-transform duration-300 hover:-translate-y-1 hover:border-neon-lime hover:shadow-[0_8px_30px_-5px_rgba(184,255,44,0.15)]"
       style={{ borderLeftColor: course.color, borderLeftWidth: '4px' }}
     >
       <div className="flex items-start justify-between mb-4">
