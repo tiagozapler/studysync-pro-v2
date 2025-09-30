@@ -77,11 +77,19 @@ export const MaterialsSection: React.FC<MaterialsSectionProps> = ({
           for (const dateInfo of analysis.dates) {
             // Solo agregar si la confianza es > 0.5
             if (dateInfo.confidence > 0.5) {
+              // Mapear tipos del AI a tipos del sistema
+              const typeMap: Record<string, 'exam' | 'assignment' | 'class' | 'meeting' | 'other'> = {
+                'examen': 'exam',
+                'entrega': 'assignment',
+                'clase': 'class',
+                'otro': 'other',
+              };
+              
               await addCourseEvent(courseId, {
                 title: dateInfo.context || `Evento - ${file.name}`,
                 description: `Detectado automáticamente en ${file.name}`,
                 date: dateInfo.date,
-                type: dateInfo.type,
+                type: typeMap[dateInfo.type] || 'other',
               });
             }
           }
@@ -98,7 +106,6 @@ export const MaterialsSection: React.FC<MaterialsSectionProps> = ({
               maxScore: gradeInfo.maxScore,
               weight: gradeInfo.weight,
               type: gradeInfo.type,
-              date: new Date(),
             });
           }
         }
