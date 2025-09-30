@@ -61,25 +61,79 @@ ${truncatedContent}
 
 ---
 
-INSTRUCCIONES:
+INSTRUCCIONES CRÍTICAS:
 
 1. **FECHAS IMPORTANTES**: 
+   - BUSCA en la sección de "CRONOGRAMA" del documento si existe
    - Busca fechas de exámenes, entregas de trabajos, proyectos, presentaciones
-   - Identifica el tipo de evento
-   - Extrae el contexto (qué es el evento)
+   - Formato: día/mes/año o año-mes-día
+   - Identifica el tipo de evento y el contexto
+   - Solo incluye fechas que estén claramente mencionadas
+   - Ejemplos de palabras clave: "cronograma", "calendario", "fechas importantes", "programación"
 
-2. **CALIFICACIONES** (MUY IMPORTANTE):
+2. **CALIFICACIONES - REGLAS ESTRICTAS**:
+   
+   **DETECCIÓN DE PESOS/PORCENTAJES:**
+   - El PESO es el porcentaje que vale la evaluación del total de la nota final
+   - BUSCA en secciones llamadas: "Evaluación", "Sistema de Evaluación", "Calificación", "Ponderación", "Criterios de Evaluación"
+   - BUSCA EXPLÍCITAMENTE palabras como: "vale", "pesa", "representa", "porcentaje", "%", "peso", "ponderación"
+   - EJEMPLOS VÁLIDOS de pesos:
+     * "vale 30%" → weight: 30
+     * "pesa 40% de la nota final" → weight: 40
+     * "representa el 25% del curso" → weight: 25
+     * "30% del total" → weight: 30
+     * "Exámenes parciales (40%)" → weight: 40
+     * "Prácticas: 30%" → weight: 30
+   
+   - **SI NO ENCUENTRAS NINGUNA DE ESTAS PALABRAS O NÚMEROS SEGUIDOS DE "%", USA weight: 100**
+   - **NO adivines pesos distribuyendo 100% entre el número de evaluaciones**
+   
+   **DETECCIÓN DE NOTAS:**
    - Las notas están en escala de 0-20 (NO de 0-100)
-   - Busca evaluaciones con sus puntuaciones
-   - Identifica el PESO/PORCENTAJE de cada evaluación (ej: "30%", "vale 40%", "pesa 25%")
-   - Si NO se menciona el peso explícitamente, usa 100 (significa que no se especificó)
-   - Tipos: Parcial/Examen → "exam", Práctica → "homework", Proyecto → "project", Participación → "participation"
+   - BUSCA PATRONES como:
+     * "15/20" o "15 de 20" o "15 sobre 20"
+     * "Nota: 18" o "Calificación: 16"
+     * "Obtuvo 14 puntos"
+   
+   **TIPOS DE EVALUACIÓN:**
+   - Parcial/Examen/Midterm → "exam"
+   - Práctica/Tarea/Homework → "homework"
+   - Proyecto/Trabajo Final → "project"
+   - Participación → "participation"
+   - Quiz/Prueba Corta → "quiz"
+   - Otros → "other"
 
-**EJEMPLOS DE CALIFICACIONES:**
-- "Parcial 1: 15/20 (30%)" → score: 15, maxScore: 20, weight: 30
-- "Examen Final: 18 puntos de 20 (40%)" → score: 18, maxScore: 20, weight: 40
-- "Práctica 2: 16/20" → score: 16, maxScore: 20, weight: 100 (no especificado)
-- "Proyecto: 19 sobre 20, vale 35%" → score: 19, maxScore: 20, weight: 35
+**EJEMPLOS REALES:**
+
+✅ CORRECTO - Ejemplo de Sílabo:
+- Texto del sílabo:
+  "SISTEMA DE EVALUACIÓN:
+   - Exámenes Parciales (40%)
+   - Prácticas Calificadas (30%)
+   - Trabajo Final (20%)
+   - Participación (10%)"
+   
+  Con notas del estudiante:
+  "Parcial 1: 15/20"
+  "Práctica 1: 18/20"
+  
+  → Resultado:
+  { name: "Parcial 1", score: 15, maxScore: 20, weight: 40, type: "exam" }
+  { name: "Práctica 1", score: 18, maxScore: 20, weight: 30, type: "homework" }
+
+✅ CORRECTO - Sin pesos en el documento:
+- Texto: "Práctica 2: obtuvo 16 de 20 puntos"
+  → { name: "Práctica 2", score: 16, maxScore: 20, weight: 100, type: "homework" }
+  (weight = 100 porque NO se menciona el porcentaje)
+
+✅ CORRECTO - Con peso explícito:
+- Texto: "Proyecto Final: 19/20 - Representa el 40% del curso"
+  → { name: "Proyecto Final", score: 19, maxScore: 20, weight: 40, type: "project" }
+
+❌ INCORRECTO (NO INVENTES PESOS):
+- Si solo dice "Parcial 1: 15/20" y NO hay sección de evaluación → weight debe ser 100, NO inventes 25 o 30
+- Si hay 4 evaluaciones pero NO se menciona "%" → NO dividas 100/4 = 25, usa weight: 100 para todas
+- Si solo dice "Examen: 18 puntos" → weight debe ser 100, NO adivines
 
 Responde ÚNICAMENTE con JSON válido en este formato:
 {
@@ -93,23 +147,26 @@ Responde ÚNICAMENTE con JSON válido en este formato:
   ],
   "grades": [
     {
-      "name": "nombre de la evaluación",
+      "name": "nombre exacto de la evaluación como aparece en el texto",
       "score": número_de_0_a_20,
       "maxScore": 20,
-      "weight": porcentaje_0_a_100,
+      "weight": porcentaje_0_a_100_SOLO_SI_SE_MENCIONA_EXPLÍCITAMENTE,
       "type": "exam|quiz|project|homework|participation|other"
     }
   ],
-  "summary": "resumen del contenido en 1-2 oraciones"
+  "summary": "resumen del contenido del archivo en 1-2 oraciones"
 }
 
-REGLAS CRÍTICAS:
-- maxScore SIEMPRE debe ser 20
-- weight: Si NO se menciona peso, usa 100
-- weight: Si dice "30%", usa 30 (no 0.30)
-- Solo incluye calificaciones con números claros
-- Si no hay fechas o notas, devuelve arrays vacíos []
-- JSON válido: sin comas finales, comillas dobles`;
+REGLAS CRÍTICAS - LEE ESTO CUIDADOSAMENTE:
+1. maxScore SIEMPRE debe ser 20
+2. weight: SOLO usa un número diferente de 100 si el texto EXPLÍCITAMENTE menciona "vale X%", "pesa X%", "X% del total", etc.
+3. weight: Si NO hay mención explícita de porcentaje o peso, SIEMPRE usa 100
+4. NO INVENTES ni ADIVINES pesos basándote en el número de evaluaciones
+5. score debe estar entre 0 y 20
+6. Solo incluye calificaciones donde puedas ver claramente la nota
+7. Si no hay fechas o notas, devuelve arrays vacíos []
+8. JSON válido: sin comas finales, comillas dobles
+9. Copia el nombre de la evaluación EXACTAMENTE como aparece en el documento`;
 
       console.log('🤖 Enviando a Groq para análisis...');
       const completion = await this.groqClient.chat.completions.create({
@@ -118,14 +175,14 @@ REGLAS CRÍTICAS:
           {
             role: 'system',
             content:
-              'Eres un asistente experto en análisis de documentos académicos del sistema educativo peruano/latinoamericano. Entiendes calificaciones en escala 0-20 y porcentajes de peso. Respondes ÚNICAMENTE con JSON válido, sin texto adicional.',
+              'Eres un asistente experto en análisis de documentos académicos del sistema educativo peruano/latinoamericano. Entiendes calificaciones en escala 0-20 y porcentajes de peso. REGLA CRÍTICA: NUNCA inventes o adivines pesos/porcentajes - solo extrae lo que está EXPLÍCITAMENTE escrito en el documento. Si no hay porcentaje mencionado, usa weight: 100. Respondes ÚNICAMENTE con JSON válido, sin texto adicional.',
           },
           {
             role: 'user',
             content: prompt,
           },
         ],
-        temperature: 0.2, // Baja temperatura para respuestas más precisas
+        temperature: 0.1, // Temperatura muy baja para máxima precisión y menos creatividad
         max_tokens: 2000,
       });
 
