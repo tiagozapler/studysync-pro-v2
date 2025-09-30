@@ -15,6 +15,7 @@ import {
 import { useAppStore } from '../../../lib/store';
 import { FileContentExtractor } from '../../../lib/services/FileContentExtractor';
 import { AIFileAnalyzer, type FileAnalysisResult } from '../../../lib/ai/fileAnalyzer';
+import { parseSyllabus, linkEvaluationsWithSchedule } from '../../../lib/files/syllabusParser';
 import env from '../../../lib/config/env';
 import toast from 'react-hot-toast';
 
@@ -50,8 +51,6 @@ export const MaterialsSection: React.FC<MaterialsSectionProps> = ({
     setAiAnalysis(null);
 
     try {
-      console.log('🔑 Groq API Key disponible:', Boolean(groqApiKey));
-      const analyzer = new AIFileAnalyzer(groqApiKey);
       let totalDatesFound = 0;
       let totalGradesFound = 0;
 
@@ -70,70 +69,69 @@ export const MaterialsSection: React.FC<MaterialsSectionProps> = ({
         // Agregar archivo al store primero
         await addFile(courseId, file, []);
 
-        // Analizar contenido con IA (Groq)
-        console.log('🤖 Iniciando análisis con IA...');
-        toast.loading(`Analizando ${file.name} con IA...`, { id: `analyze-${i}` });
-        const analysis = await analyzer.analyzeFile(file.name, content);
+        // Analizar contenido con PARSER REGEX (sin IA)
+        console.log('🔍 Iniciando análisis con parser regex...');
+        toast.loading(`Analizando ${file.name}...`, { id: `analyze-${i}` });
+        const parsed = parseSyllabus(content);
+        const evaluationsWithDates = linkEvaluationsWithSchedule(parsed);
         toast.dismiss(`analyze-${i}`);
         
-        console.log('📊 Resultado del análisis:', {
-          fechas: analysis.dates.length,
-          calificaciones: analysis.grades.length,
-          resumen: analysis.summary.substring(0, 50),
+        console.log('📊 Resultado del análisis (regex):', {
+          evaluaciones: evaluationsWithDates.length,
+          cronograma: parsed.schedule.length,
+          metadata: parsed.metadata,
         });
-        
-        setAiAnalysis(analysis);
 
-        // Si se encontraron fechas, agregar eventos al calendario
-        if (analysis.dates.length > 0) {
-          console.log(`📅 Agregando ${analysis.dates.length} fechas al calendario...`);
-          totalDatesFound += analysis.dates.length;
+        // Si se encontraron evaluaciones con fechas en el cronograma, agregar eventos
+        if (parsed.schedule.length > 0) {
+          console.log(`📅 Agregando ${parsed.schedule.length} semanas del cronograma...`);
           
-          for (const dateInfo of analysis.dates) {
-            // Solo agregar si la confianza es > 0.5
-            if (dateInfo.confidence > 0.5) {
-              // Mapear tipos del AI a tipos del sistema
-              const typeMap: Record<string, 'exam' | 'assignment' | 'class' | 'meeting' | 'other'> = {
-                'examen': 'exam',
-                'entrega': 'assignment',
-                'clase': 'class',
-                'otro': 'other',
-              };
+          for (const scheduleItem of parsed.schedule) {
+            if (scheduleItem.evaluation) {
+              // Solo agregar eventos si hay una evaluación asociada
+              const evaluation = evaluationsWithDates.find(
+                e => e.abbreviation === scheduleItem.evaluation
+              );
               
-              console.log('➕ Agregando evento:', dateInfo.context);
-              await addCourseEvent(courseId, {
-                title: dateInfo.context || `Evento - ${file.name}`,
-                description: `Detectado automáticamente en ${file.name}`,
-                date: dateInfo.date,
-                type: typeMap[dateInfo.type] || 'other',
-                priority: 'medium',
-                source: 'auto-detected',
-                sourceFile: file.name,
-              });
+              if (evaluation && scheduleItem.date) {
+                console.log('➕ Agregando evento:', evaluation.name);
+                totalDatesFound++;
+                
+                // Convertir fecha DD/MM a fecha completa (año actual, formato YYYY-MM-DD)
+                const [day, month] = scheduleItem.date.split('/');
+                const currentYear = new Date().getFullYear();
+                const eventDate = `${currentYear}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+                
+                await addCourseEvent(courseId, {
+                  title: evaluation.name,
+                  description: `${evaluation.abbreviation} - Semana ${scheduleItem.week}\nDetectado en: ${file.name}`,
+                  date: eventDate,
+                  type: evaluation.type === 'exam' ? 'exam' : 
+                        evaluation.type === 'project' ? 'assignment' : 'other',
+                  priority: 'high',
+                  source: 'auto-detected',
+                  sourceFile: file.name,
+                });
+              }
             }
           }
         }
 
-        // Si se encontraron calificaciones, agregar notas
-        if (analysis.grades.length > 0) {
-          console.log(`📊 Agregando ${analysis.grades.length} calificaciones...`);
+        // Agregar evaluaciones como calificaciones (SIN puntajes, solo estructura)
+        if (evaluationsWithDates.length > 0) {
+          console.log(`📊 Agregando ${evaluationsWithDates.length} evaluaciones...`);
           
-          for (const gradeInfo of analysis.grades) {
-            // VALIDACIÓN: Solo agregar si tiene un score válido (no 0 ni undefined)
-            if (gradeInfo.score > 0 && gradeInfo.score <= 20) {
-              console.log('➕ Agregando calificación:', gradeInfo.name, `${gradeInfo.score}/${gradeInfo.maxScore}`, `peso: ${gradeInfo.weight}%`);
-              totalGradesFound++;
-              
-              await addCourseGrade(courseId, {
-                name: gradeInfo.name,
-                score: gradeInfo.score,
-                maxScore: gradeInfo.maxScore,
-                weight: gradeInfo.weight,
-                type: gradeInfo.type,
-              });
-            } else {
-              console.warn('⚠️ Calificación ignorada (score inválido):', gradeInfo);
-            }
+          for (const evaluation of evaluationsWithDates) {
+            console.log('➕ Agregando evaluación:', evaluation.name, `peso: ${evaluation.weight}%`);
+            totalGradesFound++;
+            
+            await addCourseGrade(courseId, {
+              name: evaluation.name,
+              score: 0, // SIN puntaje, el usuario lo agregará
+              maxScore: 20, // Escala 0-20
+              weight: evaluation.weight,
+              type: evaluation.type,
+            });
           }
         }
       }
@@ -143,10 +141,10 @@ export const MaterialsSection: React.FC<MaterialsSectionProps> = ({
       // Mostrar resumen de lo detectado
       const messages = [];
       if (totalDatesFound > 0) {
-        messages.push(`📅 ${totalDatesFound} fecha(s) detectada(s)`);
+        messages.push(`📅 ${totalDatesFound} fecha(s) de evaluación detectada(s)`);
       }
       if (totalGradesFound > 0) {
-        messages.push(`📊 ${totalGradesFound} calificación(es) detectada(s)`);
+        messages.push(`📊 ${totalGradesFound} evaluación(es) detectada(s)`);
       }
       
       if (messages.length > 0) {
