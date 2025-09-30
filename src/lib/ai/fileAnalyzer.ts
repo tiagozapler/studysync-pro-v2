@@ -52,65 +52,23 @@ export class AIFileAnalyzer {
       const truncatedContent = fileContent.substring(0, 4000);
       console.log(`✂️ Contenido truncado a: ${truncatedContent.length} caracteres`);
 
-      const prompt = `Analiza el siguiente contenido del archivo "${fileName}" siguiendo un proceso estructurado en 4 ETAPAS.
+      const prompt = `Analiza este sílabo y extrae SOLO evaluaciones y notas.
 
-**SISTEMA DE CALIFICACIÓN: Escala de 0-20 puntos** (sistema latinoamericano/peruano)
-
-CONTENIDO DEL ARCHIVO:
+ARCHIVO: "${fileName}"
+CONTENIDO:
 ${truncatedContent}
 
 ---
 
-🔹 ETAPA 1: PROCESAMIENTO Y LIMPIEZA
+INSTRUCCIONES:
+1. Busca en secciones: "Programa analítico" y "Evaluación"
+2. Extrae: tipo de evaluación, semana, peso (%)
+3. Solo incluye calificaciones (grades) si VES puntajes como "15/20" o "18 puntos"
+4. Si NO hay notas del estudiante → grades: []
+5. Si NO hay pesos → weight: 100
+6. Abreviaturas: EE=Examen, TI=Trabajo, PF=Proyecto
 
-1. Lee el contenido y elimina información repetitiva:
-   - Encabezados/pies de página (ej: "Facultad de...", "Sílabos 2025-2")
-   - Información administrativa irrelevante
-   
-2. Identifica si el documento es:
-   - SOLO un sílabo (sistema de evaluación sin notas)
-   - Sílabo + notas del estudiante (tiene puntajes como "15/20")
-
-🔹 ETAPA 2: IDENTIFICACIÓN DE EVALUACIONES
-
-Busca ÚNICAMENTE en estas secciones:
-- "VI. Programa analítico"
-- "VII. Evaluación"
-- "Cronograma de evaluaciones"
-- "Sistema de evaluación"
-- "Criterios de evaluación"
-
-Extrae:
-- Semana/Fecha (ej: "Semana 5", "10/11/2025")
-- Tipo de evaluación (Examen escrito, Parcial, Trabajo, Proyecto)
-- Descripción breve
-- Peso (%) - SOLO si está explícito
-
-Reconoce abreviaturas:
-- EE = Examen escrito
-- TI = Trabajo de investigación
-- PF = Proyecto final
-- PC = Práctica calificada
-- EC = Evaluación continua
-
-🔹 ETAPA 3: DETECCIÓN DE NOTAS DEL ESTUDIANTE
-
-**CRÍTICO:** Solo incluye calificaciones si VES puntajes explícitos:
-- "Examen escrito 1: 15/20"
-- "TI: 18 puntos"
-- "Nota obtenida: 16/20"
-
-Si NO hay puntajes → grades: []
-
-🔹 ETAPA 4: VALIDACIÓN Y CONSISTENCIA
-
-Antes de responder, verifica:
-1. ¿Las evaluaciones del Programa Analítico coinciden con Sistema de Evaluación?
-2. ¿Los pesos suman aproximadamente 100%?
-3. ¿Hay notas del estudiante o solo el sílabo?
-4. ¿Eliminaste duplicados?
-
-Responde ÚNICAMENTE con JSON válido en este formato:
+Responde SOLO con este JSON (sin texto adicional):
 
 {
   "dates": [
@@ -141,35 +99,45 @@ REGLAS CRÍTICAS:
 
       console.log('🤖 Enviando a Groq para análisis...');
       const completion = await this.groqClient.chat.completions.create({
-        model: 'llama-3.1-8b-instant', // Modelo estable y rápido
+        model: 'llama-3.1-8b-instant',
         messages: [
           {
             role: 'system',
             content:
-              'Eres un asistente experto en análisis de sílabos académicos peruanos/latinoamericanos. Sigues un proceso de 4 ETAPAS: 1) Limpia el texto eliminando encabezados repetitivos. 2) Identifica evaluaciones SOLO en secciones de "Programa analítico" y "Evaluación". 3) Detecta notas del estudiante (si existen). 4) Valida consistencia. CRÍTICO: Distingue sílabo (solo sistema de evaluación) vs documento con notas del estudiante (tiene "15/20", "18 puntos"). Si solo es sílabo → grades: []. NUNCA inventes pesos ni notas. Respondes SOLO JSON válido.',
+              'Eres un analizador de sílabos. Tu respuesta DEBE ser SOLO un objeto JSON válido, nada más. No escribas explicaciones, no uses markdown, no agregues texto antes o después del JSON. Solo el JSON.',
           },
           {
             role: 'user',
             content: prompt,
           },
         ],
-        temperature: 0.1, // Temperatura muy baja para máxima precisión y menos creatividad
-        max_tokens: 2000,
+        temperature: 0,
+        max_tokens: 1500,
       });
 
       const responseText = completion.choices[0]?.message?.content?.trim() || '';
       console.log('✅ Respuesta de Groq recibida');
-      console.log('📋 Respuesta:', responseText.substring(0, 200) + '...');
+      console.log('📋 Respuesta completa:', responseText);
 
-      // Limpiar la respuesta para obtener solo el JSON
+      // Extraer JSON de la respuesta (maneja texto antes/después)
       let jsonText = responseText;
       
-      // Remover posibles bloques de código markdown
+      // 1. Intentar extraer de bloques de código markdown
       if (jsonText.includes('```')) {
         const match = jsonText.match(/```(?:json)?\s*([\s\S]*?)```/);
         if (match) {
           jsonText = match[1].trim();
+          console.log('📋 JSON extraído de markdown');
         }
+      }
+      
+      // 2. Buscar el primer { y el último }
+      const firstBrace = jsonText.indexOf('{');
+      const lastBrace = jsonText.lastIndexOf('}');
+      
+      if (firstBrace !== -1 && lastBrace !== -1 && lastBrace > firstBrace) {
+        jsonText = jsonText.substring(firstBrace, lastBrace + 1);
+        console.log('📋 JSON extraído entre llaves');
       }
 
       // Intentar parsear el JSON
