@@ -17,11 +17,11 @@ export const createFile = mutation({
 });
 
 export const getFilesByCourse = query({
-  args: { courseId: v.id("courses") },
+  args: { courseId: v.string() },
   handler: async (ctx, args) => {
     return await ctx.db
       .query("files")
-      .withIndex("by_course", q => q.eq("courseId", args.courseId))
+      .withIndex("by_course", (q) => q.eq("courseId", args.courseId))
       .collect();
   },
 });
@@ -31,7 +31,7 @@ export const getFilesByUser = query({
   handler: async (ctx, args) => {
     return await ctx.db
       .query("files")
-      .withIndex("by_user", q => q.eq("userId", args.userId))
+      .withIndex("by_user", (q) => q.eq("userId", args.userId))
       .collect();
   },
 });
@@ -47,7 +47,7 @@ export const upsertFileText = mutation({
   handler: async (ctx, args) => {
     const existing = await ctx.db
       .query("fileTexts")
-      .withIndex("by_file", q => q.eq("fileId", args.fileId))
+      .withIndex("by_file", (q) => q.eq("fileId", args.fileId))
       .unique();
 
     if (existing) {
