@@ -97,10 +97,10 @@ export const MaterialsSection: React.FC<MaterialsSectionProps> = ({
                 console.log('➕ Agregando evento:', evaluation.name);
                 totalDatesFound++;
                 
-                // Convertir fecha DD/MM a fecha completa (año actual, formato YYYY-MM-DD)
+                // Convertir fecha DD/MM a objeto Date completo
                 const [day, month] = scheduleItem.date.split('/');
                 const currentYear = new Date().getFullYear();
-                const eventDate = `${currentYear}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+                const eventDate = new Date(currentYear, parseInt(month) - 1, parseInt(day));
                 
                 await addCourseEvent(courseId, {
                   title: evaluation.name,
