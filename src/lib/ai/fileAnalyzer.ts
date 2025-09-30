@@ -40,13 +40,17 @@ export class AIFileAnalyzer {
     fileContent: string
   ): Promise<FileAnalysisResult> {
     if (!this.groqClient) {
-      console.warn('Groq not configured, skipping AI analysis');
+      console.warn('⚠️ Groq not configured, skipping AI analysis');
       return { dates: [], grades: [], summary: '' };
     }
 
     try {
+      console.log(`🔍 Analizando archivo: ${fileName}`);
+      console.log(`📄 Contenido: ${fileContent.length} caracteres`);
+      
       // Limitar contenido para no exceder límites de tokens
       const truncatedContent = fileContent.substring(0, 4000);
+      console.log(`✂️ Contenido truncado a: ${truncatedContent.length} caracteres`);
 
       const prompt = `Analiza el siguiente contenido del archivo "${fileName}" y extrae información académica.
 
@@ -107,8 +111,9 @@ REGLAS CRÍTICAS:
 - Si no hay fechas o notas, devuelve arrays vacíos []
 - JSON válido: sin comas finales, comillas dobles`;
 
+      console.log('🤖 Enviando a Groq para análisis...');
       const completion = await this.groqClient.chat.completions.create({
-        model: 'llama-3.1-70b-versatile', // Modelo más potente para mejor comprensión
+        model: 'llama-3.1-8b-instant', // Modelo estable y rápido
         messages: [
           {
             role: 'system',
@@ -125,6 +130,8 @@ REGLAS CRÍTICAS:
       });
 
       const responseText = completion.choices[0]?.message?.content?.trim() || '';
+      console.log('✅ Respuesta de Groq recibida');
+      console.log('📋 Respuesta:', responseText.substring(0, 200) + '...');
 
       // Limpiar la respuesta para obtener solo el JSON
       let jsonText = responseText;
@@ -139,7 +146,11 @@ REGLAS CRÍTICAS:
 
       // Intentar parsear el JSON
       try {
+        console.log('📊 Parseando JSON...');
         const result = JSON.parse(jsonText);
+        console.log('✅ JSON parseado correctamente');
+        console.log(`📅 Fechas encontradas: ${result.dates?.length || 0}`);
+        console.log(`📊 Calificaciones encontradas: ${result.grades?.length || 0}`);
         
         // Validar y transformar fechas
         const validDates: DetectedDate[] = (result.dates || [])
@@ -185,18 +196,22 @@ REGLAS CRÍTICAS:
           })
           .filter(Boolean);
 
-        return {
+        const analysisResult = {
           dates: validDates,
           grades: validGrades,
           summary: result.summary || '',
         };
+        
+        console.log(`✅ Análisis completado: ${validDates.length} fechas, ${validGrades.length} calificaciones`);
+        return analysisResult;
       } catch (parseError) {
-        console.error('Error parsing AI response:', parseError);
-        console.log('AI Response:', responseText);
+        console.error('❌ Error parsing AI response:', parseError);
+        console.log('📋 AI Response:', responseText);
         return { dates: [], grades: [], summary: '' };
       }
-    } catch (error) {
-      console.error('Error analyzing file with AI:', error);
+    } catch (error: any) {
+      console.error('❌ Error analyzing file with AI:', error);
+      console.error('Detalles del error:', error?.message || error);
       return { dates: [], grades: [], summary: '' };
     }
   }

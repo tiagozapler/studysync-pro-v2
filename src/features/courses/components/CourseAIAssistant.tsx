@@ -227,19 +227,27 @@ export const CourseAIAssistant: React.FC<CourseAIAssistantProps> = ({
 
   const buildCourseContext = useCallback(async (): Promise<string> => {
     try {
+      console.log('🔍 Obteniendo contexto del curso...');
       const [convexTexts, courseContext] = await Promise.all([
         getCourseFileTexts(courseId, { numItems: 100 }),
         Promise.resolve(buildMetadataContext()),
       ]);
 
+      console.log(`📄 ${convexTexts.length} textos de archivos obtenidos de Convex`);
+
+      // Limitar el contexto de archivos a ~8000 caracteres para evitar exceder límites
       const fileContext = convexTexts
         .map(text => text.content)
         .filter(Boolean)
-        .join('\n\n');
+        .join('\n\n')
+        .substring(0, 8000);
 
-      return [courseContext, fileContext].filter(Boolean).join('\n\n').trim();
+      const fullContext = [courseContext, fileContext].filter(Boolean).join('\n\n').trim();
+      console.log(`📊 Contexto total: ${fullContext.length} caracteres`);
+      
+      return fullContext;
     } catch (error) {
-      console.error('Error obteniendo contexto del curso:', error);
+      console.error('❌ Error obteniendo contexto del curso:', error);
       return buildMetadataContext();
     }
   }, [courseId, courseEvents, courseFiles, grades]);
@@ -293,37 +301,57 @@ export const CourseAIAssistant: React.FC<CourseAIAssistantProps> = ({
 
     const { context, history } = options;
 
-    const completion = await groqClient.chat.completions.create({
-      model: 'llama-3.1-8b-instant',
-      messages: [
-        {
-          role: 'system',
-          content:
-            'Eres un asistente académico que utiliza el contexto del curso para responder preguntas de estudiantes. Si la información no está en el contexto, dilo claramente.',
-        },
-        ...(context
-          ? [
-              {
-                role: 'system' as const,
-                content: `Contexto del curso:
-${context}`,
-              },
-            ]
-          : []),
-        ...history,
-        {
-          role: 'user',
-          content: userMessage,
-        },
-      ],
-      temperature: 0.4,
-      max_tokens: 800,
-    });
+    try {
+      console.log('🤖 Enviando mensaje a Groq...');
+      console.log(`📝 Mensaje: ${userMessage.substring(0, 100)}...`);
+      console.log(`📚 Historial: ${history.length} mensajes`);
 
-    return (
-      completion.choices[0]?.message?.content?.trim() ||
-      'No pude generar una respuesta en este momento.'
-    );
+      const completion = await groqClient.chat.completions.create({
+        model: 'llama-3.1-8b-instant',
+        messages: [
+          {
+            role: 'system',
+            content:
+              'Eres un asistente académico que utiliza el contexto del curso para responder preguntas de estudiantes. Si la información no está en el contexto, dilo claramente. Responde en español de manera clara y concisa.',
+          },
+          ...(context
+            ? [
+                {
+                  role: 'system' as const,
+                  content: `Contexto del curso:
+${context}`,
+                },
+              ]
+            : []),
+          ...history.slice(-10), // Limitar historial a los últimos 10 mensajes
+          {
+            role: 'user',
+            content: userMessage,
+          },
+        ],
+        temperature: 0.4,
+        max_tokens: 1000,
+      });
+
+      const response = completion.choices[0]?.message?.content?.trim() ||
+        'No pude generar una respuesta en este momento.';
+      
+      console.log('✅ Respuesta recibida de Groq');
+      return response;
+    } catch (error: any) {
+      console.error('❌ Error en llamada a Groq:', error);
+      
+      // Mensajes de error más específicos
+      if (error?.status === 400) {
+        throw new Error(`Error de Groq: ${error?.message || 'Solicitud inválida'}`);
+      } else if (error?.status === 401) {
+        throw new Error('API key de Groq inválida. Por favor, reconfigura tu clave.');
+      } else if (error?.status === 429) {
+        throw new Error('Límite de solicitudes excedido. Intenta de nuevo en unos momentos.');
+      } else {
+        throw new Error(`Error al comunicarse con Groq: ${error?.message || 'Error desconocido'}`);
+      }
+    }
   };
 
   const handleFileSelection = (fileId: string) => {
