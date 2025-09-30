@@ -63,53 +63,66 @@ ${truncatedContent}
 
 INSTRUCCIONES CRÍTICAS:
 
+**IMPORTANTE: Los sílabos pueden variar en formato. Adapta tu búsqueda según la estructura del documento.**
+
 1. **FECHAS IMPORTANTES**: 
-   - BUSCA en secciones: "VI. Programa analítico", "CRONOGRAMA", "Calendario", "Fechas importantes"
+   - BUSCA en secciones como: "Programa analítico", "CRONOGRAMA", "Calendario", "Fechas", "Schedule"
+   - Pueden estar en secciones numeradas (VI., VII., etc.) o con títulos diferentes
    
-   **FORMATOS COMUNES EN SÍLABOS:**
+   **FORMATOS POSIBLES:**
    a) TABLA con semanas y evaluaciones:
       "Semana  Tema             Evaluación
-       5       Ratios           EE1
-       10      Financiamiento   EE2
-       13      Investigación    TI"
-      → Si encuentras "EE1", "EE2", "TI" en el cronograma, cruza con la tabla de evaluación
+       5       Ratios           EE1"
+      → Si hay fechas explícitas en otra parte, úsalas
    
-   b) FECHAS EXPLÍCITAS:
-      "15/03/2024", "2024-03-15", "15 de marzo"
+   b) FECHAS EXPLÍCITAS (preferidas):
+      "15/03/2024", "2024-03-15", "15 de marzo", "marzo 15"
       → Usa estas fechas directamente
    
+   c) TEXTO descriptivo:
+      "El examen parcial será el 20 de marzo"
+      → Extrae la fecha y el contexto
+   
    **REGLAS:**
-   - Si solo hay "Semana X" sin fecha específica, NO incluyas esa fecha
-   - Solo incluye fechas con día/mes/año completo
-   - El contexto debe incluir el nombre de la evaluación (ej: "Examen escrito 1")
+   - SOLO incluye fechas con día/mes/año completo
+   - Si solo hay "Semana X", NO la incluyas
+   - Adapta según lo que encuentres en el documento
 
 2. **CALIFICACIONES - REGLAS ESTRICTAS**:
    
    **DETECCIÓN DE PESOS/PORCENTAJES:**
    - El PESO es el porcentaje que vale la evaluación del total de la nota final
-   - BUSCA en secciones llamadas: "VII. Evaluación", "Evaluación", "Sistema de Evaluación", "Calificación", "Ponderación", "Criterios de Evaluación"
+   - BUSCA en secciones como: "Evaluación", "Sistema de Evaluación", "Calificación", "Ponderación", "Grading", "Assessment"
+   - La sección puede estar numerada (VII., VIII., etc.) o tener títulos variados
    
-   **FORMATOS COMUNES DE PESOS EN SÍLABOS:**
-   a) TABLA con columna "Peso":
+   **FORMATOS POSIBLES (adapta según el documento):**
+   
+   a) TABLA con columna "Peso" o "Weight" o "%":
+      Ejemplos de encabezados: "Peso", "Ponderación", "Porcentaje", "%", "Weight"
       "N.º  Semana  Tipo de evaluación     Peso
        1    5       Examen escrito 1       20
        2    10      Examen escrito 2       25"
-      → Si encuentras una tabla, la columna "Peso" contiene los porcentajes (20, 25, etc.)
+      → Busca la columna que contenga números sin "%" o con "%"
    
-   b) LISTA con porcentajes entre paréntesis:
-      "- Exámenes parciales (40%)
-       - Prácticas: 30%
-       - Trabajo Final: 20%"
-      → Los números entre paréntesis o después de ":" son los pesos
+   b) LISTA con porcentajes:
+      "- Exámenes parciales: 40%"
+      "- Prácticas (30%)"
+      "- Trabajo Final - 20%"
+      → Los números con "%" son los pesos
    
-   c) TEXTO con palabras clave:
-      "vale 30%", "pesa 40%", "representa el 25%"
+   c) TEXTO descriptivo:
+      "vale 30% de la nota", "pesa 40%", "representa el 25%"
+   
+   d) TABLA sin encabezado explícito de "Peso":
+      A veces la tabla tiene números sin encabezado claro
+      → Busca una columna con números que sumen cerca de 100
    
    **REGLAS CRÍTICAS:**
-   - Si hay una tabla de evaluación con columna "Peso", usa esos valores
-   - Si hay "%" explícito, usa ese número
-   - **SI NO HAY TABLA NI "%", USA weight: 100**
-   - **NO inventes pesos ni dividas 100 entre evaluaciones**
+   - PRIORIDAD: Busca primero tablas, luego listas, luego texto
+   - Si encuentras pesos que sumen cerca de 100 (95-100), úsalos
+   - **SI NO HAY PESOS EXPLÍCITOS, USA weight: 100**
+   - **NUNCA inventes pesos distribuyendo 100/N evaluaciones**
+   - Adapta la búsqueda al formato específico del documento
    
    **DETECCIÓN DE NOTAS:**
    - Las notas están en escala de 0-20 (NO de 0-100)
@@ -211,7 +224,7 @@ REGLAS CRÍTICAS - LEE ESTO CUIDADOSAMENTE:
           {
             role: 'system',
             content:
-              'Eres un asistente experto en análisis de documentos académicos del sistema educativo peruano/latinoamericano. Entiendes calificaciones en escala 0-20 y porcentajes de peso. REGLA CRÍTICA: NUNCA inventes o adivines pesos/porcentajes - solo extrae lo que está EXPLÍCITAMENTE escrito en el documento. Si no hay porcentaje mencionado, usa weight: 100. Respondes ÚNICAMENTE con JSON válido, sin texto adicional.',
+              'Eres un asistente experto en análisis de documentos académicos del sistema educativo peruano/latinoamericano. Los sílabos varían en formato, así que ADAPTA tu búsqueda a la estructura del documento. Entiendes calificaciones en escala 0-20 y porcentajes de peso en diferentes formatos (tablas, listas, texto). REGLA CRÍTICA: NUNCA inventes o adivines pesos/porcentajes - solo extrae lo que está EXPLÍCITAMENTE escrito. Si no encuentras pesos explícitos, usa weight: 100 para TODAS las evaluaciones. Respondes ÚNICAMENTE con JSON válido, sin texto adicional.',
           },
           {
             role: 'user',
