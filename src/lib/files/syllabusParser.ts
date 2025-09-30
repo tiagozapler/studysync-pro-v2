@@ -109,30 +109,31 @@ function parseEvaluationSection(content: string): SyllabusEvaluation[] {
     console.log('✅ Tabla de evaluación encontrada (formato estándar)');
     const tableContent = tableMatch[1];
     console.log('📋 Contenido de la tabla:', tableContent.substring(0, 500));
-    const lines = tableContent.split('\n').filter(line => line.trim());
-    console.log(`📋 Líneas de la tabla: ${lines.length}`);
     
-    for (const line of lines) {
-      console.log('🔍 Procesando línea:', line);
-      // Regex flexible para capturar filas de la tabla
-      // Grupos: (número) (semana opcional) (nombre/tipo) (peso)
-      const rowMatch = line.match(/^\s*(\d+)\s+(?:(\d+)\s+)?(.+?)\s+(\d+)\s*$/);
+    // Estrategia: Buscar patrones de evaluación en el texto concatenado
+    // Formato: N.º Semana Nombre_Evaluación Peso%
+    // Ejemplo: "1 5 Examen escrito 1 20"
+    
+    // Regex global para capturar todas las evaluaciones en una sola línea
+    // Patrón: (número) (semana) (nombre con espacios) (peso numérico)
+    // Usa lookahead para detectar siguiente número o fin de texto
+    const evalRegex = /(\d+)\s+(\d+)\s+([A-Za-zá-úÁ-Ú\s]+?)\s+(\d+)(?=\s+\d+%|\s+\d+\s+\d+|$)/g;
+    let match;
+    
+    while ((match = evalRegex.exec(tableContent)) !== null) {
+      const [, number, week, name, weight] = match;
+      console.log('✅ Evaluación capturada:', { number, week, name: name.trim(), weight });
       
-      if (rowMatch) {
-        const [, number, week, name, weight] = rowMatch;
-        console.log('✅ Fila capturada:', { number, week, name, weight });
-        
-        evaluations.push({
-          number: parseInt(number),
-          week: week ? parseInt(week) : undefined,
-          name: name.trim(),
-          weight: parseInt(weight),
-          type: detectEvaluationType(name),
-        });
-      } else {
-        console.log('❌ Línea NO capturada por regex');
-      }
+      evaluations.push({
+        number: parseInt(number),
+        week: parseInt(week),
+        name: name.trim(),
+        weight: parseInt(weight),
+        type: detectEvaluationType(name),
+      });
     }
+    
+    console.log(`📊 Total evaluaciones extraídas: ${evaluations.length}`);
   }
   
   // Estrategia 2: Tabla con Siglas (EE1, EE2, TI, etc.)
