@@ -48,57 +48,80 @@ export class AIFileAnalyzer {
       // Limitar contenido para no exceder límites de tokens
       const truncatedContent = fileContent.substring(0, 4000);
 
-      const prompt = `Analiza el siguiente contenido del archivo "${fileName}" y extrae:
+      const prompt = `Analiza el siguiente contenido del archivo "${fileName}" y extrae información académica.
 
-1. FECHAS IMPORTANTES: Busca fechas de exámenes, entregas, clases especiales, etc.
-2. CALIFICACIONES: Busca notas, puntuaciones, evaluaciones con sus pesos.
+**SISTEMA DE CALIFICACIÓN: Escala de 0-20 puntos** (sistema latinoamericano/peruano)
 
-CONTENIDO:
+CONTENIDO DEL ARCHIVO:
 ${truncatedContent}
 
-Responde ÚNICAMENTE con un objeto JSON válido en este formato exacto (sin comentarios ni texto adicional):
+---
+
+INSTRUCCIONES:
+
+1. **FECHAS IMPORTANTES**: 
+   - Busca fechas de exámenes, entregas de trabajos, proyectos, presentaciones
+   - Identifica el tipo de evento
+   - Extrae el contexto (qué es el evento)
+
+2. **CALIFICACIONES** (MUY IMPORTANTE):
+   - Las notas están en escala de 0-20 (NO de 0-100)
+   - Busca evaluaciones con sus puntuaciones
+   - Identifica el PESO/PORCENTAJE de cada evaluación (ej: "30%", "vale 40%", "pesa 25%")
+   - Si NO se menciona el peso explícitamente, usa 100 (significa que no se especificó)
+   - Tipos: Parcial/Examen → "exam", Práctica → "homework", Proyecto → "project", Participación → "participation"
+
+**EJEMPLOS DE CALIFICACIONES:**
+- "Parcial 1: 15/20 (30%)" → score: 15, maxScore: 20, weight: 30
+- "Examen Final: 18 puntos de 20 (40%)" → score: 18, maxScore: 20, weight: 40
+- "Práctica 2: 16/20" → score: 16, maxScore: 20, weight: 100 (no especificado)
+- "Proyecto: 19 sobre 20, vale 35%" → score: 19, maxScore: 20, weight: 35
+
+Responde ÚNICAMENTE con JSON válido en este formato:
 {
   "dates": [
     {
       "date": "YYYY-MM-DD",
       "type": "examen|entrega|clase|otro",
-      "context": "descripción breve",
-      "confidence": 0.0-1.0
+      "context": "descripción breve del evento",
+      "confidence": 0.8
     }
   ],
   "grades": [
     {
       "name": "nombre de la evaluación",
-      "score": número,
-      "maxScore": número,
-      "weight": porcentaje (0-100),
+      "score": número_de_0_a_20,
+      "maxScore": 20,
+      "weight": porcentaje_0_a_100,
       "type": "exam|quiz|project|homework|participation|other"
     }
   ],
-  "summary": "resumen breve del contenido"
+  "summary": "resumen del contenido en 1-2 oraciones"
 }
 
-REGLAS IMPORTANTES:
-- Solo incluye fechas futuras o del presente
-- Solo incluye calificaciones con valores numéricos claros
-- Si no encuentras fechas o calificaciones, devuelve arrays vacíos []
-- El JSON debe ser válido (sin comas finales, comillas correctas)`;
+REGLAS CRÍTICAS:
+- maxScore SIEMPRE debe ser 20
+- weight: Si NO se menciona peso, usa 100
+- weight: Si dice "30%", usa 30 (no 0.30)
+- Solo incluye calificaciones con números claros
+- Si no hay fechas o notas, devuelve arrays vacíos []
+- JSON válido: sin comas finales, comillas dobles`;
 
       const completion = await this.groqClient.chat.completions.create({
-        model: 'llama-3.1-8b-instant',
+        model: 'llama-3.1-70b-versatile', // Modelo más potente para mejor comprensión
         messages: [
           {
             role: 'system',
             content:
-              'Eres un asistente experto en análisis de documentos académicos. Respondes ÚNICAMENTE con JSON válido, sin texto adicional.',
+              'Eres un asistente experto en análisis de documentos académicos del sistema educativo peruano/latinoamericano. Entiendes calificaciones en escala 0-20 y porcentajes de peso. Respondes ÚNICAMENTE con JSON válido, sin texto adicional.',
           },
           {
             role: 'user',
             content: prompt,
           },
         ],
-        temperature: 0.3,
-        max_tokens: 1500,
+        temperature: 0.2, // Baja temperatura para respuestas más precisas
+        max_tokens: 2000,
       });
 
       const responseText = completion.choices[0]?.message?.content?.trim() || '';
@@ -140,13 +163,23 @@ REGLAS IMPORTANTES:
         // Validar calificaciones
         const validGrades: DetectedGrade[] = (result.grades || [])
           .map((g: any) => {
-            if (!g.name || !g.score || !g.maxScore) return null;
+            if (!g.name || !g.score) return null;
+            
+            const score = parseFloat(g.score);
+            const maxScore = 20; // Siempre 20 para sistema peruano/latinoamericano
+            const weight = parseFloat(g.weight) || 100; // Si no hay peso, asumimos 100
+            
+            // Validar que la nota esté en rango válido
+            if (score < 0 || score > 20) return null;
+            
+            // Validar que el peso sea razonable
+            if (weight < 0 || weight > 100) return null;
             
             return {
               name: g.name,
-              score: parseFloat(g.score),
-              maxScore: parseFloat(g.maxScore),
-              weight: parseFloat(g.weight) || 100,
+              score,
+              maxScore,
+              weight,
               type: g.type || 'other',
             };
           })
