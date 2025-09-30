@@ -25,6 +25,8 @@ interface MaterialsSectionProps {
 export const MaterialsSection: React.FC<MaterialsSectionProps> = ({
   courseId,
 }) => {
+  console.log('📦 MaterialsSection montado para curso:', courseId);
+  
   const { files, addFile, deleteFile, addCourseEvent, addCourseGrade } =
     useAppStore();
   const [isUploading, setIsUploading] = useState(false);
