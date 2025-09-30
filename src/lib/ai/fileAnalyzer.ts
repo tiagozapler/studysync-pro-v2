@@ -52,7 +52,7 @@ export class AIFileAnalyzer {
       const truncatedContent = fileContent.substring(0, 4000);
       console.log(`✂️ Contenido truncado a: ${truncatedContent.length} caracteres`);
 
-      const prompt = `Analiza el siguiente contenido del archivo "${fileName}" y extrae información académica.
+      const prompt = `Analiza el siguiente contenido del archivo "${fileName}" siguiendo un proceso estructurado en 4 ETAPAS.
 
 **SISTEMA DE CALIFICACIÓN: Escala de 0-20 puntos** (sistema latinoamericano/peruano)
 
@@ -61,191 +61,82 @@ ${truncatedContent}
 
 ---
 
-INSTRUCCIONES CRÍTICAS:
+🔹 ETAPA 1: PROCESAMIENTO Y LIMPIEZA
 
-**IMPORTANTE: Los sílabos pueden variar en formato. Adapta tu búsqueda según la estructura del documento.**
+1. Lee el contenido y elimina información repetitiva:
+   - Encabezados/pies de página (ej: "Facultad de...", "Sílabos 2025-2")
+   - Información administrativa irrelevante
+   
+2. Identifica si el documento es:
+   - SOLO un sílabo (sistema de evaluación sin notas)
+   - Sílabo + notas del estudiante (tiene puntajes como "15/20")
 
-1. **FECHAS IMPORTANTES**: 
-   - BUSCA en secciones como: "Programa analítico", "CRONOGRAMA", "Calendario", "Fechas", "Schedule"
-   - Pueden estar en secciones numeradas (VI., VII., etc.) o con títulos diferentes
-   
-   **FORMATOS POSIBLES:**
-   a) TABLA con semanas y evaluaciones:
-      "Semana  Tema             Evaluación
-       5       Ratios           EE1"
-      → Si hay fechas explícitas en otra parte, úsalas
-   
-   b) FECHAS EXPLÍCITAS (preferidas):
-      "15/03/2024", "2024-03-15", "15 de marzo", "marzo 15"
-      → Usa estas fechas directamente
-   
-   c) TEXTO descriptivo:
-      "El examen parcial será el 20 de marzo"
-      → Extrae la fecha y el contexto
-   
-   **REGLAS:**
-   - PRIORIDAD: Si hay fechas exactas (día/mes/año), úsalas
-   - Si SOLO hay "Semana X" sin fecha exacta, incluye "Semana X" en el campo context
-   - Si no hay fechas explícitas pero sí semanas, puedes estimar fechas basándote en el ciclo académico
-   - Adapta según lo que encuentres en el documento
+🔹 ETAPA 2: IDENTIFICACIÓN DE EVALUACIONES
 
-2. **CALIFICACIONES - REGLAS ESTRICTAS**:
-   
-   **DETECCIÓN DE PESOS/PORCENTAJES:**
-   - El PESO es el porcentaje que vale la evaluación del total de la nota final
-   - BUSCA en secciones como: "Evaluación", "Sistema de Evaluación", "Calificación", "Ponderación", "Grading", "Assessment"
-   - La sección puede estar numerada (VII., VIII., etc.) o tener títulos variados
-   
-   **FORMATOS POSIBLES (adapta según el documento):**
-   
-   a) TABLA con columna "Peso" o "Weight" o "%":
-      Ejemplos de encabezados: "Peso", "Ponderación", "Porcentaje", "%", "Weight"
-      "N.º  Semana  Tipo de evaluación     Peso
-       1    5       Examen escrito 1       20
-       2    10      Examen escrito 2       25"
-      → Busca la columna que contenga números sin "%" o con "%"
-   
-   b) LISTA con porcentajes:
-      "- Exámenes parciales: 40%"
-      "- Prácticas (30%)"
-      "- Trabajo Final - 20%"
-      → Los números con "%" son los pesos
-   
-   c) TEXTO descriptivo:
-      "vale 30% de la nota", "pesa 40%", "representa el 25%"
-   
-   d) TABLA sin encabezado explícito de "Peso":
-      A veces la tabla tiene números sin encabezado claro
-      → Busca una columna con números que sumen cerca de 100
-   
-   **REGLAS CRÍTICAS:**
-   - PRIORIDAD: Busca primero tablas, luego listas, luego texto
-   - Si encuentras pesos que sumen cerca de 100 (95-100), úsalos
-   - **SI NO HAY PESOS EXPLÍCITOS, USA weight: 100**
-   - **NUNCA inventes pesos distribuyendo 100/N evaluaciones**
-   - Adapta la búsqueda al formato específico del documento
-   
-   **DETECCIÓN DE NOTAS:**
-   - **IMPORTANTE: SOLO incluye calificaciones si HAY UNA NOTA EXPLÍCITA en el documento**
-   - Si el documento solo tiene el SÍLABO (sistema de evaluación) SIN notas del estudiante, NO incluyas calificaciones
-   - Las notas están en escala de 0-20 (NO de 0-100)
-   
-   **BUSCA PATRONES DE NOTAS:**
-   - "15/20" o "15 de 20" o "15 sobre 20"
-   - "Nota: 18" o "Calificación: 16" o "Score: 14"
-   - "Obtuvo 14 puntos" o "Sacó 17"
-   - "Examen escrito 1: 15/20" (nombre de evaluación + nota)
-   
-   **REGLA CRÍTICA:**
-   - Si solo ves "Examen escrito 1" en la tabla de evaluación SIN una nota → NO la incluyas
-   - Solo incluye una calificación si puedes ver CLARAMENTE el puntaje obtenido
-   
-   **TIPOS DE EVALUACIÓN:**
-   - Parcial/Examen/Midterm → "exam"
-   - Práctica/Tarea/Homework → "homework"
-   - Proyecto/Trabajo Final → "project"
-   - Participación → "participation"
-   - Quiz/Prueba Corta → "quiz"
-   - Otros → "other"
+Busca ÚNICAMENTE en estas secciones:
+- "VI. Programa analítico"
+- "VII. Evaluación"
+- "Cronograma de evaluaciones"
+- "Sistema de evaluación"
+- "Criterios de evaluación"
 
-**EJEMPLOS REALES DE SÍLABOS:**
+Extrae:
+- Semana/Fecha (ej: "Semana 5", "10/11/2025")
+- Tipo de evaluación (Examen escrito, Parcial, Trabajo, Proyecto)
+- Descripción breve
+- Peso (%) - SOLO si está explícito
 
-✅ EJEMPLO 1 - SOLO SÍLABO (sin notas):
-Texto del sílabo:
-"VII. Evaluación
-N.º  Semana  Tipo de evaluación  Peso
-1    5       Examen escrito 1    20
-2    10      Examen escrito 2    25"
+Reconoce abreviaturas:
+- EE = Examen escrito
+- TI = Trabajo de investigación
+- PF = Proyecto final
+- PC = Práctica calificada
+- EC = Evaluación continua
 
-→ Resultado: { "grades": [] }
-(NO incluyas calificaciones porque NO hay notas, solo está el sistema de evaluación)
+🔹 ETAPA 3: DETECCIÓN DE NOTAS DEL ESTUDIANTE
 
-✅ EJEMPLO 2 - SÍLABO CON NOTAS del estudiante:
-"VII. Evaluación
-N.º  Semana  Tipo de evaluación  Peso
-1    5       Examen escrito 1    20
-2    10      Examen escrito 2    25
+**CRÍTICO:** Solo incluye calificaciones si VES puntajes explícitos:
+- "Examen escrito 1: 15/20"
+- "TI: 18 puntos"
+- "Nota obtenida: 16/20"
 
-MIS NOTAS:
-Examen escrito 1: 15/20
-Examen escrito 2: 18/20"
+Si NO hay puntajes → grades: []
 
-→ Resultado:
-{ name: "Examen escrito 1", score: 15, maxScore: 20, weight: 20, type: "exam" }
-{ name: "Examen escrito 2", score: 18, maxScore: 20, weight: 25, type: "exam" }
+🔹 ETAPA 4: VALIDACIÓN Y CONSISTENCIA
 
-✅ EJEMPLO 2 - Formato con porcentajes:
-Texto del sílabo:
-"SISTEMA DE EVALUACIÓN:
-- Exámenes Parciales (40%)
-- Prácticas Calificadas (30%)
-- Trabajo Final (20%)
-- Participación (10%)"
-
-→ Resultado (si hay notas):
-{ name: "Parcial 1", score: 15, maxScore: 20, weight: 40, type: "exam" }
-{ name: "Práctica 1", score: 18, maxScore: 20, weight: 30, type: "homework" }
-
-✅ CORRECTO - Sin pesos en el documento:
-- Texto: "Práctica 2: obtuvo 16 de 20 puntos"
-  → { name: "Práctica 2", score: 16, maxScore: 20, weight: 100, type: "homework" }
-  (weight = 100 porque NO se menciona el porcentaje)
-
-✅ CORRECTO - Con peso explícito:
-- Texto: "Proyecto Final: 19/20 - Representa el 40% del curso"
-  → { name: "Proyecto Final", score: 19, maxScore: 20, weight: 40, type: "project" }
-
-❌ INCORRECTO (NO INVENTES PESOS):
-- Si solo dice "Parcial 1: 15/20" y NO hay sección de evaluación → weight debe ser 100, NO inventes 25 o 30
-- Si hay 4 evaluaciones pero NO se menciona "%" → NO dividas 100/4 = 25, usa weight: 100 para todas
-- Si solo dice "Examen: 18 puntos" → weight debe ser 100, NO adivines
+Antes de responder, verifica:
+1. ¿Las evaluaciones del Programa Analítico coinciden con Sistema de Evaluación?
+2. ¿Los pesos suman aproximadamente 100%?
+3. ¿Hay notas del estudiante o solo el sílabo?
+4. ¿Eliminaste duplicados?
 
 Responde ÚNICAMENTE con JSON válido en este formato:
 {
   "dates": [
     {
-      "date": "YYYY-MM-DD",
-      "type": "examen|entrega|clase|otro",
-      "context": "descripción breve del evento",
+      "date": "YYYY-MM-DD" o "Semana X",
+      "type": "exam|assignment|class|other",
+      "context": "Tipo de evaluación + descripción breve",
       "confidence": 0.8
     }
   ],
   "grades": [
     {
-      "name": "nombre exacto de la evaluación como aparece en el texto",
+      "name": "Nombre EXACTO de la evaluación",
       "score": número_de_0_a_20,
       "maxScore": 20,
-      "weight": porcentaje_0_a_100_SOLO_SI_SE_MENCIONA_EXPLÍCITAMENTE,
+      "weight": porcentaje_de_0_a_100,
       "type": "exam|quiz|project|homework|participation|other"
     }
   ],
-  "summary": "resumen del contenido del archivo en 1-2 oraciones"
+  "summary": "Breve resumen del sílabo y evaluaciones encontradas"
 }
 
-REGLAS CRÍTICAS - LEE ESTO CUIDADOSAMENTE:
-
-**SOBRE CALIFICACIONES (MUY IMPORTANTE):**
-1. **NO INCLUYAS NINGUNA CALIFICACIÓN SI SOLO VES EL SÍLABO (tabla de evaluación)**
-2. **SOLO incluye calificaciones si VES EXPLÍCITAMENTE el puntaje del estudiante**
-3. Ejemplos de cuando SÍ incluir: "Examen 1: 15/20", "Obtuvo 18 puntos", "Nota: 16"
-4. Ejemplos de cuando NO incluir: Solo tabla que dice "Examen 1 - 20%" sin nota
-5. Si el documento es SOLO un sílabo sin notas, devuelve: { "grades": [] }
-
-**SOBRE PESOS:**
-6. weight: SOLO usa un número diferente de 100 si está EXPLÍCITO en el texto
-7. weight: Si NO hay "%" mencionado, usa 100
-
-**SOBRE FORMATO:**
-8. maxScore SIEMPRE debe ser 20
-9. score debe estar entre 0 y 20
-10. Si no hay fechas o notas, devuelve arrays vacíos []
-11. JSON válido: sin comas finales, comillas dobles
-12. Copia nombres EXACTAMENTE como aparecen
-
-**VERIFICACIÓN FINAL ANTES DE RESPONDER:**
-- ¿Este documento tiene NOTAS del estudiante o solo el sistema de evaluación?
-- Si solo tiene sistema de evaluación → grades: []
-- Si tiene notas del estudiante → incluye solo las que tengan puntajes explícitos`;
+REGLAS FINALES:
+1. Si NO hay notas del estudiante → grades: []
+2. Si NO hay pesos explícitos → weight: 100
+3. maxScore siempre es 20
+4. Solo JSON válido, sin texto adicional`;
 
       console.log('🤖 Enviando a Groq para análisis...');
       const completion = await this.groqClient.chat.completions.create({
@@ -254,7 +145,7 @@ REGLAS CRÍTICAS - LEE ESTO CUIDADOSAMENTE:
           {
             role: 'system',
             content:
-              'Eres un asistente experto en análisis de documentos académicos del sistema educativo peruano/latinoamericano. CRÍTICO: Distingue entre un SÍLABO (que solo tiene la tabla de evaluación con pesos) vs un documento con NOTAS DEL ESTUDIANTE (que tiene puntajes como "15/20", "18 puntos", etc.). REGLA #1: Si el documento es SOLO un sílabo SIN notas del estudiante, devuelve grades: []. REGLA #2: NUNCA inventes pesos ni notas. REGLA #3: Solo incluye calificaciones si VES EXPLÍCITAMENTE el puntaje obtenido. Respondes ÚNICAMENTE con JSON válido, sin texto adicional.',
+              'Eres un asistente experto en análisis de sílabos académicos peruanos/latinoamericanos. Sigues un proceso de 4 ETAPAS: 1) Limpia el texto eliminando encabezados repetitivos. 2) Identifica evaluaciones SOLO en secciones de "Programa analítico" y "Evaluación". 3) Detecta notas del estudiante (si existen). 4) Valida consistencia. CRÍTICO: Distingue sílabo (solo sistema de evaluación) vs documento con notas del estudiante (tiene "15/20", "18 puntos"). Si solo es sílabo → grades: []. NUNCA inventes pesos ni notas. Respondes SOLO JSON válido.',
           },
           {
             role: 'user',
