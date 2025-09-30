@@ -223,15 +223,29 @@ Responde ÚNICAMENTE con JSON válido en este formato:
 }
 
 REGLAS CRÍTICAS - LEE ESTO CUIDADOSAMENTE:
-1. maxScore SIEMPRE debe ser 20
-2. weight: SOLO usa un número diferente de 100 si el texto EXPLÍCITAMENTE menciona "vale X%", "pesa X%", "X% del total", etc.
-3. weight: Si NO hay mención explícita de porcentaje o peso, SIEMPRE usa 100
-4. NO INVENTES ni ADIVINES pesos basándote en el número de evaluaciones
-5. score debe estar entre 0 y 20
-6. Solo incluye calificaciones donde puedas ver claramente la nota
-7. Si no hay fechas o notas, devuelve arrays vacíos []
-8. JSON válido: sin comas finales, comillas dobles
-9. Copia el nombre de la evaluación EXACTAMENTE como aparece en el documento`;
+
+**SOBRE CALIFICACIONES (MUY IMPORTANTE):**
+1. **NO INCLUYAS NINGUNA CALIFICACIÓN SI SOLO VES EL SÍLABO (tabla de evaluación)**
+2. **SOLO incluye calificaciones si VES EXPLÍCITAMENTE el puntaje del estudiante**
+3. Ejemplos de cuando SÍ incluir: "Examen 1: 15/20", "Obtuvo 18 puntos", "Nota: 16"
+4. Ejemplos de cuando NO incluir: Solo tabla que dice "Examen 1 - 20%" sin nota
+5. Si el documento es SOLO un sílabo sin notas, devuelve: { "grades": [] }
+
+**SOBRE PESOS:**
+6. weight: SOLO usa un número diferente de 100 si está EXPLÍCITO en el texto
+7. weight: Si NO hay "%" mencionado, usa 100
+
+**SOBRE FORMATO:**
+8. maxScore SIEMPRE debe ser 20
+9. score debe estar entre 0 y 20
+10. Si no hay fechas o notas, devuelve arrays vacíos []
+11. JSON válido: sin comas finales, comillas dobles
+12. Copia nombres EXACTAMENTE como aparecen
+
+**VERIFICACIÓN FINAL ANTES DE RESPONDER:**
+- ¿Este documento tiene NOTAS del estudiante o solo el sistema de evaluación?
+- Si solo tiene sistema de evaluación → grades: []
+- Si tiene notas del estudiante → incluye solo las que tengan puntajes explícitos`;
 
       console.log('🤖 Enviando a Groq para análisis...');
       const completion = await this.groqClient.chat.completions.create({
@@ -240,7 +254,7 @@ REGLAS CRÍTICAS - LEE ESTO CUIDADOSAMENTE:
           {
             role: 'system',
             content:
-              'Eres un asistente experto en análisis de documentos académicos del sistema educativo peruano/latinoamericano. Los sílabos varían en formato, así que ADAPTA tu búsqueda a la estructura del documento. Entiendes calificaciones en escala 0-20 y porcentajes de peso en diferentes formatos (tablas, listas, texto). REGLAS CRÍTICAS: 1) NUNCA inventes pesos - usa weight: 100 si no están explícitos. 2) NUNCA inventes notas - solo incluye calificaciones si VES un puntaje (ej: "15/20"). Si solo hay sistema de evaluación sin notas del estudiante, devuelve grades: []. Respondes ÚNICAMENTE con JSON válido, sin texto adicional.',
+              'Eres un asistente experto en análisis de documentos académicos del sistema educativo peruano/latinoamericano. CRÍTICO: Distingue entre un SÍLABO (que solo tiene la tabla de evaluación con pesos) vs un documento con NOTAS DEL ESTUDIANTE (que tiene puntajes como "15/20", "18 puntos", etc.). REGLA #1: Si el documento es SOLO un sílabo SIN notas del estudiante, devuelve grades: []. REGLA #2: NUNCA inventes pesos ni notas. REGLA #3: Solo incluye calificaciones si VES EXPLÍCITAMENTE el puntaje obtenido. Respondes ÚNICAMENTE con JSON válido, sin texto adicional.',
           },
           {
             role: 'user',
@@ -325,6 +339,8 @@ REGLAS CRÍTICAS - LEE ESTO CUIDADOSAMENTE:
         };
         
         console.log(`✅ Análisis completado: ${validDates.length} fechas, ${validGrades.length} calificaciones`);
+        console.log('📊 Calificaciones detectadas:', validGrades);
+        console.log('📅 Fechas detectadas:', validDates);
         return analysisResult;
       } catch (parseError) {
         console.error('❌ Error parsing AI response:', parseError);

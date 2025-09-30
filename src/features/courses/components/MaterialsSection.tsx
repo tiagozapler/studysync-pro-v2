@@ -117,17 +117,23 @@ export const MaterialsSection: React.FC<MaterialsSectionProps> = ({
         // Si se encontraron calificaciones, agregar notas
         if (analysis.grades.length > 0) {
           console.log(`📊 Agregando ${analysis.grades.length} calificaciones...`);
-          totalGradesFound += analysis.grades.length;
           
           for (const gradeInfo of analysis.grades) {
-            console.log('➕ Agregando calificación:', gradeInfo.name, `${gradeInfo.score}/${gradeInfo.maxScore}`);
-            await addCourseGrade(courseId, {
-              name: gradeInfo.name,
-              score: gradeInfo.score,
-              maxScore: gradeInfo.maxScore,
-              weight: gradeInfo.weight,
-              type: gradeInfo.type,
-            });
+            // VALIDACIÓN: Solo agregar si tiene un score válido (no 0 ni undefined)
+            if (gradeInfo.score > 0 && gradeInfo.score <= 20) {
+              console.log('➕ Agregando calificación:', gradeInfo.name, `${gradeInfo.score}/${gradeInfo.maxScore}`, `peso: ${gradeInfo.weight}%`);
+              totalGradesFound++;
+              
+              await addCourseGrade(courseId, {
+                name: gradeInfo.name,
+                score: gradeInfo.score,
+                maxScore: gradeInfo.maxScore,
+                weight: gradeInfo.weight,
+                type: gradeInfo.type,
+              });
+            } else {
+              console.warn('⚠️ Calificación ignorada (score inválido):', gradeInfo);
+            }
           }
         }
       }
