@@ -64,29 +64,52 @@ ${truncatedContent}
 INSTRUCCIONES CRÍTICAS:
 
 1. **FECHAS IMPORTANTES**: 
-   - BUSCA en la sección de "CRONOGRAMA" del documento si existe
-   - Busca fechas de exámenes, entregas de trabajos, proyectos, presentaciones
-   - Formato: día/mes/año o año-mes-día
-   - Identifica el tipo de evento y el contexto
-   - Solo incluye fechas que estén claramente mencionadas
-   - Ejemplos de palabras clave: "cronograma", "calendario", "fechas importantes", "programación"
+   - BUSCA en secciones: "VI. Programa analítico", "CRONOGRAMA", "Calendario", "Fechas importantes"
+   
+   **FORMATOS COMUNES EN SÍLABOS:**
+   a) TABLA con semanas y evaluaciones:
+      "Semana  Tema             Evaluación
+       5       Ratios           EE1
+       10      Financiamiento   EE2
+       13      Investigación    TI"
+      → Si encuentras "EE1", "EE2", "TI" en el cronograma, cruza con la tabla de evaluación
+   
+   b) FECHAS EXPLÍCITAS:
+      "15/03/2024", "2024-03-15", "15 de marzo"
+      → Usa estas fechas directamente
+   
+   **REGLAS:**
+   - Si solo hay "Semana X" sin fecha específica, NO incluyas esa fecha
+   - Solo incluye fechas con día/mes/año completo
+   - El contexto debe incluir el nombre de la evaluación (ej: "Examen escrito 1")
 
 2. **CALIFICACIONES - REGLAS ESTRICTAS**:
    
    **DETECCIÓN DE PESOS/PORCENTAJES:**
    - El PESO es el porcentaje que vale la evaluación del total de la nota final
-   - BUSCA en secciones llamadas: "Evaluación", "Sistema de Evaluación", "Calificación", "Ponderación", "Criterios de Evaluación"
-   - BUSCA EXPLÍCITAMENTE palabras como: "vale", "pesa", "representa", "porcentaje", "%", "peso", "ponderación"
-   - EJEMPLOS VÁLIDOS de pesos:
-     * "vale 30%" → weight: 30
-     * "pesa 40% de la nota final" → weight: 40
-     * "representa el 25% del curso" → weight: 25
-     * "30% del total" → weight: 30
-     * "Exámenes parciales (40%)" → weight: 40
-     * "Prácticas: 30%" → weight: 30
+   - BUSCA en secciones llamadas: "VII. Evaluación", "Evaluación", "Sistema de Evaluación", "Calificación", "Ponderación", "Criterios de Evaluación"
    
-   - **SI NO ENCUENTRAS NINGUNA DE ESTAS PALABRAS O NÚMEROS SEGUIDOS DE "%", USA weight: 100**
-   - **NO adivines pesos distribuyendo 100% entre el número de evaluaciones**
+   **FORMATOS COMUNES DE PESOS EN SÍLABOS:**
+   a) TABLA con columna "Peso":
+      "N.º  Semana  Tipo de evaluación     Peso
+       1    5       Examen escrito 1       20
+       2    10      Examen escrito 2       25"
+      → Si encuentras una tabla, la columna "Peso" contiene los porcentajes (20, 25, etc.)
+   
+   b) LISTA con porcentajes entre paréntesis:
+      "- Exámenes parciales (40%)
+       - Prácticas: 30%
+       - Trabajo Final: 20%"
+      → Los números entre paréntesis o después de ":" son los pesos
+   
+   c) TEXTO con palabras clave:
+      "vale 30%", "pesa 40%", "representa el 25%"
+   
+   **REGLAS CRÍTICAS:**
+   - Si hay una tabla de evaluación con columna "Peso", usa esos valores
+   - Si hay "%" explícito, usa ese número
+   - **SI NO HAY TABLA NI "%", USA weight: 100**
+   - **NO inventes pesos ni dividas 100 entre evaluaciones**
    
    **DETECCIÓN DE NOTAS:**
    - Las notas están en escala de 0-20 (NO de 0-100)
@@ -103,23 +126,36 @@ INSTRUCCIONES CRÍTICAS:
    - Quiz/Prueba Corta → "quiz"
    - Otros → "other"
 
-**EJEMPLOS REALES:**
+**EJEMPLOS REALES DE SÍLABOS:**
 
-✅ CORRECTO - Ejemplo de Sílabo:
-- Texto del sílabo:
-  "SISTEMA DE EVALUACIÓN:
-   - Exámenes Parciales (40%)
-   - Prácticas Calificadas (30%)
-   - Trabajo Final (20%)
-   - Participación (10%)"
-   
-  Con notas del estudiante:
-  "Parcial 1: 15/20"
-  "Práctica 1: 18/20"
-  
-  → Resultado:
-  { name: "Parcial 1", score: 15, maxScore: 20, weight: 40, type: "exam" }
-  { name: "Práctica 1", score: 18, maxScore: 20, weight: 30, type: "homework" }
+✅ EJEMPLO 1 - Formato con tabla de evaluación:
+Texto del sílabo:
+"VII. Evaluación
+N.º  Semana  Tipo de evaluación  Peso
+1    5       Examen escrito 1    20
+2    10      Examen escrito 2    25
+3    13      Trabajo de Investigación  30
+4    15      Examen escrito 3    25"
+
+Si encuentras notas del estudiante:
+"Examen escrito 1: 15/20"
+"Trabajo de Investigación: 18/20"
+
+→ Resultado:
+{ name: "Examen escrito 1", score: 15, maxScore: 20, weight: 20, type: "exam" }
+{ name: "Trabajo de Investigación", score: 18, maxScore: 20, weight: 30, type: "project" }
+
+✅ EJEMPLO 2 - Formato con porcentajes:
+Texto del sílabo:
+"SISTEMA DE EVALUACIÓN:
+- Exámenes Parciales (40%)
+- Prácticas Calificadas (30%)
+- Trabajo Final (20%)
+- Participación (10%)"
+
+→ Resultado (si hay notas):
+{ name: "Parcial 1", score: 15, maxScore: 20, weight: 40, type: "exam" }
+{ name: "Práctica 1", score: 18, maxScore: 20, weight: 30, type: "homework" }
 
 ✅ CORRECTO - Sin pesos en el documento:
 - Texto: "Práctica 2: obtuvo 16 de 20 puntos"
