@@ -217,7 +217,7 @@ export const CourseAIAssistant: React.FC<CourseAIAssistantProps> = ({
     const { context, history } = options;
 
     const completion = await groqClient.chat.completions.create({
-      model: 'gemma-7b-it',
+      model: 'llama-3.1-8b-instant',
       messages: [
         {
           role: 'system',
