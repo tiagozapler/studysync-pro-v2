@@ -30,6 +30,7 @@ export const MaterialsSection: React.FC<MaterialsSectionProps> = ({
   
   const { files, addFile, deleteFile, addCourseEvent, addCourseGrade } =
     useAppStore();
+  const ENABLE_AUTO_ANALYSIS = false; // Desactivar análisis automático temporalmente
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [aiAnalysis, setAiAnalysis] = useState<FileAnalysisResult | null>(null);
@@ -69,21 +70,27 @@ export const MaterialsSection: React.FC<MaterialsSectionProps> = ({
         // Agregar archivo al store primero
         await addFile(courseId, file, []);
 
-        // Analizar contenido con PARSER REGEX (sin IA)
-        console.log('🔍 Iniciando análisis con parser regex...');
-        toast.loading(`Analizando ${file.name}...`, { id: `analyze-${i}` });
-        const parsed = parseSyllabus(content);
-        const evaluationsWithDates = linkEvaluationsWithSchedule(parsed);
-        toast.dismiss(`analyze-${i}`);
-        
-        console.log('📊 Resultado del análisis (regex):', {
-          evaluaciones: evaluationsWithDates.length,
-          cronograma: parsed.schedule.length,
-          metadata: parsed.metadata,
-        });
+        // Análisis automático desactivado temporalmente
+        let evaluationsWithDates: any[] = [];
+        let parsed: any = { schedule: [], metadata: {} };
+        if (ENABLE_AUTO_ANALYSIS) {
+          console.log('🔍 Iniciando análisis con parser regex...');
+          toast.loading(`Analizando ${file.name}...`, { id: `analyze-${i}` });
+          parsed = parseSyllabus(content);
+          evaluationsWithDates = linkEvaluationsWithSchedule(parsed);
+          toast.dismiss(`analyze-${i}`);
+          
+          console.log('📊 Resultado del análisis (regex):', {
+            evaluaciones: evaluationsWithDates.length,
+            cronograma: parsed.schedule.length,
+            metadata: parsed.metadata,
+          });
+        } else {
+          console.log('⏸️ Análisis automático desactivado. Solo guardando archivo.');
+        }
 
         // Si se encontraron evaluaciones con fechas en el cronograma, agregar eventos
-        if (parsed.schedule.length > 0) {
+        if (ENABLE_AUTO_ANALYSIS && parsed.schedule.length > 0) {
           console.log(`📅 Agregando ${parsed.schedule.length} semanas del cronograma...`);
           
           for (const scheduleItem of parsed.schedule) {
@@ -118,7 +125,7 @@ export const MaterialsSection: React.FC<MaterialsSectionProps> = ({
         }
 
         // Agregar evaluaciones como calificaciones (SIN puntajes, solo estructura)
-        if (evaluationsWithDates.length > 0) {
+        if (ENABLE_AUTO_ANALYSIS && evaluationsWithDates.length > 0) {
           console.log(`📊 Agregando ${evaluationsWithDates.length} evaluaciones...`);
           
           for (const evaluation of evaluationsWithDates) {
