@@ -79,15 +79,16 @@ Responde SOLO con este JSON (sin texto adicional):
       "confidence": 0.8
     }
   ],
-  "grades": [
-    {
-      "name": "Examen escrito 1",
-      "score": 15,
-      "maxScore": 20,
-      "weight": 20,
-      "type": "exam|quiz|project|homework|participation|other"
-    }
-  ],
+  "grades": [],
+  
+IMPORTANTE: "grades" solo debe tener elementos si el documento tiene NOTAS del estudiante (ej: "15/20", "18 puntos").
+Si el documento es SOLO un sílabo SIN notas, deja "grades": [] vacío.
+
+Ejemplo CON notas:
+  "grades": [{"name": "Examen 1", "score": 15, "maxScore": 20, "weight": 20, "type": "exam"}]
+  
+Ejemplo SIN notas (solo sílabo):
+  "grades": []
   "summary": "Sílabo con 4 evaluaciones: 2 exámenes escritos (45%), 1 trabajo de investigación (30%), 1 examen final (25%)"
 }
 
@@ -170,14 +171,23 @@ REGLAS CRÍTICAS:
         // Validar calificaciones
         const validGrades: DetectedGrade[] = (result.grades || [])
           .map((g: any) => {
-            if (!g.name || !g.score) return null;
+            if (!g.name) return null;
+            
+            // Si score es un array vacío, undefined, null, o no existe → NO incluir
+            if (!g.score || Array.isArray(g.score) || g.score === 'undefined' || g.score === '') {
+              console.log(`⚠️ Calificación sin nota detectada (ignorada): ${g.name}`);
+              return null;
+            }
             
             const score = parseFloat(g.score);
             const maxScore = 20; // Siempre 20 para sistema peruano/latinoamericano
             const weight = parseFloat(g.weight) || 100; // Si no hay peso, asumimos 100
             
             // Validar que la nota esté en rango válido
-            if (score < 0 || score > 20) return null;
+            if (isNaN(score) || score < 0 || score > 20) {
+              console.log(`⚠️ Score inválido para ${g.name}: ${score}`);
+              return null;
+            }
             
             // Validar que el peso sea razonable
             if (weight < 0 || weight > 100) return null;
