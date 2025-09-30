@@ -9,10 +9,12 @@ import {
   Brain,
   Settings,
   X,
+  Calendar,
+  Calculator,
 } from 'lucide-react';
 import { useAppStore } from '../../../lib/store';
 import { FileContentExtractor } from '../../../lib/services/FileContentExtractor';
-import { AIAnalysisResult } from '../../../lib/services/AIService';
+import { AIFileAnalyzer, type FileAnalysisResult } from '../../../lib/ai/fileAnalyzer';
 import env from '../../../lib/config/env';
 import toast from 'react-hot-toast';
 
@@ -27,7 +29,7 @@ export const MaterialsSection: React.FC<MaterialsSectionProps> = ({
     useAppStore();
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
-  const [aiAnalysis, setAiAnalysis] = useState<AIAnalysisResult | null>(null);
+  const [aiAnalysis, setAiAnalysis] = useState<FileAnalysisResult | null>(null);
   const [showAISettings, setShowAISettings] = useState(false);
   const [groqApiKey, setGroqApiKey] = useState(
     localStorage.getItem('groqApiKey') || env.GROQ_API_KEY || ''
@@ -45,61 +47,86 @@ export const MaterialsSection: React.FC<MaterialsSectionProps> = ({
     setAiAnalysis(null);
 
     try {
+      const analyzer = new AIFileAnalyzer(groqApiKey);
+      let totalDatesFound = 0;
+      let totalGradesFound = 0;
+
       for (let i = 0; i < files.length; i++) {
         const file = files[i];
 
         // Actualizar progreso
-        setUploadProgress((i / files.length) * 100);
+        setUploadProgress((i / files.length) * 90); // 90% para procesar archivos
 
         // Extraer contenido del archivo
         const content = await FileContentExtractor.extractContent(file);
 
-        // Analizar contenido con análisis básico (no requiere IA)
-        const analysis = await basicFileAnalysis(content, file.name);
-        setAiAnalysis(analysis);
-
-        // Agregar archivo al store
+        // Agregar archivo al store primero
         await addFile(courseId, file, []);
+
+        // Analizar contenido con IA (Groq)
+        toast.loading(`Analizando ${file.name} con IA...`, { id: `analyze-${i}` });
+        const analysis = await analyzer.analyzeFile(file.name, content);
+        toast.dismiss(`analyze-${i}`);
+        
+        setAiAnalysis(analysis);
 
         // Si se encontraron fechas, agregar eventos al calendario
         if (analysis.dates.length > 0) {
+          totalDatesFound += analysis.dates.length;
+          
           for (const dateInfo of analysis.dates) {
-            await addCourseEvent(courseId, {
-              title: `${file.name} - ${dateInfo.type}`,
-              description: `Fecha importante encontrada en ${file.name}: ${dateInfo.context}`,
-              date: dateInfo.date,
-              type: 'assignment',
-              priority: 'medium',
-              source: 'auto-detected',
-              sourceFile: file.name,
-            });
+            // Solo agregar si la confianza es > 0.5
+            if (dateInfo.confidence > 0.5) {
+              await addCourseEvent(courseId, {
+                title: dateInfo.context || `Evento - ${file.name}`,
+                description: `Detectado automáticamente en ${file.name}`,
+                date: dateInfo.date,
+                type: dateInfo.type,
+              });
+            }
           }
         }
 
         // Si se encontraron calificaciones, agregar notas
         if (analysis.grades.length > 0) {
+          totalGradesFound += analysis.grades.length;
+          
           for (const gradeInfo of analysis.grades) {
             await addCourseGrade(courseId, {
               name: gradeInfo.name,
               score: gradeInfo.score,
               maxScore: gradeInfo.maxScore,
               weight: gradeInfo.weight,
-              type: gradeInfo.type as
-                | 'exam'
-                | 'quiz'
-                | 'project'
-                | 'homework'
-                | 'participation'
-                | 'other',
+              type: gradeInfo.type,
+              date: new Date(),
             });
           }
         }
       }
 
       setUploadProgress(100);
+      
+      // Mostrar resumen de lo detectado
+      const messages = [];
+      if (totalDatesFound > 0) {
+        messages.push(`📅 ${totalDatesFound} fecha(s) detectada(s)`);
+      }
+      if (totalGradesFound > 0) {
+        messages.push(`📊 ${totalGradesFound} calificación(es) detectada(s)`);
+      }
+      
+      if (messages.length > 0) {
+        toast.success(`✅ Análisis completado:\n${messages.join('\n')}`, {
+          duration: 5000,
+        });
+      } else {
+        toast.success('Archivo(s) subido(s) correctamente');
+      }
+      
       setTimeout(() => setUploadProgress(0), 1000);
     } catch (error) {
       console.error('Error uploading files:', error);
+      toast.error('Error al subir archivos');
     } finally {
       setIsUploading(false);
     }
@@ -166,17 +193,6 @@ export const MaterialsSection: React.FC<MaterialsSectionProps> = ({
 
   const systemInfo = {
     groq: Boolean(groqApiKey),
-  };
-
-  const basicFileAnalysis = async (content: string, fileName: string): Promise<AIAnalysisResult> => {
-    // Análisis básico sin IA
-    return {
-      dates: [],
-      grades: [],
-      summary: `Archivo ${fileName} subido correctamente`,
-      topics: [],
-      importantInfo: []
-    };
   };
 
   return (
@@ -280,54 +296,49 @@ export const MaterialsSection: React.FC<MaterialsSectionProps> = ({
           </div>
 
           {/* Resumen */}
-          <div className="mb-4">
-            <h5 className="text-xs font-medium text-gray-700 mb-1">Resumen</h5>
-            <p className="text-sm text-gray-600">{aiAnalysis.summary}</p>
-          </div>
-
-          {/* Temas */}
-          {aiAnalysis.topics.length > 0 && (
+          {aiAnalysis.summary && (
             <div className="mb-4">
-              <h5 className="text-xs font-medium text-gray-700 mb-1">
-                Temas Identificados
-              </h5>
-              <div className="flex flex-wrap gap-2">
-                {aiAnalysis.topics.map((topic, index) => (
-                  <span
-                    key={index}
-                    className="inline-flex px-2 py-1 text-xs font-medium bg-blue-100 text-blue-800 rounded-full"
-                  >
-                    {topic}
-                  </span>
-                ))}
-              </div>
+              <h5 className="text-xs font-medium text-gray-700 mb-1">Resumen</h5>
+              <p className="text-sm text-gray-600">{aiAnalysis.summary}</p>
             </div>
           )}
 
           {/* Fechas */}
           {aiAnalysis.dates.length > 0 && (
             <div className="mb-4">
-              <h5 className="text-xs font-medium text-gray-700 mb-1">
-                Fechas Importantes
-              </h5>
+              <div className="flex items-center mb-2">
+                <Calendar className="h-4 w-4 text-blue-600 mr-2" />
+                <h5 className="text-xs font-medium text-gray-700">
+                  📅 {aiAnalysis.dates.length} Fecha(s) Detectada(s) y Agregada(s) al Calendario
+                </h5>
+              </div>
               <div className="space-y-2">
                 {aiAnalysis.dates.map((dateInfo, index) => (
                   <div
                     key={index}
-                    className="flex items-center justify-between p-2 bg-gray-50 rounded"
+                    className="flex items-center justify-between p-3 bg-blue-50 border border-blue-200 rounded-lg"
                   >
-                    <div>
-                      <span className="text-sm font-medium text-gray-900">
-                        {dateInfo.date.toLocaleDateString()}
-                      </span>
-                      <span className="ml-2 text-xs text-gray-500">
-                        {dateInfo.type} •{' '}
-                        {Math.round(dateInfo.confidence * 100)}% confianza
+                    <div className="flex-1">
+                      <div className="flex items-center">
+                        <span className="text-sm font-medium text-gray-900">
+                          {dateInfo.date.toLocaleDateString('es-ES', {
+                            weekday: 'long',
+                            year: 'numeric',
+                            month: 'long',
+                            day: 'numeric',
+                          })}
+                        </span>
+                        <span className="ml-3 inline-flex px-2 py-0.5 text-xs font-medium bg-blue-100 text-blue-800 rounded-full">
+                          {dateInfo.type}
+                        </span>
+                      </div>
+                      <p className="text-xs text-gray-600 mt-1">
+                        {dateInfo.context}
+                      </p>
+                      <span className="text-xs text-gray-500 mt-1">
+                        Confianza: {Math.round(dateInfo.confidence * 100)}%
                       </span>
                     </div>
-                    <span className="text-xs text-gray-600">
-                      {dateInfo.context}
-                    </span>
                   </div>
                 ))}
               </div>
@@ -337,44 +348,37 @@ export const MaterialsSection: React.FC<MaterialsSectionProps> = ({
           {/* Calificaciones */}
           {aiAnalysis.grades.length > 0 && (
             <div className="mb-4">
-              <h5 className="text-xs font-medium text-gray-700 mb-1">
-                Calificaciones Detectadas
-              </h5>
+              <div className="flex items-center mb-2">
+                <Calculator className="h-4 w-4 text-green-600 mr-2" />
+                <h5 className="text-xs font-medium text-gray-700">
+                  📊 {aiAnalysis.grades.length} Calificación(es) Detectada(s) y Agregada(s)
+                </h5>
+              </div>
               <div className="space-y-2">
                 {aiAnalysis.grades.map((grade, index) => (
                   <div
                     key={index}
-                    className="flex items-center justify-between p-2 bg-gray-50 rounded"
+                    className="p-3 bg-green-50 border border-green-200 rounded-lg"
                   >
-                    <div>
-                      <span className="text-sm font-medium text-gray-900">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm font-semibold text-gray-900">
                         {grade.name}
                       </span>
-                      <span className="ml-2 text-xs text-gray-500">
-                        {grade.score}/{grade.maxScore} • {grade.weight}% peso •{' '}
-                        {Math.round(grade.confidence * 100)}% confianza
+                      <span className="inline-flex px-2 py-0.5 text-xs font-medium bg-green-100 text-green-800 rounded-full">
+                        {grade.type}
                       </span>
                     </div>
-                    <span className="text-xs text-gray-600">{grade.type}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Información importante */}
-          {aiAnalysis.importantInfo.length > 0 && (
-            <div>
-              <h5 className="text-xs font-medium text-gray-700 mb-1">
-                Información Importante
-              </h5>
-              <div className="space-y-2">
-                {aiAnalysis.importantInfo.map((info, index) => (
-                  <div
-                    key={index}
-                    className="p-2 bg-yellow-50 border-l-4 border-yellow-400"
-                  >
-                    <p className="text-sm text-gray-700">{info}</p>
+                    <div className="mt-2 flex items-center justify-between text-xs text-gray-600">
+                      <span>
+                        Puntuación: <strong>{grade.score}/{grade.maxScore}</strong>
+                      </span>
+                      <span>
+                        Peso: <strong>{grade.weight}%</strong>
+                      </span>
+                      <span>
+                        {Math.round((grade.score / grade.maxScore) * 100)}%
+                      </span>
+                    </div>
                   </div>
                 ))}
               </div>
