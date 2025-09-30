@@ -109,30 +109,52 @@ function parseEvaluationSection(content: string): SyllabusEvaluation[] {
     console.log('✅ Tabla de evaluación encontrada (formato estándar)');
     const tableContent = tableMatch[1];
     console.log('📋 Contenido de la tabla:', tableContent.substring(0, 500));
-    
-    // Estrategia: Buscar patrones de evaluación en el texto concatenado
-    // Formato: N.º Semana Nombre_Evaluación Peso%
-    // Ejemplo: "1 5 Examen escrito 1 20"
-    
-    // Regex global para capturar todas las evaluaciones en una sola línea
-    // Patrón: (número) (semana) (nombre con espacios) (peso numérico)
-    // Usa lookahead para detectar siguiente número o fin de texto
-    const evalRegex = /(\d+)\s+(\d+)\s+([A-Za-zá-úÁ-Ú\s]+?)\s+(\d+)(?=\s+\d+%|\s+\d+\s+\d+|$)/g;
-    let match;
-    
-    while ((match = evalRegex.exec(tableContent)) !== null) {
-      const [, number, week, name, weight] = match;
-      console.log('✅ Evaluación capturada:', { number, week, name: name.trim(), weight });
-      
+
+    // Estrategia robusta: detectar cada bloque por índice y semana, y extraer el peso
+    const startRegex = /(\d+)\s+(\d+)\s+/g; // (número) (semana)
+    const starts: Array<{ idx: number; number: number; week: number }> = [];
+    let m: RegExpExecArray | null;
+    while ((m = startRegex.exec(tableContent)) !== null) {
+      starts.push({ idx: m.index, number: parseInt(m[1]), week: parseInt(m[2]) });
+    }
+
+    for (let i = 0; i < starts.length; i++) {
+      const cur = starts[i];
+      const next = starts[i + 1];
+      const segment = tableContent.slice(cur.idx, next ? next.idx : tableContent.length);
+      console.log('🔎 Segmento detectado:', segment.trim());
+
+      // Quitar prefijo "número semana"
+      const body = segment.replace(/^\s*\d+\s+\d+\s+/, '');
+
+      // Peso: número que precede a un porcentaje (ej. "20  100%" o "30  75%")
+      const weightMatch = body.match(/(\d{1,3})\s+\d{1,3}%/);
+      const weight = weightMatch ? parseInt(weightMatch[1]) : NaN;
+
+      // Nombre: todo lo que queda antes del peso detectado
+      let name = body;
+      if (weightMatch && typeof weightMatch.index === 'number') {
+        name = body.slice(0, weightMatch.index).trim();
+      }
+      // Normalizar espacios en nombre
+      name = name.replace(/\s+/g, ' ').trim();
+
+      console.log('✅ Evaluación capturada:', {
+        number: cur.number,
+        week: cur.week,
+        name,
+        weight,
+      });
+
       evaluations.push({
-        number: parseInt(number),
-        week: parseInt(week),
-        name: name.trim(),
-        weight: parseInt(weight),
+        number: cur.number,
+        week: cur.week,
+        name,
+        weight: isNaN(weight) ? 0 : weight,
         type: detectEvaluationType(name),
       });
     }
-    
+
     console.log(`📊 Total evaluaciones extraídas: ${evaluations.length}`);
   }
   
