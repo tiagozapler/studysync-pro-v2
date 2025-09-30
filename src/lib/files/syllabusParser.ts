@@ -108,15 +108,19 @@ function parseEvaluationSection(content: string): SyllabusEvaluation[] {
   if (tableMatch) {
     console.log('✅ Tabla de evaluación encontrada (formato estándar)');
     const tableContent = tableMatch[1];
+    console.log('📋 Contenido de la tabla:', tableContent.substring(0, 500));
     const lines = tableContent.split('\n').filter(line => line.trim());
+    console.log(`📋 Líneas de la tabla: ${lines.length}`);
     
     for (const line of lines) {
+      console.log('🔍 Procesando línea:', line);
       // Regex flexible para capturar filas de la tabla
       // Grupos: (número) (semana opcional) (nombre/tipo) (peso)
       const rowMatch = line.match(/^\s*(\d+)\s+(?:(\d+)\s+)?(.+?)\s+(\d+)\s*$/);
       
       if (rowMatch) {
         const [, number, week, name, weight] = rowMatch;
+        console.log('✅ Fila capturada:', { number, week, name, weight });
         
         evaluations.push({
           number: parseInt(number),
@@ -125,6 +129,8 @@ function parseEvaluationSection(content: string): SyllabusEvaluation[] {
           weight: parseInt(weight),
           type: detectEvaluationType(name),
         });
+      } else {
+        console.log('❌ Línea NO capturada por regex');
       }
     }
   }
