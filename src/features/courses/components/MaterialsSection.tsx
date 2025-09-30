@@ -187,8 +187,14 @@ export const MaterialsSection: React.FC<MaterialsSectionProps> = ({
   };
 
   const handleFileInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    console.log('📂 Input de archivo cambió');
+    console.log('📂 Archivos seleccionados:', e.target.files?.length || 0);
+    
     if (e.target.files && e.target.files[0]) {
+      console.log('✅ Archivo detectado, iniciando carga...');
       handleFileUpload(e.target.files);
+    } else {
+      console.warn('⚠️ No se detectaron archivos');
     }
   };
 
