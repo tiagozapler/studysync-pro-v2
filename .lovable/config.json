@@ -1,0 +1,17 @@
+{
+  "name": "StudySync Pro V2",
+  "description": "Advanced study management platform with AI assistant",
+  "framework": "React + TypeScript + Vite",
+  "backend": "Convex",
+  "features": [
+    "AI Chat Assistant",
+    "Course Management",
+    "File Management",
+    "Calendar & Events",
+    "Notes & Todos",
+    "Focus Mode"
+  ],
+  "dependencies": {
+    "runtime": "node >= 18.0.0"
+  }
+}
