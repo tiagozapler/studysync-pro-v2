@@ -90,6 +90,9 @@ export const MaterialsSection: React.FC<MaterialsSectionProps> = ({
                 description: `Detectado automáticamente en ${file.name}`,
                 date: dateInfo.date,
                 type: typeMap[dateInfo.type] || 'other',
+                priority: 'medium',
+                source: 'auto-detected',
+                sourceFile: file.name,
               });
             }
           }
