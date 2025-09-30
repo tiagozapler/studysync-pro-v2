@@ -2,7 +2,6 @@ import { paginationOptsValidator } from "convex/server";
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
 
-// Crear un archivo
 export const createFile = mutation({
   args: {
     courseId: v.id("courses"),
@@ -17,9 +16,8 @@ export const createFile = mutation({
   },
 });
 
-// Obtener archivos por curso
 export const getFilesByCourse = query({
-  args: { courseId: v.string() },
+  args: { courseId: v.id("courses") },
   handler: async (ctx, args) => {
     return await ctx.db
       .query("files")
@@ -28,7 +26,6 @@ export const getFilesByCourse = query({
   },
 });
 
-// Obtener archivos por usuario
 export const getFilesByUser = query({
   args: { userId: v.string() },
   handler: async (ctx, args) => {
@@ -39,7 +36,6 @@ export const getFilesByUser = query({
   },
 });
 
-// Guardar o actualizar texto de archivo
 export const upsertFileText = mutation({
   args: {
     fileId: v.string(),
@@ -66,7 +62,6 @@ export const upsertFileText = mutation({
   },
 });
 
-// Obtener texto de un archivo específico
 export const getFileTextByFile = query({
   args: { fileId: v.string() },
   handler: async (ctx, args) => {
@@ -77,7 +72,6 @@ export const getFileTextByFile = query({
   },
 });
 
-// Obtener todos los textos de archivos de un curso
 export const getFileTextsByCourse = query({
   args: {
     courseId: v.string(),
@@ -91,7 +85,6 @@ export const getFileTextsByCourse = query({
   },
 });
 
-// Eliminar archivo y sus textos relacionados
 export const deleteFile = mutation({
   args: { id: v.id("files") },
   handler: async (ctx, args) => {
