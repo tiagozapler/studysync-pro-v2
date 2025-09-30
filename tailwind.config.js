@@ -40,6 +40,18 @@ export default {
           orange: '#F97316',
           indigo: '#6366F1',
         },
+        // Neon palette for dynamic gradients
+        neon: {
+          lime: '#B8FF2C',
+          green: '#39FF14',
+          cyan: '#00E5FF',
+          blue: '#00A3FF',
+          purple: '#B367FF',
+          pink: '#FF4D9D',
+          red: '#FF3B3B',
+          orange: '#FF8A00',
+          yellow: '#F9F871',
+        },
       },
       fontFamily: {
         inter: ['Inter', 'system-ui', 'sans-serif'],
@@ -52,11 +64,13 @@ export default {
         card: '0 8px 25px -5px rgba(0, 0, 0, 0.4), 0 4px 10px -2px rgba(0, 0, 0, 0.3)',
         modal:
           '0 20px 25px -5px rgba(0, 0, 0, 0.5), 0 10px 10px -5px rgba(0, 0, 0, 0.4)',
+        glow: '0 0 30px rgba(184,255,44,0.08), 0 0 60px rgba(0,229,255,0.06)',
       },
       animation: {
         'fade-in': 'fadeIn 0.3s ease-out',
         'slide-in': 'slideIn 0.3s ease-out',
         'pulse-fast': 'pulse 1s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+        'gradient-x': 'gradientX 8s ease infinite',
       },
       keyframes: {
         fadeIn: {
@@ -66,6 +80,10 @@ export default {
         slideIn: {
           '0%': { transform: 'translateX(-100%)' },
           '100%': { transform: 'translateX(0)' },
+        },
+        gradientX: {
+          '0%, 100%': { backgroundPosition: '0% 50%' },
+          '50%': { backgroundPosition: '100% 50%' },
         },
       },
       transitionDuration: {

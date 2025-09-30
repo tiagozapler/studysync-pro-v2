@@ -123,10 +123,10 @@ export function Dashboard() {
   return (
     <div className="container-app py-8">
       {/* Hero moderno */}
-      <div className="relative mb-10 overflow-hidden rounded-lg border border-dark-border bg-dark-bg-secondary/60 shadow-card">
+      <div className="relative mb-10 overflow-hidden rounded-lg border border-dark-border bg-dark-bg-secondary/60 shadow-card shadow-glow">
         <div className="absolute inset-0 opacity-40">
-          <div className="absolute -top-20 -left-16 h-64 w-64 rounded-full bg-course-blue/30 blur-3xl" />
-          <div className="absolute -bottom-20 -right-16 h-64 w-64 rounded-full bg-course-violet/30 blur-3xl" />
+          <div className="absolute -top-20 -left-16 h-64 w-64 rounded-full bg-neon-lime/20 blur-3xl" />
+          <div className="absolute -bottom-20 -right-16 h-64 w-64 rounded-full bg-neon-cyan/20 blur-3xl" />
         </div>
         <div className="relative z-10 p-6 md:p-8">
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6">

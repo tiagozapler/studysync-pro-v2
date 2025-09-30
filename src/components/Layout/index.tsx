@@ -47,9 +47,15 @@ export function Layout({ children }: LayoutProps) {
     <div className="relative flex h-screen bg-dark-bg-primary">
       {/* Fondo decorativo con degradados suaves */}
       <div aria-hidden className="pointer-events-none absolute inset-0 -z-10 overflow-hidden">
-        <div className="absolute -top-24 -left-24 h-96 w-96 rounded-full bg-course-blue/20 blur-3xl" />
-        <div className="absolute top-1/3 -right-24 h-96 w-96 rounded-full bg-course-violet/20 blur-3xl" />
-        <div className="absolute bottom-0 left-1/2 h-64 w-64 -translate-x-1/2 rounded-full bg-course-pink/10 blur-2xl" />
+        {/* Gradiente animado neon */}
+        <div className="absolute inset-0 opacity-[0.35] bg-[length:200%_200%] animate-gradient-x" style={{
+          backgroundImage:
+            'radial-gradient(600px 200px at 20% 10%, rgba(184,255,44,0.15), transparent), radial-gradient(400px 200px at 90% 20%, rgba(0,229,255,0.12), transparent), radial-gradient(500px 250px at 50% 100%, rgba(255,77,157,0.10), transparent)'
+        }} />
+        {/* Blobs adicionales */}
+        <div className="absolute -top-24 -left-24 h-80 w-80 rounded-full bg-neon-lime/10 blur-3xl" />
+        <div className="absolute top-1/3 -right-24 h-96 w-96 rounded-full bg-neon-cyan/10 blur-3xl" />
+        <div className="absolute bottom-0 left-1/2 h-64 w-64 -translate-x-1/2 rounded-full bg-neon-purple/10 blur-2xl" />
       </div>
       {/* Sidebar para móvil */}
       {sidebarOpen && (
