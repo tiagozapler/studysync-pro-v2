@@ -8,7 +8,13 @@
 /* Base styles */
 @layer base {
   :root {
-    --accent: #00E5FF; /* cyan default */
+    --bg-primary: #0d0d0d; /* negro */
+    --bg-secondary: #1b2d1b; /* verde oscuro */
+    --accent-primary: #b34700; /* naranja oscuro */
+    --accent-secondary: #7a1f1f; /* rojo oscuro */
+    --accent-tertiary: #c7a600; /* amarillo oscuro */
+    --text-primary: #e0e0e0; /* gris claro */
+    --text-secondary: #a1a1a1; /* gris medio */
   }
   [data-accent='cyan'] {
     --accent: #00E5FF;
@@ -28,7 +34,8 @@
   }
 
   body {
-    @apply bg-dark-bg-primary text-dark-text-primary font-sans antialiased;
+    background-color: var(--bg-primary);
+    color: var(--text-primary);
     @apply min-h-screen overflow-x-hidden;
   }
 
@@ -59,7 +66,7 @@
 @layer components {
   /* Botones base */
   .btn {
-    @apply inline-flex items-center justify-center gap-2 px-4 py-2 text-sm font-semibold;
+    @apply inline-flex items-center justify-center gap-2 px-4 py-2 text-sm font-semibold rounded-lg transition-all duration-200;
     @apply border border-dark-border bg-dark-bg-secondary/70 text-dark-text-primary backdrop-blur-md;
     @apply rounded-sm transition-all duration-fast shadow-glow;
     @apply hover:border-neon-cyan hover:bg-neon-cyan/10 hover:shadow-[0_0_24px_rgba(0,229,255,0.15)];
@@ -68,31 +75,37 @@
   }
 
   .btn-primary {
-    @apply bg-transparent border text-white;
-    border-color: var(--accent);
-    color: var(--accent);
+    background-color: var(--accent-primary);
+    color: #fff;
+    border: 1px solid color-mix(in oklab, var(--accent-primary) 80%, black);
   }
   .btn-primary:hover {
-    background: color-mix(in oklab, var(--accent) 20%, transparent);
-    border-color: var(--accent);
-    color: white;
-    box-shadow: 0 0 18px color-mix(in oklab, var(--accent) 25%, transparent);
+    background-color: color-mix(in oklab, var(--accent-primary) 85%, white 15%);
+    box-shadow: 0 6px 18px rgba(179, 71, 0, 0.3);
   }
 
   .btn-danger {
-    @apply bg-neon-red/20 border-neon-red text-neon-red;
-    @apply hover:bg-neon-red/30 hover:text-white;
+    background-color: var(--accent-secondary);
+    color: #fff;
+    border: 1px solid color-mix(in oklab, var(--accent-secondary) 80%, black);
   }
 
   .btn-ghost {
-    @apply bg-transparent border-transparent text-dark-text-secondary;
-    @apply hover:bg-neon-purple/10 hover:border-neon-purple hover:text-neon-purple;
+    background-color: transparent;
+    color: var(--text-secondary);
+    border: 1px solid transparent;
+  }
+  .btn-ghost:hover {
+    border-color: color-mix(in oklab, var(--accent-primary) 50%, transparent);
+    color: var(--text-primary);
   }
 
   /* Cards */
   .card {
-    @apply bg-dark-bg-secondary/60 border border-dark-border rounded-sm backdrop-blur-md;
-    @apply shadow-card shadow-glow transition-all duration-fast;
+    background-color: color-mix(in oklab, var(--bg-secondary) 96%, black 4%);
+    border: 1px solid color-mix(in oklab, var(--bg-secondary) 70%, black 30%);
+    border-radius: 16px;
+    box-shadow: 0 10px 24px rgba(0,0,0,0.35);
   }
 
   .card-hover {
@@ -101,10 +114,16 @@
 
   /* Inputs */
   .input {
-    @apply w-full bg-dark-bg-tertiary/70 border border-dark-border text-dark-text-primary backdrop-blur-sm;
-    @apply rounded-sm px-3 py-2 text-sm transition-colors duration-fast shadow-inner;
-    @apply placeholder:text-dark-text-muted;
-    @apply focus:border-neon-cyan focus:ring-1 focus:ring-neon-cyan;
+    background-color: #0f0f0f;
+    color: var(--text-primary);
+    border: 1px solid #202020;
+    border-radius: 10px;
+    padding: 10px 12px;
+  }
+  .input:focus {
+    outline: none;
+    border-color: color-mix(in oklab, var(--accent-primary) 70%, black);
+    box-shadow: 0 0 0 3px color-mix(in oklab, var(--accent-primary) 25%, transparent);
   }
 
   /* Modal */
@@ -120,13 +139,17 @@
 
   /* Navigation */
   .nav-item {
-    @apply flex items-center gap-3 px-3 py-2 text-sm font-medium;
-    @apply text-dark-text-secondary rounded-sm transition-colors duration-fast;
-    @apply hover:bg-neon-purple/10 hover:text-neon-purple hover:border hover:border-neon-purple/50;
+    @apply flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-lg transition-colors;
+    color: var(--text-secondary);
   }
-
+  .nav-item:hover {
+    background-color: color-mix(in oklab, var(--bg-secondary) 60%, black);
+    color: var(--text-primary);
+  }
   .nav-item.active {
-    @apply bg-neon-cyan/20 text-neon-cyan border border-neon-cyan;
+    background-color: color-mix(in oklab, var(--accent-primary) 12%, transparent);
+    color: var(--text-primary);
+    border: 1px solid color-mix(in oklab, var(--accent-primary) 40%, transparent);
   }
 
   /* Utilidades para layout */
@@ -135,7 +158,9 @@
   }
 
   .page-header {
-    @apply mb-8 border-b border-dark-border pb-6;
+    border-bottom: 1px solid color-mix(in oklab, var(--bg-secondary) 40%, black);
+    padding-bottom: 24px;
+    margin-bottom: 24px;
   }
 
   .section-header {
@@ -292,6 +317,18 @@
       transition-duration: 0.01ms !important;
     }
   }
+
+  .text-subtle { color: var(--text-secondary); }
+  .bg-app { background-color: var(--bg-primary); }
+  .bg-panel { background-color: var(--bg-secondary); }
+  .badge-warn {
+    background-color: color-mix(in oklab, var(--accent-tertiary) 20%, transparent);
+    color: var(--accent-tertiary);
+    border: 1px solid color-mix(in oklab, var(--accent-tertiary) 50%, transparent);
+    @apply text-xs px-2 py-0.5 rounded-full;
+  }
+  .link-accent { color: var(--accent-primary); }
+  .link-accent:hover { color: color-mix(in oklab, var(--accent-primary) 85%, white); }
 }
 
 /* Print styles */
