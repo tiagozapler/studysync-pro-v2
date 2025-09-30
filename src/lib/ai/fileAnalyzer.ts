@@ -111,32 +111,33 @@ Antes de responder, verifica:
 4. ¿Eliminaste duplicados?
 
 Responde ÚNICAMENTE con JSON válido en este formato:
+
 {
   "dates": [
     {
-      "date": "YYYY-MM-DD" o "Semana X",
+      "date": "YYYY-MM-DD (o Semana X si no hay fecha exacta)",
       "type": "exam|assignment|class|other",
-      "context": "Tipo de evaluación + descripción breve",
+      "context": "Examen escrito 1 - Ratios financieros",
       "confidence": 0.8
     }
   ],
   "grades": [
     {
-      "name": "Nombre EXACTO de la evaluación",
-      "score": número_de_0_a_20,
+      "name": "Examen escrito 1",
+      "score": 15,
       "maxScore": 20,
-      "weight": porcentaje_de_0_a_100,
+      "weight": 20,
       "type": "exam|quiz|project|homework|participation|other"
     }
   ],
-  "summary": "Breve resumen del sílabo y evaluaciones encontradas"
+  "summary": "Sílabo con 4 evaluaciones: 2 exámenes escritos (45%), 1 trabajo de investigación (30%), 1 examen final (25%)"
 }
 
-REGLAS FINALES:
-1. Si NO hay notas del estudiante → grades: []
-2. Si NO hay pesos explícitos → weight: 100
-3. maxScore siempre es 20
-4. Solo JSON válido, sin texto adicional`;
+REGLAS CRÍTICAS:
+- Si NO hay notas del estudiante en el documento → "grades": []
+- Si NO hay pesos explícitos → weight: 100
+- maxScore SIEMPRE es 20
+- Solo devuelve JSON válido sin texto adicional`;
 
       console.log('🤖 Enviando a Groq para análisis...');
       const completion = await this.groqClient.chat.completions.create({
