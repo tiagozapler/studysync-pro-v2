@@ -4,6 +4,7 @@ import {
   Routes,
   Route,
   Navigate,
+  useLocation,
 } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 
@@ -192,50 +193,7 @@ export function App() {
 
           {/* Layout principal */}
           <Layout>
-            <main id="main-content" tabIndex={-1}>
-              <React.Suspense fallback={<LoadingScreen />}>
-                <Routes>
-                  {/* Ruta de login (pública) */}
-                  <Route path="/login" element={<Login />} />
-
-                  {/* Ruta principal - redirigir a login si no está autenticado */}
-                  <Route
-                    path="/"
-                    element={<Navigate to="/dashboard" replace />}
-                  />
-
-                  {/* Rutas protegidas - requieren autenticación */}
-                  <Route path="/dashboard" element={<Dashboard />} />
-
-                  {/* Curso específico */}
-                  <Route path="/course/:courseId" element={<Course />} />
-                  <Route
-                    path="/course/:courseId/:section"
-                    element={<Course />}
-                  />
-
-                  {/* Páginas principales */}
-                  <Route path="/calendar" element={<Calendar />} />
-                  <Route path="/notes" element={<Notes />} />
-                  <Route path="/search" element={<Search />} />
-                  <Route path="/settings" element={<Settings />} />
-                  <Route path="/help" element={<Help />} />
-
-                  {/* Focus mode */}
-                  <Route path="/focus" element={<Focus />} />
-                  <Route path="/focus/:courseId" element={<Focus />} />
-
-                  {/* Chat con IA */}
-                  <Route path="/chat" element={<Chat />} />
-
-                  {/* 404 - Redirigir al dashboard */}
-                  <Route
-                    path="*"
-                    element={<Navigate to="/dashboard" replace />}
-                  />
-                </Routes>
-              </React.Suspense>
-            </main>
+            <RoutedContent />
           </Layout>
 
           {/* Modales globales */}
@@ -339,6 +297,49 @@ function OfflineIndicator() {
         <span className="font-semibold">Modo Offline</span>
       </div>
     </div>
+  );
+}
+
+function RoutedContent() {
+  const location = useLocation();
+  return (
+    <main id="main-content" tabIndex={-1} className="relative">
+      <React.Suspense fallback={<LoadingScreen />}>
+        <div key={location.pathname} className="animate-fade-in">
+          <Routes location={location}>
+            {/* Ruta de login (pública) */}
+            <Route path="/login" element={<Login />} />
+
+            {/* Ruta principal - redirigir a login si no está autenticado */}
+            <Route path="/" element={<Navigate to="/dashboard" replace />} />
+
+            {/* Rutas protegidas - requieren autenticación */}
+            <Route path="/dashboard" element={<Dashboard />} />
+
+            {/* Curso específico */}
+            <Route path="/course/:courseId" element={<Course />} />
+            <Route path="/course/:courseId/:section" element={<Course />} />
+
+            {/* Páginas principales */}
+            <Route path="/calendar" element={<Calendar />} />
+            <Route path="/notes" element={<Notes />} />
+            <Route path="/search" element={<Search />} />
+            <Route path="/settings" element={<Settings />} />
+            <Route path="/help" element={<Help />} />
+
+            {/* Focus mode */}
+            <Route path="/focus" element={<Focus />} />
+            <Route path="/focus/:courseId" element={<Focus />} />
+
+            {/* Chat con IA */}
+            <Route path="/chat" element={<Chat />} />
+
+            {/* 404 - Redirigir al dashboard */}
+            <Route path="*" element={<Navigate to="/dashboard" replace />} />
+          </Routes>
+        </div>
+      </React.Suspense>
+    </main>
   );
 }
 

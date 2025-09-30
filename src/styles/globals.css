@@ -190,6 +190,11 @@
     @apply bg-gradient-to-r from-course-blue to-course-purple bg-clip-text text-transparent;
   }
 
+  /* Page fade-in */
+  .animate-fade-in {
+    animation: fadeIn 300ms ease-out;
+  }
+
   .scrollbar-hide {
     -ms-overflow-style: none;
     scrollbar-width: none;
