@@ -401,18 +401,18 @@ ${context}`,
   };
 
   return (
-    <div className="flex flex-col h-full bg-white rounded-lg shadow">
-      {/* Header */}
-      <div className="flex items-center justify-between p-4 border-b border-gray-200">
+    <div className="flex flex-col h-full card">
+      {/* Header Tron */}
+      <div className="flex items-center justify-between p-4 border-b border-dark-border bg-dark-bg-secondary/60">
         <div className="flex items-center">
-          <Bot className="h-6 w-6 text-purple-600 mr-2" />
-          <h3 className="text-lg font-semibold text-gray-900">Asistente IA</h3>
+          <Bot className="h-6 w-6 text-neon-cyan mr-2" />
+          <h3 className="text-lg font-semibold">Asistente IA</h3>
         </div>
         <div className="flex items-center space-x-2">
           {messages.length > 0 && (
             <button
               onClick={handleClearChat}
-              className="p-2 text-gray-400 hover:text-red-600 rounded-md hover:bg-gray-100"
+              className="btn btn-ghost p-2"
               title="Limpiar historial del chat"
             >
               <Trash2 className="h-5 w-5" />
@@ -420,7 +420,7 @@ ${context}`,
           )}
           <button
             onClick={() => setShowSettings(true)}
-            className="p-2 text-gray-400 hover:text-gray-600 rounded-md hover:bg-gray-100"
+            className="btn btn-ghost p-2"
           >
             <Settings className="h-5 w-5" />
           </button>
@@ -428,18 +428,18 @@ ${context}`,
       </div>
 
       {/* Estado de IA */}
-      <div className="px-4 py-3 bg-gray-50 border-b border-gray-200">
+      <div className="px-4 py-3 bg-dark-bg-secondary/50 border-b border-dark-border">
         <div className="flex items-center justify-between">
           <div className="flex items-center">
-            <Brain className="h-4 w-4 text-purple-600 mr-2" />
-            <span className="text-xs text-gray-600">Estado de la IA</span>
+            <Brain className="h-4 w-4 text-neon-purple mr-2" />
+            <span className="text-xs text-dark-text-secondary">Estado de la IA</span>
           </div>
           <div className="flex space-x-2">
             <span
               className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
                 systemInfo.groq
-                  ? 'bg-green-100 text-green-800'
-                  : 'bg-red-100 text-red-800'
+                  ? 'bg-green-500/20 text-green-300 border border-green-500/40'
+                  : 'bg-red-500/20 text-red-300 border border-red-500/40'
               }`}
             >
               Groq: {systemInfo.groq ? 'Activo' : 'Sin clave'}
@@ -449,10 +449,10 @@ ${context}`,
       </div>
 
       {/* Mensajes */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-4">
+      <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-dark-bg-secondary/30">
         {messages.length === 0 ? (
-          <div className="text-center text-gray-500 py-8">
-            <Bot className="h-12 w-12 mx-auto mb-4 text-gray-300" />
+          <div className="text-center text-dark-text-muted py-8">
+            <Bot className="h-12 w-12 mx-auto mb-4 text-dark-text-secondary" />
             <p className="text-sm">
               ¡Hola! Soy tu asistente de IA para este curso.
             </p>
@@ -468,11 +468,11 @@ ${context}`,
               className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
             >
               <div
-                className={`max-w-xs lg:max-w-md px-4 py-2 rounded-lg ${
+                className={`max-w-xs lg:max-w-md px-4 py-2 rounded-lg border ${
                   message.role === 'user'
-                    ? 'bg-blue-600 text-white'
-                    : 'bg-gray-100 text-gray-900'
-                }`}
+                    ? 'bg-neon-cyan/20 text-neon-cyan border-neon-cyan/40'
+                    : 'bg-dark-bg-secondary/70 text-dark-text-primary border-dark-border'
+                } backdrop-blur-sm`}
               >
                 {message.files && message.files.length > 0 && (
                   <div className="mb-2">
@@ -485,7 +485,7 @@ ${context}`,
                         return file ? (
                           <span
                             key={fileId}
-                            className="text-xs bg-white bg-opacity-20 px-2 py-1 rounded"
+                            className="text-xs bg-neon-purple/20 px-2 py-1 rounded border border-neon-purple/40"
                           >
                             {file.name}
                           </span>
@@ -505,9 +505,9 @@ ${context}`,
 
         {isLoading && (
           <div className="flex justify-start">
-            <div className="bg-gray-100 text-gray-900 max-w-xs lg:max-w-md px-4 py-2 rounded-lg">
+            <div className="bg-dark-bg-secondary/70 text-dark-text-primary border border-dark-border max-w-xs lg:max-w-md px-4 py-2 rounded-lg">
               <div className="flex items-center space-x-2">
-                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-purple-600"></div>
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-neon-cyan"></div>
                 <span className="text-sm">Pensando...</span>
               </div>
             </div>
@@ -519,14 +519,14 @@ ${context}`,
 
       {/* Selector de archivos */}
       {showFileSelector && (
-        <div className="px-4 py-3 bg-gray-50 border-t border-gray-200">
+        <div className="px-4 py-3 bg-dark-bg-secondary/50 border-t border-dark-border">
           <div className="flex items-center justify-between mb-2">
-            <span className="text-sm font-medium text-gray-700">
+            <span className="text-sm font-medium text-dark-text-primary">
               Archivos seleccionados:
             </span>
             <button
               onClick={() => setShowFileSelector(false)}
-              className="text-gray-400 hover:text-gray-600"
+              className="text-dark-text-secondary hover:text-dark-text-primary"
             >
               <X className="h-4 w-4" />
             </button>
@@ -541,9 +541,9 @@ ${context}`,
                   type="checkbox"
                   checked={selectedFiles.includes(file.id)}
                   onChange={() => handleFileSelection(file.id)}
-                  className="rounded border-gray-300 text-purple-600 focus:ring-purple-500"
+                  className="rounded border-dark-border text-neon-purple focus:ring-neon-purple"
                 />
-                <span className="text-sm text-gray-700">{file.name}</span>
+                <span className="text-sm text-dark-text-secondary">{file.name}</span>
               </label>
             ))}
           </div>
@@ -551,11 +551,11 @@ ${context}`,
       )}
 
       {/* Input */}
-      <div className="p-4 border-t border-gray-200">
+      <div className="p-4 border-t border-dark-border bg-dark-bg-secondary/60">
         <div className="flex space-x-2">
           <button
             onClick={() => setShowFileSelector(!showFileSelector)}
-            className="p-2 text-gray-400 hover:text-gray-600 rounded-md hover:bg-gray-100"
+            className="btn btn-ghost p-2"
             title="Seleccionar archivos"
           >
             <FileText className="h-5 w-5" />
@@ -566,7 +566,7 @@ ${context}`,
             onChange={e => setInputValue(e.target.value)}
             onKeyPress={e => e.key === 'Enter' && handleSendMessage()}
             placeholder="Haz una pregunta sobre el curso..."
-            className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+            className="input flex-1"
             disabled={isLoading}
           />
           <button
@@ -574,7 +574,7 @@ ${context}`,
             disabled={
               isLoading || (!inputValue.trim() && selectedFiles.length === 0)
             }
-            className="p-2 bg-purple-600 text-white rounded-md hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="btn btn-primary p-2 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <Send className="h-5 w-5" />
           </button>
@@ -606,15 +606,14 @@ ${context}`,
       {/* Modal de configuración */}
       {showSettings && (
         <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg shadow-lg w-full max-w-md p-6 space-y-4 border border-purple-100">
+          <div className="card w-full max-w-md p-6 space-y-4">
             <div className="flex items-center justify-between">
-              <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
-                <Brain className="h-5 w-5 text-purple-600" /> Configuración de
-                Groq
+              <h3 className="text-lg font-semibold flex items-center gap-2">
+                <Brain className="h-5 w-5 text-neon-purple" /> Configuración de Groq
               </h3>
               <button
                 onClick={() => setShowSettings(false)}
-                className="text-gray-400 hover:text-gray-600"
+                className="btn btn-ghost p-2"
               >
                 <X className="h-5 w-5" />
               </button>
@@ -622,19 +621,19 @@ ${context}`,
 
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700">
+                <label className="block text-sm font-medium text-dark-text-primary">
                   API Key de Groq
                 </label>
                 <input
                   type="password"
                   value={groqApiKey}
                   onChange={e => setGroqApiKey(e.target.value)}
-                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-purple-500 focus:ring-purple-500 sm:text-sm"
+                  className="mt-1 block w-full input"
                   placeholder="gsk_..."
                 />
               </div>
 
-              <div className="bg-purple-50 border border-purple-100 rounded-lg p-4 text-sm text-purple-900">
+              <div className="bg-neon-purple/10 border border-neon-purple/30 rounded-lg p-4 text-sm">
                 <h4 className="font-semibold mb-2">¿Dónde obtengo la clave?</h4>
                 <p>
                   Consigue tu API key gratuita en
@@ -642,7 +641,7 @@ ${context}`,
                     href="https://console.groq.com/keys"
                     target="_blank"
                     rel="noreferrer"
-                    className="text-purple-600 hover:text-purple-800 ml-1"
+                    className="text-neon-purple hover:text-neon-cyan ml-1"
                   >
                     console.groq.com
                   </a>
@@ -652,12 +651,12 @@ ${context}`,
               <button
                 onClick={handleSaveGroqKey}
                 disabled={!groqApiKey.trim()}
-                className="w-full inline-flex justify-center items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-purple-600 hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full btn btn-primary"
               >
                 Guardar clave
               </button>
 
-              <div className="text-xs text-gray-500">
+              <div className="text-xs text-dark-text-muted">
                 La clave se guarda localmente en tu navegador y puedes cambiarla
                 o borrarla cuando quieras.
               </div>

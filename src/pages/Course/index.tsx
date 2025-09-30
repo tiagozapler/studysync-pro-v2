@@ -38,41 +38,49 @@ export function Course() {
 
   return (
     <div className="container-app py-8">
-      {/* Header */}
-      <div className="page-header">
-        <div className="flex items-center space-x-4 mb-4">
-          <Link to="/dashboard" className="btn btn-ghost">
-            <ArrowLeft size={16} />
-            Volver
-          </Link>
-          <div
-            className="w-4 h-4 rounded-sm"
-            style={{ backgroundColor: course.color }}
-          />
-          <div>
-            <h1 className="text-2xl font-display font-bold text-dark-text-primary">
-              {course.name}
-            </h1>
-            <p className="text-dark-text-muted">{course.teacher}</p>
-          </div>
+      {/* Header banner Tron */}
+      <div className="relative overflow-hidden rounded-lg border border-dark-border bg-dark-bg-secondary/60 shadow-card shadow-glow mb-6">
+        <div className="absolute inset-0 opacity-30">
+          <div className="absolute -top-20 -left-16 h-64 w-64 rounded-full bg-neon-cyan/20 blur-3xl" />
+          <div className="absolute -bottom-20 -right-16 h-64 w-64 rounded-full bg-neon-purple/20 blur-3xl" />
         </div>
-
-        {/* Navigation */}
-        <nav className="flex space-x-2">
-          {sections.map(({ id, label, icon: Icon }) => {
-            const isActive = section === id;
-            return (
-              <Link
-                key={id}
-                to={`/course/${courseId}/${id}`}
-                className={`nav-item ${isActive ? 'active' : ''}`}
-              >
-                <Icon size={16} />
-                {label}
+        <div className="relative z-10 p-5 md:p-6">
+          <div className="flex items-center justify-between gap-4">
+            <div className="flex items-center gap-4">
+              <Link to="/dashboard" className="btn btn-ghost">
+                <ArrowLeft size={16} />
+                Volver
               </Link>
-            );
-          })}
-        </nav>
+              <div
+                className="w-4 h-4 rounded-sm"
+                style={{ backgroundColor: course.color }}
+              />
+              <div>
+                <h1 className="text-2xl md:text-3xl font-space-grotesk font-bold">
+                  {course.name}
+                </h1>
+                <p className="text-dark-text-muted">{course.teacher}</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Navigation */}
+          <nav className="mt-4 flex flex-wrap gap-2">
+            {sections.map(({ id, label, icon: Icon }) => {
+              const isActive = section === id;
+              return (
+                <Link
+                  key={id}
+                  to={`/course/${courseId}/${id}`}
+                  className={`nav-item ${isActive ? 'active' : ''}`}
+                >
+                  <Icon size={16} />
+                  {label}
+                </Link>
+              );
+            })}
+          </nav>
+        </div>
       </div>
 
       {/* Content */}
