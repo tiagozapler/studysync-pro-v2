@@ -195,6 +195,22 @@
     animation: fadeIn 300ms ease-out;
   }
 
+  /* Hover glow for buttons and links */
+  .hover-glow {
+    @apply transition-shadow duration-300;
+  }
+  .hover-glow:hover {
+    box-shadow: 0 0 18px rgba(0,229,255,0.18);
+  }
+
+  /* Neon link */
+  .link-neon {
+    @apply text-neon-cyan transition-colors;
+  }
+  .link-neon:hover {
+    color: #B367FF; /* neon-purple */
+  }
+
   .scrollbar-hide {
     -ms-overflow-style: none;
     scrollbar-width: none;
