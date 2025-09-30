@@ -84,8 +84,9 @@ INSTRUCCIONES CRÍTICAS:
       → Extrae la fecha y el contexto
    
    **REGLAS:**
-   - SOLO incluye fechas con día/mes/año completo
-   - Si solo hay "Semana X", NO la incluyas
+   - PRIORIDAD: Si hay fechas exactas (día/mes/año), úsalas
+   - Si SOLO hay "Semana X" sin fecha exacta, incluye "Semana X" en el campo context
+   - Si no hay fechas explícitas pero sí semanas, puedes estimar fechas basándote en el ciclo académico
    - Adapta según lo que encuentres en el documento
 
 2. **CALIFICACIONES - REGLAS ESTRICTAS**:
@@ -125,11 +126,19 @@ INSTRUCCIONES CRÍTICAS:
    - Adapta la búsqueda al formato específico del documento
    
    **DETECCIÓN DE NOTAS:**
+   - **IMPORTANTE: SOLO incluye calificaciones si HAY UNA NOTA EXPLÍCITA en el documento**
+   - Si el documento solo tiene el SÍLABO (sistema de evaluación) SIN notas del estudiante, NO incluyas calificaciones
    - Las notas están en escala de 0-20 (NO de 0-100)
-   - BUSCA PATRONES como:
-     * "15/20" o "15 de 20" o "15 sobre 20"
-     * "Nota: 18" o "Calificación: 16"
-     * "Obtuvo 14 puntos"
+   
+   **BUSCA PATRONES DE NOTAS:**
+   - "15/20" o "15 de 20" o "15 sobre 20"
+   - "Nota: 18" o "Calificación: 16" o "Score: 14"
+   - "Obtuvo 14 puntos" o "Sacó 17"
+   - "Examen escrito 1: 15/20" (nombre de evaluación + nota)
+   
+   **REGLA CRÍTICA:**
+   - Si solo ves "Examen escrito 1" en la tabla de evaluación SIN una nota → NO la incluyas
+   - Solo incluye una calificación si puedes ver CLARAMENTE el puntaje obtenido
    
    **TIPOS DE EVALUACIÓN:**
    - Parcial/Examen/Midterm → "exam"
@@ -141,22 +150,29 @@ INSTRUCCIONES CRÍTICAS:
 
 **EJEMPLOS REALES DE SÍLABOS:**
 
-✅ EJEMPLO 1 - Formato con tabla de evaluación:
+✅ EJEMPLO 1 - SOLO SÍLABO (sin notas):
 Texto del sílabo:
 "VII. Evaluación
 N.º  Semana  Tipo de evaluación  Peso
 1    5       Examen escrito 1    20
-2    10      Examen escrito 2    25
-3    13      Trabajo de Investigación  30
-4    15      Examen escrito 3    25"
+2    10      Examen escrito 2    25"
 
-Si encuentras notas del estudiante:
-"Examen escrito 1: 15/20"
-"Trabajo de Investigación: 18/20"
+→ Resultado: { "grades": [] }
+(NO incluyas calificaciones porque NO hay notas, solo está el sistema de evaluación)
+
+✅ EJEMPLO 2 - SÍLABO CON NOTAS del estudiante:
+"VII. Evaluación
+N.º  Semana  Tipo de evaluación  Peso
+1    5       Examen escrito 1    20
+2    10      Examen escrito 2    25
+
+MIS NOTAS:
+Examen escrito 1: 15/20
+Examen escrito 2: 18/20"
 
 → Resultado:
 { name: "Examen escrito 1", score: 15, maxScore: 20, weight: 20, type: "exam" }
-{ name: "Trabajo de Investigación", score: 18, maxScore: 20, weight: 30, type: "project" }
+{ name: "Examen escrito 2", score: 18, maxScore: 20, weight: 25, type: "exam" }
 
 ✅ EJEMPLO 2 - Formato con porcentajes:
 Texto del sílabo:
@@ -224,7 +240,7 @@ REGLAS CRÍTICAS - LEE ESTO CUIDADOSAMENTE:
           {
             role: 'system',
             content:
-              'Eres un asistente experto en análisis de documentos académicos del sistema educativo peruano/latinoamericano. Los sílabos varían en formato, así que ADAPTA tu búsqueda a la estructura del documento. Entiendes calificaciones en escala 0-20 y porcentajes de peso en diferentes formatos (tablas, listas, texto). REGLA CRÍTICA: NUNCA inventes o adivines pesos/porcentajes - solo extrae lo que está EXPLÍCITAMENTE escrito. Si no encuentras pesos explícitos, usa weight: 100 para TODAS las evaluaciones. Respondes ÚNICAMENTE con JSON válido, sin texto adicional.',
+              'Eres un asistente experto en análisis de documentos académicos del sistema educativo peruano/latinoamericano. Los sílabos varían en formato, así que ADAPTA tu búsqueda a la estructura del documento. Entiendes calificaciones en escala 0-20 y porcentajes de peso en diferentes formatos (tablas, listas, texto). REGLAS CRÍTICAS: 1) NUNCA inventes pesos - usa weight: 100 si no están explícitos. 2) NUNCA inventes notas - solo incluye calificaciones si VES un puntaje (ej: "15/20"). Si solo hay sistema de evaluación sin notas del estudiante, devuelve grades: []. Respondes ÚNICAMENTE con JSON válido, sin texto adicional.',
           },
           {
             role: 'user',

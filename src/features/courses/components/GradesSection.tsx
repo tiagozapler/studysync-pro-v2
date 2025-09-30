@@ -33,17 +33,17 @@ export const GradesSection: React.FC<GradesSectionProps> = ({ courseId }) => {
   const safeGrades = grades && typeof grades === 'object' ? grades : {};
   const courseGrades = Array.isArray(safeGrades[courseId]) ? safeGrades[courseId] : [];
 
-  // Calcular estadísticas del curso
+  // Calcular estadísticas del curso (escala 0-20)
   const calculateStats = () => {
     if (!Array.isArray(courseGrades) || courseGrades.length === 0) {
       return {
         totalWeight: 0,
         currentWeight: 0,
         average: 0,
-        percentage: 0,
         remainingWeight: 100,
         projectedGrade: 0,
-        letterGrade: 'N/A',
+        needToPass: null as number | null,
+        status: 'incomplete' as 'passing' | 'failing' | 'incomplete',
       };
     }
 
@@ -51,37 +51,53 @@ export const GradesSection: React.FC<GradesSectionProps> = ({ courseId }) => {
       (sum, grade) => sum + grade.weight,
       0
     );
-    const currentWeight = courseGrades.reduce(
-      (sum, grade) => sum + grade.weight,
-      0
-    );
+    
+    // Calcular promedio ponderado en escala 0-20
     const weightedSum = courseGrades.reduce((sum, grade) => {
-      const percentage = (grade.score / grade.maxScore) * 100;
-      return sum + percentage * grade.weight;
+      const gradeIn20Scale = (grade.score / grade.maxScore) * 20; // Convertir a escala 0-20
+      return sum + (gradeIn20Scale * grade.weight) / 100;
     }, 0);
 
-    const average = weightedSum / totalWeight;
-    const percentage = weightedSum / totalWeight;
+    const average = weightedSum; // Ya está en escala 0-20
     const remainingWeight = Math.max(0, 100 - totalWeight);
 
-    // Calcular nota proyectada si hay peso restante
-    let projectedGrade = average;
+    // Calcular qué nota se necesita para aprobar (11/20 = aprobado)
+    let needToPass: number | null = null;
+    let status: 'passing' | 'failing' | 'incomplete' = 'incomplete';
+    
+    const passingGrade = 11; // Nota mínima para aprobar en escala 0-20
+    
     if (remainingWeight > 0) {
-      // Asumir que las evaluaciones restantes tendrán la misma nota promedio
-      projectedGrade = average;
+      // Calcular qué nota se necesita en el peso restante para llegar a 11
+      const currentContribution = average; // Lo que ya contribuye
+      const neededTotal = passingGrade; // Necesitamos llegar a 11
+      const neededFromRemaining = neededTotal - currentContribution;
+      needToPass = (neededFromRemaining * 100) / remainingWeight;
+      
+      // Limitar entre 0 y 20
+      needToPass = Math.max(0, Math.min(20, needToPass));
+      
+      // Determinar estado
+      if (needToPass <= 0) {
+        status = 'passing'; // Ya aprobó
+      } else if (needToPass > 20) {
+        status = 'failing'; // Imposible aprobar
+      } else {
+        status = 'incomplete'; // Aún puede aprobar
+      }
+    } else {
+      // No hay más evaluaciones, el promedio final es el actual
+      status = average >= passingGrade ? 'passing' : 'failing';
     }
-
-    // Convertir a letra
-    const letterGrade = getLetterGrade(projectedGrade);
 
     return {
       totalWeight,
-      currentWeight,
+      currentWeight: totalWeight,
       average: Math.round(average * 100) / 100,
-      percentage: Math.round(percentage * 100) / 100,
       remainingWeight,
-      projectedGrade: Math.round(projectedGrade * 100) / 100,
-      letterGrade,
+      projectedGrade: Math.round(average * 100) / 100,
+      needToPass: needToPass !== null ? Math.round(needToPass * 100) / 100 : null,
+      status,
     };
   };
 
@@ -200,10 +216,8 @@ export const GradesSection: React.FC<GradesSectionProps> = ({ courseId }) => {
               <p className="text-sm font-medium text-gray-500">
                 Promedio Actual
               </p>
-              <p
-                className={`text-2xl font-bold ${getGradeColor(stats.average)}`}
-              >
-                {stats.average}%
+              <p className={`text-2xl font-bold ${stats.average >= 11 ? 'text-green-600' : 'text-red-600'}`}>
+                {stats.average}/20
               </p>
             </div>
           </div>
@@ -211,15 +225,23 @@ export const GradesSection: React.FC<GradesSectionProps> = ({ courseId }) => {
 
         <div className="bg-white p-4 rounded-lg shadow border">
           <div className="flex items-center">
-            <div className="p-2 bg-green-100 rounded-lg">
-              <Award className="h-6 w-6 text-green-600" />
+            <div className={`p-2 rounded-lg ${
+              stats.status === 'passing' ? 'bg-green-100' :
+              stats.status === 'failing' ? 'bg-red-100' : 'bg-yellow-100'
+            }`}>
+              <Award className={`h-6 w-6 ${
+                stats.status === 'passing' ? 'text-green-600' :
+                stats.status === 'failing' ? 'text-red-600' : 'text-yellow-600'
+              }`} />
             </div>
             <div className="ml-3">
-              <p className="text-sm font-medium text-gray-500">Nota Letra</p>
-              <p
-                className={`text-2xl font-bold ${getGradeColor(stats.average)}`}
-              >
-                {stats.letterGrade}
+              <p className="text-sm font-medium text-gray-500">Estado</p>
+              <p className={`text-lg font-bold ${
+                stats.status === 'passing' ? 'text-green-600' :
+                stats.status === 'failing' ? 'text-red-600' : 'text-yellow-600'
+              }`}>
+                {stats.status === 'passing' ? 'Aprobando' :
+                 stats.status === 'failing' ? 'Desaprobado' : 'En curso'}
               </p>
             </div>
           </div>
@@ -245,9 +267,14 @@ export const GradesSection: React.FC<GradesSectionProps> = ({ courseId }) => {
               <Target className="h-6 w-6 text-purple-600" />
             </div>
             <div className="ml-3">
-              <p className="text-sm font-medium text-gray-500">Peso Restante</p>
+              <p className="text-sm font-medium text-gray-500">
+                {stats.needToPass !== null && stats.remainingWeight > 0 ? 'Necesitas para aprobar' : 'Peso Restante'}
+              </p>
               <p className="text-2xl font-bold text-gray-900">
-                {stats.remainingWeight}%
+                {stats.needToPass !== null && stats.remainingWeight > 0 
+                  ? `${stats.needToPass}/20`
+                  : `${stats.remainingWeight}%`
+                }
               </p>
             </div>
           </div>
