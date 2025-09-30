@@ -42,36 +42,49 @@ export const MaterialsSection: React.FC<MaterialsSectionProps> = ({
   const courseFiles = Array.isArray(safeFiles[courseId]) ? safeFiles[courseId] : [];
 
   const handleFileUpload = async (files: FileList) => {
+    console.log('📤 Iniciando carga de archivos:', files.length);
     setIsUploading(true);
     setUploadProgress(0);
     setAiAnalysis(null);
 
     try {
+      console.log('🔑 Groq API Key disponible:', Boolean(groqApiKey));
       const analyzer = new AIFileAnalyzer(groqApiKey);
       let totalDatesFound = 0;
       let totalGradesFound = 0;
 
       for (let i = 0; i < files.length; i++) {
         const file = files[i];
+        console.log(`📁 Procesando archivo ${i + 1}/${files.length}: ${file.name}`);
 
         // Actualizar progreso
         setUploadProgress((i / files.length) * 90); // 90% para procesar archivos
 
         // Extraer contenido del archivo
+        console.log('📄 Extrayendo contenido del archivo...');
         const content = await FileContentExtractor.extractContent(file);
+        console.log(`✅ Contenido extraído: ${content.length} caracteres`);
 
         // Agregar archivo al store primero
         await addFile(courseId, file, []);
 
         // Analizar contenido con IA (Groq)
+        console.log('🤖 Iniciando análisis con IA...');
         toast.loading(`Analizando ${file.name} con IA...`, { id: `analyze-${i}` });
         const analysis = await analyzer.analyzeFile(file.name, content);
         toast.dismiss(`analyze-${i}`);
+        
+        console.log('📊 Resultado del análisis:', {
+          fechas: analysis.dates.length,
+          calificaciones: analysis.grades.length,
+          resumen: analysis.summary.substring(0, 50),
+        });
         
         setAiAnalysis(analysis);
 
         // Si se encontraron fechas, agregar eventos al calendario
         if (analysis.dates.length > 0) {
+          console.log(`📅 Agregando ${analysis.dates.length} fechas al calendario...`);
           totalDatesFound += analysis.dates.length;
           
           for (const dateInfo of analysis.dates) {
@@ -85,6 +98,7 @@ export const MaterialsSection: React.FC<MaterialsSectionProps> = ({
                 'otro': 'other',
               };
               
+              console.log('➕ Agregando evento:', dateInfo.context);
               await addCourseEvent(courseId, {
                 title: dateInfo.context || `Evento - ${file.name}`,
                 description: `Detectado automáticamente en ${file.name}`,
@@ -100,9 +114,11 @@ export const MaterialsSection: React.FC<MaterialsSectionProps> = ({
 
         // Si se encontraron calificaciones, agregar notas
         if (analysis.grades.length > 0) {
+          console.log(`📊 Agregando ${analysis.grades.length} calificaciones...`);
           totalGradesFound += analysis.grades.length;
           
           for (const gradeInfo of analysis.grades) {
+            console.log('➕ Agregando calificación:', gradeInfo.name, `${gradeInfo.score}/${gradeInfo.maxScore}`);
             await addCourseGrade(courseId, {
               name: gradeInfo.name,
               score: gradeInfo.score,
